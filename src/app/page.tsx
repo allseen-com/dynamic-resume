@@ -1,24 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import resumeData from '../../data/resume.json';
 
 export default function Home() {
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const handleDownloadPDF = async () => {
-    const res = await fetch('/api/generate-pdf');
-    if (!res.ok) {
-      alert('Failed to generate PDF.');
-      return;
+    setIsGenerating(true);
+    try {
+      const res = await fetch('/api/generate-pdf');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const errorMessage = errorData.details || errorData.error || 'Failed to generate PDF';
+        alert(`PDF generation failed: ${errorMessage}`);
+        return;
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Meysam-Soheilipour-Resume.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Failed to generate PDF. Please try again later.');
+    } finally {
+      setIsGenerating(false);
     }
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Meysam-Soheilipour-Resume.pdf';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -27,9 +41,14 @@ export default function Home() {
       <div className="max-w-3xl mx-auto mb-4 px-8">
         <button
           onClick={handleDownloadPDF}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 print:hidden"
+          disabled={isGenerating}
+          className={`font-semibold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 print:hidden ${
+            isGenerating 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
         >
-          📄 Download PDF
+          {isGenerating ? '🔄 Generating PDF...' : '📄 Download PDF'}
         </button>
       </div>
 
