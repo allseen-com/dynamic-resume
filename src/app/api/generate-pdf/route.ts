@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import puppeteer from 'puppeteer';
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.origin;
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
   });
   const page = await browser.newPage();
   await page.goto(`${url}`, { waitUntil: 'networkidle0' });
