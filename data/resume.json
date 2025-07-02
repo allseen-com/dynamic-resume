@@ -28,42 +28,40 @@
   },
   "professionalExperience": [
     {
-      "company": "Trip Ways (Remote, Worldwide)",
+      "company": "Red Ventures (San Francisco, CA)",
+      "title": "Sr. Growth Marketing – Audience and SEO",
+      "dateRange": "12/2021 – Present",
+      "description": "Responsible for the CNET brand in the 'Media & Commerce' vertical at Red Ventures to diversify the audience and contribute to the audience acquisition and revenue growth strategies through many different channels on Google, YouTube, Amazon, and CNET.com platforms.\n\nSuccessfully plugged-in to many different teams (Leadership, Engineering, Data, CE, SEO, Product, Editorial, Video, and Commerce) to manage cross functional optimization of the workflows, Implement the best practices, and providing a data-driven growth strategy for CNET in different business units (Amazon Publishing, Video Optimizations, SEO, Customer Experience)\n\nManaging data pipe-lines from various sources, determining data needs & sources, developing SQL Queries, and analyze big data, to discover insights, define and align KPIs, and find growth opportunities.\n\nBuilding real time dashboards, in-depth monitoring, analysis, and tracking KPIs through the sales funnel, to optimize step-by-step performance, and improve overall ROI for many on-site and off-site channels.\n\nContributing to the video content strategy by providing data-driven content ideas, optimization of the workflows and processes, and revenue generating best practices that results to the general growth of the YouTube, Social, and on-site channels. Insightfully contributed to the production of video series that moved many all-time records across the CNET channels, improved and diversified audience, and added new commerce-based revenue sources, resulted in a 2X impact in the affiliate revenue, and 4X impact on the Ad revenue.\n\nProactively contributed to the CNET SEO strategy to beat the traffic and revenue goals by managing the editorial and technical resources, prioritizing the highest revenue opportunities, expanding into the new topics, collaborating with the video team to make video content and implement the best practices for the video content, and contribute to the SEO playbook.\n\nActively managing day-to-day operations of Amazon on-site Publishing program and collaborate with editorial and technical teams to improve the content strategy, and profitability, resulting in a 5X sustainable growth in the first 6 months."
+    },
+    {
+      "company": "Trip Ways LLC (Portland, OR)",
       "title": "Co-Founder and CEO",
-      "dateRange": "01/2024 – Present",
-      "bullets": [
-        "Spearheaded the relaunch and scaling of TripWays.com by integrating AI-powered semantic search, chatbot assistants, vectorized travel product databases, and retrieval-augmented generation (RAG) models to enhance user experience, personalize travel recommendations, improve booking efficiency, and drive conversions.",
-        "Implemented new strategies that significantly increased the inventory from 1,000 to 10,000+ travel packages and significantly increased its share of voice in the OTA industry. Enhanced B2B operations by streamlining vendor onboarding processes, fostering stronger partnership with travel-tech providers to use programmatic solutions, and expanding the network to over 500 global vendors, driving growth and operational efficiency.",
-        "Optimized revenue models and monetization strategies by balancing commission structures (20-40%) and transaction fees to maximize profitability and drive sales growth, leveraging AI-driven marketing strategies across video ads, in-destination Ads, and travel-specific ad networks to increase user acquisition and ROI.",
-        "Led a team of developers to rebuild platform architecture, integrating big data processing, AI-powered engineering, and personalization optimization, while spearheading technical project management to align engineering workflows and business developments with data-driven growth strategies.",
-        "Developed tools and workflows for a cross-functional team of 10, fostering collaboration across 60 destinations and achieving seamless global operations."
-      ]
+      "dateRange": "06/2018 – 12/2021",
+      "description": "Proactively manages and oversees the day-to-day business operations of an upscale international two-sided marketplace, composed of 300 vendor companies, +1000 complex bookable products, +4000 Travelers, and a team of 20 employees, on a global level distribution.\n\nBuilt a platform for local tour companies to list tours and services for free, allowing travelers to get connected to local people, allowing local companies to obtain the most authentic and affordable travel experiences worldwide, and making it easier for clients and vendors to transact money.\n\nSuccessfully developed and launched a high-performance cloud-based WordPress platform with a focus on meeting and/or exceeding the specific needs of the multi-vendor online travel agency with a real time booking system, automated workflows, and content marketing strategies.\n\nSkillfully organizes, priorities, and manages multiple projects simultaneously with an emphasis towards making strategic decisions based on the analyzed feedback data.\n\nRecognized for optimal abilities in partnering with the travel industry influencers in implementing marketing strategies, tracking performance, and analyzing / optimizing the results across multiple paid campaigns.\n\nProactively organized and categorized a wide variety of tour products based on their attributes (Destination, Duration, Availability, Price, Style, Inclusions / Exclusions, Hotels, Flights, and other parameters), allowing users to easily filter travel packages.\n\nSkillfully utilized an open-source platform in developing a complicated system that automated and localized numerous tasks into one place, resulting in a significant savings of both time and money for the company.\n\nSuccessfully developed an innovative platform (Vendor Side Onboarding Automated Workflows) with a focus on accepting, filtering, interviewing, and helping tour companies to get onboard and provide complicated tour products on TripWays through the website capabilities.\n\nExpertly designed and developed a platform that provided real time pricing and availability for +1000 tour products, allowing users to get updated price and availability while avoiding the frustrating price inquiry, response time, and extra communications.\n\nProactively developed and implemented various tools and workflows, for a cross-functional team of 10 personnel, collaborating across different countries and customers on a global level. Consistently displays exceptional abilities in supporting the technical needs of the highly scalable tech platform on AWS.\n\nSuccessfully hired and developed staff members across different time zones to be available to customers worldwide 24/7. Significantly improved customer satisfaction by implementing an automated workflow for customer communications based on latest language processing models trained with the local data."
     },
     {
       "company": "Setare E-Commerce Co. (Tehran, Iran)",
-      "title": "Co-Founder / Director of Growth Marketing / CTO",
+      "title": "Co-Founder / Business Developer / Technical Project Manager",
       "dateRange": "04/2015 – 06/2019",
-      "bullets": [
-        "Co-founded and grew a company of 50 personnel, overseeing operations, growth marketing, and technical strategy from inception to becoming a top-ranked platform.",
-        "Designed and developed an online platform featuring 55,000 unique resources (articles, podcasts, forums, and online materials in Farsi) across 800+ categories, attracting 10M monthly visitors and achieving a global website ranking of 999 (top 20 in Iran) within 3 years.",
-        "Held a pivotal role in planning content management strategies that resulted in +15M monthly sessions (80% organic traffic), ranking the platform among the top 50 websites in Iran and top 2000 globally (Alexa Ranking).",
-        "Recruited, managed, and led a cross-functional team of SEO specialists, copywriters, and developers, optimizing workflows to enhance efficiency and performance.",
-        "Planned and implemented marketing strategies and business operations, focusing on keyword research, content optimization, monetization, and SEO/SEM techniques, driving sustainable growth.",
-        "Managed a large-scale migration of data from the old CMS to a WordPress platform on self-managed AWS servers, reducing server costs by 40% while improving user experience and workflows.",
-        "Overcame infrastructure challenges in a developing country by implementing innovative solutions and continuous system improvements to support scalability and growth."
-      ]
+      "description": "Held a pivotal role in creating and managing a company, consisting of 50 personnel, from the ground up.\n\nSuccessfully designed and developed an online platform that provided approximately 55.000 unique resources (Articles, Podcasts, Forums, and online resources in Farsi language), categorized in +800 different categories, and approximately 10M visitors monthly, resulting in a ranking of 999 in the world (20 in Iran) within a 3-year timeframe.\n\nHeld a pivotal role in developing content management strategies, leading to the website being ranked among the top 80 websites in Iran and top 2000 websites in the world, as well as having +15M sessions monthly with 80% organic traffic.\n\nProactively hired, managed, and oversaw a diverse cross-functional team, to include SEO specialists and copywriters, with a focus towards organizing workflow based on efficiency and performance.\n\nDisplayed exceptional abilities in planning a guideline for cross-functional department collaboration on marketing plans and business strategies based on keyword research, copywriting, content optimization, and SEO/SEM techniques, Monetization, and operations of the team.\n\nDemonstrated exceptional abilities in implementing continuous improvements to systems in a developing country with limited access to knowledge and infrastructures.\n\nSkillfully managed a large-scale migration of data from the old CMS into a highly sustainable WordPress platform running on self-managed AWS servers, leading to a significant improvement to the site experience by while saving 40% of the server costs and improved user experience and workflows."
+    },
+    {
+      "company": "Lam Research (Oregon, USA)",
+      "title": "QA / Testing Technician",
+      "dateRange": "01/2015 – 09/2016",
+      "description": ""
     },
     {
       "company": "Nilgasht Travel Agency (Tehran, Iran)",
       "title": "Digital Marketing Manager / CRM Project Manager",
       "dateRange": "01/2015 – 09/2016",
-      "bullets": []
+      "description": ""
     },
     {
-      "company": "Hamrah Ltd. (London, UK)",
+      "company": "Hamrah Ltd, (London, UK)",
       "title": "Jr. Digital Marketer / Web Publisher / Copywriter / Graphic Designer",
       "dateRange": "04/2013 – 02/2016",
-      "bullets": []
+      "description": ""
     }
   ],
   "education": [

@@ -79,18 +79,18 @@ export default function Home() {
         <section className="mb-4">
           <h2 className="section-header">Professional Experience</h2>
           {resumeData.professionalExperience.map((role, i) => (
-            <div key={i} className="mb-3">
+            <div key={i} className="mb-6">
               <div className="flex justify-between text-sm font-semibold items-end">
                 <span className="underline underline-offset-2">{role.company}</span>
                 <span>{role.dateRange}</span>
               </div>
               <div className="font-bold text-base mt-0.5 mb-1">{role.title}</div>
-              {role.bullets.length > 0 && (
-                <ul className="list-disc list-inside text-sm ml-4 mt-1">
+              {role.bullets && role.bullets.length > 0 && (
+                <div className="text-sm whitespace-pre-line leading-relaxed space-y-2 mt-2">
                   {role.bullets.map((b, j) => (
-                    <li key={j}>{b}</li>
+                    <p key={j}>{b}</p>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           ))}
