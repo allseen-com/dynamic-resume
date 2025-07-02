@@ -1,103 +1,142 @@
 import Image from "next/image";
+import fs from 'fs';
+import path from 'path';
+import React from 'react';
+
+// Types
+interface ResumeData {
+  header: {
+    name: string;
+    address: string;
+    email: string;
+    phone: string;
+  };
+  summary: string;
+  coreCompetencies: string[];
+  technicalProficiency: {
+    programming: string[];
+    cloudData: string[];
+    analytics: string[];
+    mlAi: string[];
+    productivity: string[];
+    marketingAds: string[];
+  };
+  professionalExperience: {
+    company: string;
+    title: string;
+    dateRange: string;
+    bullets: string[];
+  }[];
+  education: {
+    school: string;
+    dateRange: string;
+    degree: string;
+  }[];
+  certifications: string[];
+}
+
+// Placeholder for future AI tailoring
+export function tailorResumeForJD(jobDescription: string): ResumeData {
+  // TODO: Integrate AI endpoint
+  return resumeData;
+}
+
+// Load resume data
+const resumeData: ResumeData = require('../../data/resume.json');
 
 export default function Home() {
+  // Placeholder for dynamic injection
+  // const tailoredResume = tailorResumeForJD('');
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="bg-white text-black font-sans max-w-3xl mx-auto my-8 p-8 shadow-lg print:shadow-none print:p-0 print:m-0 print:max-w-full">
+      {/* Header */}
+      <header className="border-b-4 border-gray-800 pb-2 mb-4">
+        <h1 className="text-3xl font-bold text-center">{resumeData.header.name}</h1>
+        <div className="text-center text-sm mt-1">
+          <span>{resumeData.header.address}</span> |
+          <span className="mx-1">{resumeData.header.email}</span> |
+          <span>{resumeData.header.phone}</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </header>
+
+      {/* Title Bar */}
+      <div className="text-center font-semibold text-blue-900 text-lg mb-2">
+        Growth & Product Leader / Performance Marketing Strategist / Business Developer<br />
+        <span className="text-blue-700">Big Data & AI-Powered Solutions | Strategic Growth Planning | Leadership & Team Building</span>
+      </div>
+
+      {/* Summary */}
+      <section className="mb-4">
+        <h2 className="font-bold text-base border-b border-gray-300 pb-1 mb-1">Career Summary</h2>
+        <p className="text-sm leading-relaxed">{resumeData.summary}</p>
+      </section>
+
+      {/* Core Competencies */}
+      <section className="mb-4">
+        <h2 className="font-bold text-base border-b border-gray-300 pb-1 mb-1">Core Competencies</h2>
+        <ul className="grid grid-cols-2 gap-x-8 text-sm list-disc list-inside">
+          {resumeData.coreCompetencies.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Technical Proficiency */}
+      <section className="mb-4">
+        <h2 className="font-bold text-base bg-gray-200 px-2 py-1 mb-1">Technical Proficiency</h2>
+        <div className="text-sm">
+          <span className="font-semibold">Programming:</span> {resumeData.technicalProficiency.programming.join(', ')}<br />
+          <span className="font-semibold">Cloud/Data:</span> {resumeData.technicalProficiency.cloudData.join(', ')}<br />
+          <span className="font-semibold">Analytics:</span> {resumeData.technicalProficiency.analytics.join(', ')}<br />
+          <span className="font-semibold">ML/AI:</span> {resumeData.technicalProficiency.mlAi.join(', ')}<br />
+          <span className="font-semibold">Productivity:</span> {resumeData.technicalProficiency.productivity.join(', ')}<br />
+          <span className="font-semibold">Marketing/Ads:</span> {resumeData.technicalProficiency.marketingAds.join(', ')}
+        </div>
+      </section>
+
+      {/* Professional Experience */}
+      <section className="mb-4">
+        <h2 className="font-bold text-base border-b border-gray-300 pb-1 mb-1">Professional Experience</h2>
+        {resumeData.professionalExperience.map((role, i) => (
+          <div key={i} className="mb-3">
+            <div className="flex justify-between text-sm font-semibold">
+              <span>{role.company}</span>
+              <span>{role.dateRange}</span>
+            </div>
+            <div className="font-semibold text-sm">{role.title}</div>
+            {role.bullets.length > 0 && (
+              <ul className="list-disc list-inside text-sm ml-4 mt-1">
+                {role.bullets.map((b, j) => (
+                  <li key={j}>{b}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </section>
+
+      {/* Education */}
+      <section className="mb-4">
+        <h2 className="font-bold text-base bg-gray-200 px-2 py-1 mb-1">Advanced Education</h2>
+        <ul className="text-sm">
+          {resumeData.education.map((edu, i) => (
+            <li key={i} className="mb-1">
+              <span className="font-semibold">{edu.school}</span>, {edu.dateRange}<br />
+              {edu.degree}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Certifications */}
+      <section className="mb-4">
+        <h2 className="font-bold text-base bg-gray-200 px-2 py-1 mb-1">Specialized Training & Certifications</h2>
+        <ul className="text-sm list-disc list-inside ml-4">
+          {resumeData.certifications.map((cert, i) => (
+            <li key={i}>{cert}</li>
+          ))}
+        </ul>
+      </section>
+    </main>
   );
 }
