@@ -85,11 +85,9 @@ export default function Home() {
                 <span>{role.dateRange}</span>
               </div>
               <div className="font-bold text-base mt-0.5 mb-1">{role.title}</div>
-              {role.bullets && role.bullets.length > 0 && (
+              {role.description && (
                 <div className="text-sm whitespace-pre-line leading-relaxed space-y-2 mt-2">
-                  {role.bullets.map((b, j) => (
-                    <p key={j}>{b}</p>
-                  ))}
+                  {role.description}
                 </div>
               )}
             </div>
