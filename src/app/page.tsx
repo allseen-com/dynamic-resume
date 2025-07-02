@@ -1,7 +1,5 @@
-import Image from "next/image";
-import fs from 'fs';
-import path from 'path';
 import React from 'react';
+import resumeData from '../../data/resume.json';
 
 // Types
 interface ResumeData {
@@ -36,13 +34,10 @@ interface ResumeData {
 }
 
 // Placeholder for future AI tailoring
-export function tailorResumeForJD(jobDescription: string): ResumeData {
+export function tailorResumeForJD(_jobDescription: string): ResumeData {
   // TODO: Integrate AI endpoint
   return resumeData;
 }
-
-// Load resume data
-const resumeData: ResumeData = require('../../data/resume.json');
 
 export default function Home() {
   // Placeholder for dynamic injection
