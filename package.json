@@ -6,8 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "npx @sparticuz/chromium install"
+    "lint": "next lint"
   },
   "dependencies": {
     "@sparticuz/chromium": "^137.0.1",
