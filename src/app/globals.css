@@ -26,19 +26,51 @@ body {
 }
 
 @media print {
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 0.5in;
+  }
+  
+  /* Hide print button and background */
   body, html {
     background: white !important;
     color: black !important;
     box-shadow: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+  
+  /* Remove headers and footers */
+  @page {
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0.5in;
+    margin-right: 0.5in;
+  }
+  
+  /* Hide elements that shouldn't print */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Main content styling */
   main {
     box-shadow: none !important;
     margin: 0 !important;
     padding: 0 !important;
     max-width: 100vw !important;
+    page-break-inside: avoid;
   }
+  
+  /* Ensure sections don't break across pages */
+  section {
+    page-break-inside: avoid;
+  }
+  
+  /* Utility classes for print */
   .print\:shadow-none {
     box-shadow: none !important;
   }
@@ -51,4 +83,17 @@ body {
   .print\:max-w-full {
     max-width: 100vw !important;
   }
+  
+  /* Ensure text is readable */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+.section-header {
+  @apply font-bold text-base bg-blue-900 text-white px-2 py-1 mb-1 rounded-sm tracking-wide;
+  /* For print, ensure color is preserved */
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
 }
