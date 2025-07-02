@@ -21,7 +21,7 @@ export interface ResumeData {
     company: string;
     title: string;
     dateRange: string;
-    bullets: string[];
+    description: string;
   }[];
   education: {
     school: string;
