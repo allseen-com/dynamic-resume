@@ -33,7 +33,7 @@ interface ResumeData {
   certifications: string[];
 }
 
-// Placeholder for future AI tailoring
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function tailorResumeForJD(_jobDescription: string): ResumeData {
   // TODO: Integrate AI endpoint
   return resumeData;
