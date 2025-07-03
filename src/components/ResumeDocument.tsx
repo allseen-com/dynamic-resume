@@ -11,8 +11,41 @@ import path from 'path';
 import { ResumeData, ResumeConfig, defaultResumeConfig } from '../types/resume';
 import defaultResumeData from '../../data/resume.json';
 
+type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
+
+type FlexibleResumeData = {
+  header: {
+    name: FlexibleField;
+    address: FlexibleField;
+    email: FlexibleField;
+    phone: FlexibleField;
+  };
+  summary: FlexibleField;
+  coreCompetencies: FlexibleField[];
+  technicalProficiency: {
+    programming: FlexibleField[];
+    cloudData: FlexibleField[];
+    analytics: FlexibleField[];
+    mlAi: FlexibleField[];
+    productivity: FlexibleField[];
+    marketingAds: FlexibleField[];
+  };
+  professionalExperience: {
+    company: FlexibleField;
+    title: FlexibleField;
+    dateRange: FlexibleField;
+    description: FlexibleField;
+  }[];
+  education: {
+    school: FlexibleField;
+    dateRange: FlexibleField;
+    degree: FlexibleField;
+  }[];
+  certifications: FlexibleField[];
+};
+
 interface ResumeDocumentProps {
-  resumeData?: ResumeData;
+  resumeData?: FlexibleResumeData;
   config?: ResumeConfig;
 }
 
@@ -204,9 +237,17 @@ const styles = StyleSheet.create({
   },
 });
 
+// Utility function to get value from either string or { value, ... }
+function getFieldValue(field: any) {
+  if (typeof field === 'object' && field !== null && 'value' in field) {
+    return field.value;
+  }
+  return field;
+}
+
 export default function ResumeDocument({ resumeData, config }: ResumeDocumentProps) {
   // If no resume data is provided, use default data
-  const data: ResumeData = resumeData || defaultResumeData;
+  const data: FlexibleResumeData = resumeData || defaultResumeData;
 
   // Use provided config or default config
   const resumeConfig = config || defaultResumeConfig;
@@ -222,19 +263,19 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.name}>{data.header.name}</Text>
+          <Text style={styles.name}>{getFieldValue(data.header.name)}</Text>
           <Text style={styles.contactInfo}>
-            {data.header.address} | {data.header.email} | {data.header.phone}
+            {getFieldValue(data.header.address)} | {getFieldValue(data.header.email)} | {getFieldValue(data.header.phone)}
           </Text>
         </View>
 
         {/* Title Bar */}
         <View style={styles.titleBar}>
           <Text style={styles.titleBarMain}>
-            {resumeConfig.titleBar.main}
+            {getFieldValue(resumeConfig.titleBar.main)}
           </Text>
           <Text style={styles.titleBarSub}>
-            {resumeConfig.titleBar.sub}
+            {getFieldValue(resumeConfig.titleBar.sub)}
           </Text>
         </View>
 
@@ -242,31 +283,21 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Career Summary</Text>
           <Text style={styles.sectionContent}>
-            {data.summary.value}
+            {getFieldValue(data.summary)}
           </Text>
         </View>
 
         {/* Core Competencies */}
-        {resumeConfig.sections.showCoreCompetencies && coreItems.length > 0 && (
+        {resumeConfig.sections.showCoreCompetencies && getFieldValue(data.coreCompetencies).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Core Competencies</Text>
-            <View style={{ flexDirection: 'row', marginLeft: 6 }}>
-              <View style={{ flex: 1 }}>
-                {leftCol.map((item, i) => item && (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 1 }}>
-                    <View style={styles.bullet} />
-                    <Text style={styles.competencyText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-              <View style={{ flex: 1, marginLeft: 32 }}>
-                {rightCol.map((item, i) => item && (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 1 }}>
-                    <View style={styles.bullet} />
-                    <Text style={styles.competencyText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
+            <View style={styles.competenciesGrid}>
+              {getFieldValue(data.coreCompetencies).map((item: string, i: number) => (
+                <View key={i} style={styles.competencyItem}>
+                  <View style={styles.bullet} />
+                  <Text style={styles.competencyText}>{item}</Text>
+                </View>
+              ))}
             </View>
           </View>
         )}
@@ -283,24 +314,24 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         )}
 
         {/* Professional Experience */}
-        {resumeConfig.sections.showProfessionalExperience && data.professionalExperience.length > 0 && (
+        {resumeConfig.sections.showProfessionalExperience && getFieldValue(data.professionalExperience).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Professional Experience</Text>
-            {data.professionalExperience.map((role, i) => {
-              const hasDescription = role.description.value && role.description.value.trim();
+            {getFieldValue(data.professionalExperience).map((role: any, i: number) => {
+              const hasDescription = getFieldValue(role.description) && getFieldValue(role.description).trim();
               const itemStyle = hasDescription 
                 ? styles.experienceItem 
                 : [styles.experienceItem, { marginBottom: 6 }];
               return (
                 <View key={i} style={itemStyle}>
                   <View style={styles.experienceHeader}>
-                    <Text style={styles.companyName}>{role.company}</Text>
-                    <Text style={styles.dateRange}>{role.dateRange}</Text>
+                    <Text style={styles.companyName}>{getFieldValue(role.company)}</Text>
+                    <Text style={styles.dateRange}>{getFieldValue(role.dateRange)}</Text>
                   </View>
-                  <Text style={styles.experienceTitle}>{role.title}</Text>
+                  <Text style={styles.experienceTitle}>{getFieldValue(role.title)}</Text>
                   {hasDescription && (
                     <Text style={styles.experienceDescription}>
-                      {role.description.value}
+                      {getFieldValue(role.description)}
                     </Text>
                   )}
                 </View>
@@ -310,27 +341,27 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         )}
 
         {/* Education */}
-        {resumeConfig.sections.showEducation && data.education.value.length > 0 && (
+        {resumeConfig.sections.showEducation && getFieldValue(data.education).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Education</Text>
-            {data.education.value.map((edu, i) => (
+            {getFieldValue(data.education).map((edu: any, i: number) => (
               <View key={i} style={styles.educationItem}>
                 <View style={styles.educationHeader}>
-                  <Text style={styles.educationSchool}>{edu.school}</Text>
-                  <Text style={styles.educationDateRange}>{edu.dateRange}</Text>
+                  <Text style={styles.educationSchool}>{getFieldValue(edu.school)}</Text>
+                  <Text style={styles.educationDateRange}>{getFieldValue(edu.dateRange)}</Text>
                 </View>
-                <Text style={styles.educationDegree}>{edu.degree}</Text>
+                <Text style={styles.educationDegree}>{getFieldValue(edu.degree)}</Text>
               </View>
             ))}
           </View>
         )}
 
         {/* Certifications */}
-        {resumeConfig.sections.showCertifications && data.certifications.value.length > 0 && (
+        {resumeConfig.sections.showCertifications && getFieldValue(data.certifications).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Certifications</Text>
             <View style={styles.certificationsList}>
-              {data.certifications.value.map((cert, i) => (
+              {getFieldValue(data.certifications).map((cert: string, i: number) => (
                 <View key={i} style={styles.certificationItem}>
                   <View style={styles.bullet} />
                   <Text style={styles.certificationText}>{cert}</Text>
