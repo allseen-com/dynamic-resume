@@ -30,28 +30,31 @@ Font.register({
 
 const styles = StyleSheet.create({
   page: {
-    padding: 28,
+    paddingTop: 18,
+    paddingBottom: 18,
+    paddingLeft: 28,
+    paddingRight: 28,
     fontFamily: 'Lato',
-    fontSize: 12,
-    lineHeight: 1.4,
+    fontSize: 11.3,
+    lineHeight: 1.5,
     color: '#000',
   },
   header: {
-    borderBottom: '3px solid #1f2937',
-    paddingBottom: 6,
-    marginBottom: 12,
+    borderBottom: '2px solid #1f2937',
+    paddingBottom: 3,
+    marginBottom: 8,
     textAlign: 'center',
   },
   name: {
-    fontSize: 22,
+    fontSize: 17.5,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 8,
     color: '#000',
     textAlign: 'center',
     letterSpacing: 0.5,
   },
   contactInfo: {
-    fontSize: 12,
+    fontSize: 10.2,
     fontWeight: 'normal',
     textAlign: 'center',
     marginTop: 0,
@@ -59,69 +62,70 @@ const styles = StyleSheet.create({
   },
   titleBar: {
     textAlign: 'center',
-    marginBottom: 14,
-    paddingHorizontal: 4,
+    marginBottom: 8,
+    paddingHorizontal: 2,
   },
   titleBarMain: {
-    fontSize: 14,
+    fontSize: 12.2,
     fontWeight: 'bold',
     color: '#1e3a8a',
-    marginBottom: 3,
-    lineHeight: 1.2,
+    marginBottom: 2,
+    lineHeight: 1.12,
     textAlign: 'center',
   },
   titleBarSub: {
-    fontSize: 12,
+    fontSize: 10.2,
     fontWeight: 'normal',
     color: '#333',
-    lineHeight: 1.2,
+    lineHeight: 1.12,
     textAlign: 'center',
   },
   section: {
-    marginBottom: 14,
+    marginBottom: 8,
   },
   sectionHeader: {
-    fontSize: 16,
+    fontSize: 12.2,
     fontWeight: 'bold',
     backgroundColor: '#1e3a8a',
     color: 'white',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    marginBottom: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    marginBottom: 4,
     borderRadius: 1,
   },
   sectionContent: {
-    fontSize: 12,
-    lineHeight: 1.5,
+    fontSize: 11.2,
+    lineHeight: 1.32,
     textAlign: 'justify',
   },
   competenciesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 12,
+    marginLeft: 6,
   },
   competencyItem: {
     width: '50%',
     flexDirection: 'row',
-    marginBottom: 2,
+    marginBottom: 3,
     alignItems: 'flex-start',
+    paddingRight: 32,
   },
   bullet: {
-    width: 2.5,
-    height: 2.5,
-    borderRadius: 1.5,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: '#000',
-    marginTop: 4,
-    marginRight: 5,
+    marginTop: 2,
+    marginRight: 6,
     flexShrink: 0,
   },
   competencyText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 1.4,
+    fontSize: 11.2,
+    lineHeight: 1.32,
   },
   experienceItem: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   experienceHeader: {
     flexDirection: 'row',
@@ -130,41 +134,41 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   companyName: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     textDecoration: 'underline',
     textDecorationStyle: 'solid',
     flex: 1,
   },
   dateRange: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#333',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   experienceTitle: {
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 1,
-    marginBottom: 3,
+    marginBottom: 2,
     color: '#1e3a8a',
-    lineHeight: 1.2,
+    lineHeight: 1.1,
     flexWrap: 'wrap',
   },
   experienceDescription: {
-    fontSize: 12,
-    lineHeight: 1.5,
-    marginTop: 4,
+    fontSize: 11.2,
+    lineHeight: 1.32,
+    marginTop: 2,
     textAlign: 'justify',
   },
   educationItem: {
-    marginBottom: 6,
+    marginBottom: 3,
   },
   educationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     marginBottom: 1,
   },
@@ -172,31 +176,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   educationDateRange: {
-    marginLeft: 8,
+    marginLeft: 6,
     color: '#333',
   },
   educationDegree: {
-    fontSize: 12,
-    lineHeight: 1.4,
+    fontSize: 11.2,
+    lineHeight: 1.32,
     color: '#333',
   },
   certificationsList: {
-    marginLeft: 12,
+    marginLeft: 6,
   },
   certificationItem: {
     flexDirection: 'row',
-    marginBottom: 2,
+    marginBottom: 1,
     alignItems: 'flex-start',
   },
   certificationText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 1.4,
+    fontSize: 11.2,
+    lineHeight: 1.32,
   },
   technicalSkills: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    lineHeight: 1.5,
+    fontSize: 11.2,
+    fontWeight: 'normal',
+    lineHeight: 1.32,
   },
 });
 
@@ -206,6 +210,12 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
 
   // Use provided config or default config
   const resumeConfig = config || defaultResumeConfig;
+
+  // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
+  const coreItems = (data.coreCompetencies.value || []).slice(0, 10);
+  while (coreItems.length < 10) coreItems.push('');
+  const leftCol = coreItems.slice(0, 5);
+  const rightCol = coreItems.slice(5, 10);
 
   return (
     <Document>
@@ -232,21 +242,31 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Career Summary</Text>
           <Text style={styles.sectionContent}>
-            {data.summary}
+            {data.summary.value}
           </Text>
         </View>
 
         {/* Core Competencies */}
-        {resumeConfig.sections.showCoreCompetencies && data.coreCompetencies.length > 0 && (
+        {resumeConfig.sections.showCoreCompetencies && coreItems.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Core Competencies</Text>
-            <View style={styles.competenciesGrid}>
-              {data.coreCompetencies.map((item, i) => (
-                <View key={i} style={styles.competencyItem}>
-                  <View style={styles.bullet} />
-                  <Text style={styles.competencyText}>{item}</Text>
-                </View>
-              ))}
+            <View style={{ flexDirection: 'row', marginLeft: 6 }}>
+              <View style={{ flex: 1 }}>
+                {leftCol.map((item, i) => item && (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 1 }}>
+                    <View style={styles.bullet} />
+                    <Text style={styles.competencyText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={{ flex: 1, marginLeft: 32 }}>
+                {rightCol.map((item, i) => item && (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 1 }}>
+                    <View style={styles.bullet} />
+                    <Text style={styles.competencyText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
         )}
@@ -255,8 +275,9 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         {resumeConfig.sections.showTechnicalProficiency && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Technical Proficiency</Text>
-            <Text style={styles.technicalSkills}>
-              SQL; MySQL Database; AWS; Looker Data Studio; AI Automation, Google Tag Manager; PHP; HTML; CSS; WordPress Development; Google Search Console; Google Analytics; Adobe Analytics; Google AdWords; Google Optimize; A/B Testing; Similar Web; Zapier; HubSpot; Adobe CC.
+            {/* Use normal font, comma separator, not bold */}
+            <Text style={{ fontSize: 11, fontWeight: 'normal', lineHeight: 1.2 }}>
+              {`SQL, MySQL Database, AWS, Looker Data Studio, AI Automation, Google Tag Manager, PHP, HTML, CSS, WordPress Development, Google Search Console, Google Analytics, Adobe Analytics, Google AdWords, Google Optimize, A/B Testing, Similar Web, Zapier, HubSpot, Adobe CC.`}
             </Text>
           </View>
         )}
@@ -266,10 +287,10 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Professional Experience</Text>
             {data.professionalExperience.map((role, i) => {
-              const hasDescription = role.description && role.description.trim();
+              const hasDescription = role.description.value && role.description.value.trim();
               const itemStyle = hasDescription 
                 ? styles.experienceItem 
-                : [styles.experienceItem, { marginBottom: 8 }];
+                : [styles.experienceItem, { marginBottom: 6 }];
               return (
                 <View key={i} style={itemStyle}>
                   <View style={styles.experienceHeader}>
@@ -279,7 +300,7 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
                   <Text style={styles.experienceTitle}>{role.title}</Text>
                   {hasDescription && (
                     <Text style={styles.experienceDescription}>
-                      {role.description}
+                      {role.description.value}
                     </Text>
                   )}
                 </View>
@@ -289,10 +310,10 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         )}
 
         {/* Education */}
-        {resumeConfig.sections.showEducation && data.education.length > 0 && (
+        {resumeConfig.sections.showEducation && data.education.value.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Education</Text>
-            {data.education.map((edu, i) => (
+            {data.education.value.map((edu, i) => (
               <View key={i} style={styles.educationItem}>
                 <View style={styles.educationHeader}>
                   <Text style={styles.educationSchool}>{edu.school}</Text>
@@ -305,11 +326,11 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         )}
 
         {/* Certifications */}
-        {resumeConfig.sections.showCertifications && data.certifications.length > 0 && (
+        {resumeConfig.sections.showCertifications && data.certifications.value.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Certifications</Text>
             <View style={styles.certificationsList}>
-              {data.certifications.map((cert, i) => (
+              {data.certifications.value.map((cert, i) => (
                 <View key={i} style={styles.certificationItem}>
                   <View style={styles.bullet} />
                   <Text style={styles.certificationText}>{cert}</Text>

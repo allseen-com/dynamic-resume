@@ -16,6 +16,11 @@ export default function Resume({
   showDownloadButton = true,
   isGenerating = false
 }: ResumeProps) {
+  // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
+  const coreItems = resumeData.coreCompetencies.value.slice(0, 10);
+  while (coreItems.length < 10) coreItems.push('');
+  const rows = Array.from({ length: 5 }, (_, i) => [coreItems[i], coreItems[i + 5]]);
+
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       {/* Download Button */}
@@ -36,44 +41,54 @@ export default function Resume({
       )}
 
       {/* Resume Content */}
-      <main className="bg-white text-black font-sans max-w-3xl mx-auto p-7 shadow-lg print:shadow-none print:p-0 print:m-0 print:max-w-full text-xs leading-relaxed">
+      <main className="bg-white text-black font-sans max-w-3xl mx-auto p-7 shadow-lg print:shadow-none print:p-0 print:m-0 print:max-w-full text-sm leading-relaxed">
         {/* Header */}
-        <header className="border-b-2 border-gray-800 pb-1.5 mb-3">
-          <h1 className="text-2xl font-bold text-center leading-tight mb-4 tracking-wide">
+        <header className="border-b-2 border-gray-800 pb-2 mb-5">
+          <h1 className="text-4xl font-extrabold text-center leading-tight mb-5 tracking-wide">
             {resumeData.header.name}
           </h1>
-          <div className="text-center text-xs font-normal text-gray-700">
+          <div className="text-center text-base font-medium text-gray-700">
             <span>{resumeData.header.address}</span> |
-            <span className="mx-1">{resumeData.header.email}</span> |
-            <span>{resumeData.header.phone}</span>
+            <span> {resumeData.header.email} </span>|
+            <span> {resumeData.header.phone}</span>
           </div>
         </header>
 
         {/* Title Bar */}
-        <div className="text-center mb-3.5 px-1">
-          <div className="text-sm font-bold text-blue-900 leading-tight mb-0.5">
+        <div className="text-center mb-5 px-1">
+          <div className="text-lg font-bold text-blue-900 leading-tight mb-1">
             {config.titleBar.main}
           </div>
-          <div className="text-xs font-normal text-gray-700 leading-tight">
+          <div className="text-base font-normal text-gray-700 leading-tight">
             {config.titleBar.sub}
           </div>
         </div>
 
         {/* Summary */}
-        <section className="mb-3.5">
+        <section className="mb-5">
           <h2 className="section-header">Career Summary</h2>
-          <p className="text-xs leading-relaxed text-justify">{resumeData.summary}</p>
+          <p className="text-base leading-relaxed text-justify">{resumeData.summary.value}</p>
         </section>
 
         {/* Core Competencies */}
         {config.sections.showCoreCompetencies && (
-          <section className="mb-3.5">
+          <section className="mb-5">
             <h2 className="section-header">Core Competencies</h2>
-            <ul className="grid grid-cols-2 gap-x-6 text-xs ml-3">
-              {resumeData.coreCompetencies.map((item, i) => (
-                <li key={i} className="flex items-start mb-0.5">
-                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                  <span className="leading-snug">{item}</span>
+            <ul className="space-y-1.5 ml-3">
+              {rows.map(([left, right], i) => (
+                <li key={i} className="flex flex-row flex-wrap gap-x-6">
+                  {left && (
+                    <span className="flex items-start flex-1 min-w-[180px] max-w-full whitespace-nowrap">
+                      <span className="w-2 h-2 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <span className="leading-snug">{left}</span>
+                    </span>
+                  )}
+                  {right && (
+                    <span className="flex items-start flex-1 min-w-[180px] max-w-full whitespace-nowrap ml-4">
+                      <span className="w-2 h-2 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <span className="leading-snug">{right}</span>
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -82,30 +97,31 @@ export default function Resume({
 
         {/* Technical Proficiency */}
         {config.sections.showTechnicalProficiency && (
-          <section className="mb-3.5">
+          <section className="mb-5">
             <h2 className="section-header">Technical Proficiency</h2>
-            <div className="text-xs font-bold leading-relaxed">
-              SQL; MySQL Database; AWS; Looker Data Studio; AI Automation, Google Tag Manager; PHP; HTML; CSS; WordPress Development; Google Search Console; Google Analytics; Adobe Analytics; Google AdWords; Google Optimize; A/B Testing; Similar Web; Zapier; HubSpot; Adobe CC.
+            {/* Use normal font, comma separator, not bold */}
+            <div className="text-base font-normal leading-relaxed">
+              {`SQL, MySQL Database, AWS, Looker Data Studio, AI Automation, Google Tag Manager, PHP, HTML, CSS, WordPress Development, Google Search Console, Google Analytics, Adobe Analytics, Google AdWords, Google Optimize, A/B Testing, Similar Web, Zapier, HubSpot, Adobe CC.`}
             </div>
           </section>
         )}
 
         {/* Professional Experience */}
         {config.sections.showProfessionalExperience && (
-          <section className="mb-3.5">
+          <section className="mb-5">
             <h2 className="section-header">Professional Experience</h2>
             {resumeData.professionalExperience.map((role, i) => {
-              const hasDescription = role.description && role.description.trim();
+              const hasDescription = role.description.value && role.description.value.trim();
               return (
-                <div key={i} className={`${hasDescription ? 'mb-4' : 'mb-2'}`}>
-                  <div className="flex justify-between items-start mb-0.5">
-                    <span className="text-xs font-bold underline underline-offset-1 flex-1">{role.company}</span>
-                    <span className="text-xs font-bold text-gray-700 ml-2">{role.dateRange}</span>
+                <div key={i} className={`${hasDescription ? 'mb-6' : 'mb-3'}`}>
+                  <div className="flex justify-between items-start mb-1.5">
+                    <span className="text-base font-bold underline underline-offset-1 flex-1">{role.company}</span>
+                    <span className="text-base font-bold text-gray-700 ml-2">{role.dateRange}</span>
                   </div>
-                  <div className="font-bold text-xs text-blue-900 leading-tight mb-0.5">{role.title}</div>
+                  <div className="font-bold text-base text-blue-900 leading-tight mb-1">{role.title}</div>
                   {hasDescription && (
-                    <div className="text-xs whitespace-pre-line leading-relaxed text-justify mt-1">
-                      {role.description}
+                    <div className="text-base whitespace-pre-line leading-relaxed text-justify mt-1">
+                      {role.description.value}
                     </div>
                   )}
                 </div>
@@ -116,15 +132,15 @@ export default function Resume({
 
         {/* Education */}
         {config.sections.showEducation && (
-          <section className="mb-3.5">
+          <section className="mb-5">
             <h2 className="section-header">Education</h2>
-            {resumeData.education.map((edu, i) => (
-              <div key={i} className="mb-1.5">
-                <div className="flex justify-between items-start text-xs font-bold mb-0.5">
+            {resumeData.education.value.map((edu, i) => (
+              <div key={i} className="mb-2.5">
+                <div className="flex justify-between items-start text-base font-bold mb-1.5">
                   <span className="flex-1">{edu.school}</span>
                   <span className="text-gray-700 ml-2">{edu.dateRange}</span>
                 </div>
-                <div className="text-xs text-gray-700 leading-snug">{edu.degree}</div>
+                <div className="text-base text-gray-700 leading-snug">{edu.degree}</div>
               </div>
             ))}
           </section>
@@ -134,10 +150,10 @@ export default function Resume({
         {config.sections.showCertifications && (
           <section>
             <h2 className="section-header">Certifications</h2>
-            <ul className="text-xs ml-3">
-              {resumeData.certifications.map((cert, i) => (
-                <li key={i} className="flex items-start mb-0.5">
-                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
+            <ul className="text-base ml-3">
+              {resumeData.certifications.value.map((cert, i) => (
+                <li key={i} className="flex items-start mb-1.5">
+                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
                   <span className="leading-snug">{cert}</span>
                 </li>
               ))}

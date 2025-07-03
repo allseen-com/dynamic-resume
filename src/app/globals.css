@@ -41,6 +41,7 @@ body {
     padding: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    font-size: 0.95em !important;
   }
   
   /* Remove headers and footers */
@@ -89,10 +90,14 @@ body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  
+  .section-header {
+    font-size: 1.1em !important;
+  }
 }
 
 .section-header {
-  @apply font-bold text-base bg-blue-900 text-white px-1.5 py-0.5 mb-2 rounded-sm tracking-wide;
+  @apply font-bold text-xl bg-blue-900 text-white px-1.5 py-0.5 mb-2 rounded-sm tracking-wide;
   /* For print, ensure color is preserved */
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;

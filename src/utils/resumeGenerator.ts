@@ -66,19 +66,19 @@ export function generateCustomizedResume(
   
   // Filter and prioritize core competencies based on job requirements
   if (jobRequirements.keywords.length > 0) {
-    const prioritizedCompetencies = resumeData.coreCompetencies.filter(competency =>
+    const prioritizedCompetencies = resumeData.coreCompetencies.value.filter(competency =>
       jobRequirements.keywords.some(keyword => 
         competency.toLowerCase().includes(keyword.toLowerCase())
       )
     );
     
-    const otherCompetencies = resumeData.coreCompetencies.filter(competency =>
+    const otherCompetencies = resumeData.coreCompetencies.value.filter(competency =>
       !jobRequirements.keywords.some(keyword => 
         competency.toLowerCase().includes(keyword.toLowerCase())
       )
     );
     
-    resumeData.coreCompetencies = [...prioritizedCompetencies, ...otherCompetencies];
+    resumeData.coreCompetencies.value = [...prioritizedCompetencies, ...otherCompetencies];
   }
   
   // Limit professional experience if specified
