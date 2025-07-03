@@ -1,84 +1,123 @@
 {
   "header": {
-    "name": "Meysam Soheilipour",
-    "address": "180 Brannan Street, #320, San Francisco, CA, 94107",
-    "email": "Soheil_dot@yahoo.com",
-    "phone": "(971) 267-9430"
+    "name": { "value": "Meysam Soheilipour", "fixed": true },
+    "address": { "value": "180 Brannan Street, #320, San Francisco, CA, 94107", "fixed": true },
+    "email": { "value": "Soheil_dot@yahoo.com", "fixed": true },
+    "phone": { "value": "(971) 267-9430", "fixed": true }
   },
-  "summary": "Growth marketing and product management executive with 10+ years of experience driving digital transformation and revenue growth across travel tech, media, and e-commerce. Adept at comprehensive market analysis, developing data-driven strategies, and leveraging AI automation, Python coding, and financial modeling to optimize performance, scale operations, and foster cross-functional collaboration. Proven track record in managing high-performance teams and executing innovative digital campaigns—from SEO/SEM to product-led growth initiatives—that consistently deliver measurable results. Analytical, data-driven, and solutions-focused leader with hybrid skill sets, passionate about integrating emerging technologies with business development strategies to enhance customer engagement and market competitiveness in remote, global environments.",
+  "summary": { "value": "Growth marketing and product management executive with 10+ years of experience driving digital transformation and revenue growth across travel tech, media, and e-commerce. Adept at comprehensive market analysis, developing data-driven strategies, and leveraging AI automation, Python coding, and financial modeling to optimize performance, scale operations, and foster cross-functional collaboration. Proven track record in managing high-performance teams and executing innovative digital campaigns—from SEO/SEM to product-led growth initiatives—that consistently deliver measurable results. Analytical, data-driven, and solutions-focused leader with hybrid skill sets, passionate about integrating emerging technologies with business development strategies to enhance customer engagement and market competitiveness in remote, global environments.", "editable": true },
   "coreCompetencies": [
-    "Growth Marketing Strategy & Digital Acquisition",
-    "Market Analysis & Financial Modeling",
-    "eCommerce & Brand Management",
-    "Performance Optimization & ROI Improvement",
-    "Product Management & Product-Led Growth",
-    "Leadership & Project Management",
-    "Cross-Functional Collaboration",
-    "AI & Automation Integration",
-    "Online Business Development",
-    "Technical Project Management & Strategies"
+    { "value": "Growth Marketing Strategy & Digital Acquisition", "editable": true },
+    { "value": "Market Analysis & Financial Modeling", "editable": true },
+    { "value": "eCommerce & Brand Management", "editable": true },
+    { "value": "Performance Optimization & ROI Improvement", "editable": true },
+    { "value": "Product Management & Product-Led Growth", "editable": true },
+    { "value": "Leadership & Project Management", "editable": true },
+    { "value": "Cross-Functional Collaboration", "editable": true },
+    { "value": "AI & Automation Integration", "editable": true },
+    { "value": "Online Business Development", "editable": true },
+    { "value": "Technical Project Management & Strategies", "editable": true }
   ],
   "technicalProficiency": {
-    "programming": ["Python", "SQL", "PHP"],
-    "cloudData": ["AWS", "Redshift", "S3", "SES", "LightSail", "CloudFront", "Google Big Query"],
-    "analytics": ["Looker Studio", "Google Analytics", "Tag Manager", "Google Search Console"],
-    "mlAi": ["Vertex AI", "Bedrock", "NeMo", "Cursor AI", "LLMs", "Pinecone", "Qdrant", "Agents"],
-    "productivity": ["n8n", "Airtable", "Asana", "Zapier"],
-    "marketingAds": ["AdWords", "YouTube Studio", "Facebook Ads", "TikTok Ads", "Reddit Ads", "Mailchimp", "HubSpot"]
+    "programming": [
+      { "value": "Python", "editable": true },
+      { "value": "SQL", "editable": true },
+      { "value": "PHP", "editable": true }
+    ],
+    "cloudData": [
+      { "value": "AWS", "editable": true },
+      { "value": "Redshift", "editable": true },
+      { "value": "S3", "editable": true },
+      { "value": "SES", "editable": true },
+      { "value": "LightSail", "editable": true },
+      { "value": "CloudFront", "editable": true },
+      { "value": "Google Big Query", "editable": true }
+    ],
+    "analytics": [
+      { "value": "Looker Studio", "editable": true },
+      { "value": "Google Analytics", "editable": true },
+      { "value": "Tag Manager", "editable": true },
+      { "value": "Google Search Console", "editable": true }
+    ],
+    "mlAi": [
+      { "value": "Vertex AI", "editable": true },
+      { "value": "Bedrock", "editable": true },
+      { "value": "NeMo", "editable": true },
+      { "value": "Cursor AI", "editable": true },
+      { "value": "LLMs", "editable": true },
+      { "value": "Pinecone", "editable": true },
+      { "value": "Qdrant", "editable": true },
+      { "value": "Agents", "editable": true }
+    ],
+    "productivity": [
+      { "value": "n8n", "editable": true },
+      { "value": "Airtable", "editable": true },
+      { "value": "Asana", "editable": true },
+      { "value": "Zapier", "editable": true }
+    ],
+    "marketingAds": [
+      { "value": "AdWords", "editable": true },
+      { "value": "YouTube Studio", "editable": true },
+      { "value": "Facebook Ads", "editable": true },
+      { "value": "TikTok Ads", "editable": true },
+      { "value": "Reddit Ads", "editable": true },
+      { "value": "Mailchimp", "editable": true },
+      { "value": "HubSpot", "editable": true }
+    ]
   },
   "professionalExperience": [
     {
-      "company": "Red Ventures (San Francisco, CA)",
-      "title": "Sr. Growth Marketing – Audience and SEO",
-      "dateRange": "12/2021 – Present",
-      "description": "Responsible for the CNET brand in the 'Media & Commerce' vertical at Red Ventures to diversify the audience and contribute to the audience acquisition and revenue growth strategies through many different channels on Google, YouTube, Amazon, and CNET.com platforms.\n\nSuccessfully plugged-in to many different teams (Leadership, Engineering, Data, CE, SEO, Product, Editorial, Video, and Commerce) to manage cross functional optimization of the workflows, Implement the best practices, and providing a data-driven growth strategy for CNET in different business units (Amazon Publishing, Video Optimizations, SEO, Customer Experience)\n\nManaging data pipe-lines from various sources, determining data needs & sources, developing SQL Queries, and analyze big data, to discover insights, define and align KPIs, and find growth opportunities.\n\nBuilding real time dashboards, in-depth monitoring, analysis, and tracking KPIs through the sales funnel, to optimize step-by-step performance, and improve overall ROI for many on-site and off-site channels.\n\nContributing to the video content strategy by providing data-driven content ideas, optimization of the workflows and processes, and revenue generating best practices that results to the general growth of the YouTube, Social, and on-site channels. Insightfully contributed to the production of video series that moved many all-time records across the CNET channels, improved and diversified audience, and added new commerce-based revenue sources, resulted in a 2X impact in the affiliate revenue, and 4X impact on the Ad revenue.\n\nProactively contributed to the CNET SEO strategy to beat the traffic and revenue goals by managing the editorial and technical resources, prioritizing the highest revenue opportunities, expanding into the new topics, collaborating with the video team to make video content and implement the best practices for the video content, and contribute to the SEO playbook.\n\nActively managing day-to-day operations of Amazon on-site Publishing program and collaborate with editorial and technical teams to improve the content strategy, and profitability, resulting in a 5X sustainable growth in the first 6 months."
+      "company": { "value": "Red Ventures (San Francisco, CA)", "fixed": true },
+      "title": { "value": "Sr. Growth Marketing – Audience and SEO", "fixed": true },
+      "dateRange": { "value": "12/2021 – Present", "fixed": true },
+      "description": { "value": "Responsible for the CNET brand in the 'Media & Commerce' vertical at Red Ventures to diversify the audience and contribute to the audience acquisition and revenue growth strategies through many different channels on Google, YouTube, Amazon, and CNET.com platforms.\n\nSuccessfully plugged-in to many different teams (Leadership, Engineering, Data, CE, SEO, Product, Editorial, Video, and Commerce) to manage cross functional optimization of the workflows, Implement the best practices, and providing a data-driven growth strategy for CNET in different business units (Amazon Publishing, Video Optimizations, SEO, Customer Experience)\n\nManaging data pipe-lines from various sources, determining data needs & sources, developing SQL Queries, and analyze big data, to discover insights, define and align KPIs, and find growth opportunities.\n\nBuilding real time dashboards, in-depth monitoring, analysis, and tracking KPIs through the sales funnel, to optimize step-by-step performance, and improve overall ROI for many on-site and off-site channels.\n\nContributing to the video content strategy by providing data-driven content ideas, optimization of the workflows and processes, and revenue generating best practices that results to the general growth of the YouTube, Social, and on-site channels. Insightfully contributed to the production of video series that moved many all-time records across the CNET channels, improved and diversified audience, and added new commerce-based revenue sources, resulted in a 2X impact in the affiliate revenue, and 4X impact on the Ad revenue.\n\nProactively contributed to the CNET SEO strategy to beat the traffic and revenue goals by managing the editorial and technical resources, prioritizing the highest revenue opportunities, expanding into the new topics, collaborating with the video team to make video content and implement the best practices for the video content, and contribute to the SEO playbook.\n\nActively managing day-to-day operations of Amazon on-site Publishing program and collaborate with editorial and technical teams to improve the content strategy, and profitability, resulting in a 5X sustainable growth in the first 6 months.", "editable": true }
     },
     {
-      "company": "Trip Ways LLC (Portland, OR)",
-      "title": "Co-Founder and CEO",
-      "dateRange": "06/2018 – 12/2021",
-      "description": "Proactively manages and oversees the day-to-day business operations of an upscale international two-sided marketplace, composed of 300 vendor companies, +1000 complex bookable products, +4000 Travelers, and a team of 20 employees, on a global level distribution.\n\nBuilt a platform for local tour companies to list tours and services for free, allowing travelers to get connected to local people, allowing local companies to obtain the most authentic and affordable travel experiences worldwide, and making it easier for clients and vendors to transact money.\n\nSuccessfully developed and launched a high-performance cloud-based WordPress platform with a focus on meeting and/or exceeding the specific needs of the multi-vendor online travel agency with a real time booking system, automated workflows, and content marketing strategies.\n\nSkillfully organizes, priorities, and manages multiple projects simultaneously with an emphasis towards making strategic decisions based on the analyzed feedback data.\n\nRecognized for optimal abilities in partnering with the travel industry influencers in implementing marketing strategies, tracking performance, and analyzing / optimizing the results across multiple paid campaigns.\n\nProactively organized and categorized a wide variety of tour products based on their attributes (Destination, Duration, Availability, Price, Style, Inclusions / Exclusions, Hotels, Flights, and other parameters), allowing users to easily filter travel packages.\n\nSkillfully utilized an open-source platform in developing a complicated system that automated and localized numerous tasks into one place, resulting in a significant savings of both time and money for the company.\n\nSuccessfully developed an innovative platform (Vendor Side Onboarding Automated Workflows) with a focus on accepting, filtering, interviewing, and helping tour companies to get onboard and provide complicated tour products on TripWays through the website capabilities.\n\nExpertly designed and developed a platform that provided real time pricing and availability for +1000 tour products, allowing users to get updated price and availability while avoiding the frustrating price inquiry, response time, and extra communications.\n\nProactively developed and implemented various tools and workflows, for a cross-functional team of 10 personnel, collaborating across different countries and customers on a global level. Consistently displays exceptional abilities in supporting the technical needs of the highly scalable tech platform on AWS.\n\nSuccessfully hired and developed staff members across different time zones to be available to customers worldwide 24/7. Significantly improved customer satisfaction by implementing an automated workflow for customer communications based on latest language processing models trained with the local data."
+      "company": { "value": "Trip Ways LLC (Portland, OR)", "fixed": true },
+      "title": { "value": "Co-Founder and CEO", "fixed": true },
+      "dateRange": { "value": "06/2018 – 12/2021", "fixed": true },
+      "description": { "value": "Proactively manages and oversees the day-to-day business operations of an upscale international two-sided marketplace, composed of 300 vendor companies, +1000 complex bookable products, +4000 Travelers, and a team of 20 employees, on a global level distribution.\n\nBuilt a platform for local tour companies to list tours and services for free, allowing travelers to get connected to local people, allowing local companies to obtain the most authentic and affordable travel experiences worldwide, and making it easier for clients and vendors to transact money.\n\nSuccessfully developed and launched a high-performance cloud-based WordPress platform with a focus on meeting and/or exceeding the specific needs of the multi-vendor online travel agency with a real time booking system, automated workflows, and content marketing strategies.\n\nSkillfully organizes, priorities, and manages multiple projects simultaneously with an emphasis towards making strategic decisions based on the analyzed feedback data.\n\nRecognized for optimal abilities in partnering with the travel industry influencers in implementing marketing strategies, tracking performance, and analyzing / optimizing the results across multiple paid campaigns.\n\nProactively organized and categorized a wide variety of tour products based on their attributes (Destination, Duration, Availability, Price, Style, Inclusions / Exclusions, Hotels, Flights, and other parameters), allowing users to easily filter travel packages.\n\nSkillfully utilized an open-source platform in developing a complicated system that automated and localized numerous tasks into one place, resulting in a significant savings of both time and money for the company.\n\nSuccessfully developed an innovative platform (Vendor Side Onboarding Automated Workflows) with a focus on accepting, filtering, interviewing, and helping tour companies to get onboard and provide complicated tour products on TripWays through the website capabilities.\n\nExpertly designed and developed a platform that provided real time pricing and availability for +1000 tour products, allowing users to get updated price and availability while avoiding the frustrating price inquiry, response time, and extra communications.\n\nProactively developed and implemented various tools and workflows, for a cross-functional team of 10 personnel, collaborating across different countries and customers on a global level. Consistently displays exceptional abilities in supporting the technical needs of the highly scalable tech platform on AWS.\n\nSuccessfully hired and developed staff members across different time zones to be available to customers worldwide 24/7. Significantly improved customer satisfaction by implementing an automated workflow for customer communications based on latest language processing models trained with the local data.", "editable": true }
     },
     {
-      "company": "Setare E-Commerce Co. (Tehran, Iran)",
-      "title": "Co-Founder / Business Developer / Technical Project Manager",
-      "dateRange": "04/2015 – 06/2019",
-      "description": "Held a pivotal role in creating and managing a company, consisting of 50 personnel, from the ground up.\n\nSuccessfully designed and developed an online platform that provided approximately 55.000 unique resources (Articles, Podcasts, Forums, and online resources in Farsi language), categorized in +800 different categories, and approximately 10M visitors monthly, resulting in a ranking of 999 in the world (20 in Iran) within a 3-year timeframe.\n\nHeld a pivotal role in developing content management strategies, leading to the website being ranked among the top 80 websites in Iran and top 2000 websites in the world, as well as having +15M sessions monthly with 80% organic traffic.\n\nProactively hired, managed, and oversaw a diverse cross-functional team, to include SEO specialists and copywriters, with a focus towards organizing workflow based on efficiency and performance.\n\nDisplayed exceptional abilities in planning a guideline for cross-functional department collaboration on marketing plans and business strategies based on keyword research, copywriting, content optimization, and SEO/SEM techniques, Monetization, and operations of the team.\n\nDemonstrated exceptional abilities in implementing continuous improvements to systems in a developing country with limited access to knowledge and infrastructures.\n\nSkillfully managed a large-scale migration of data from the old CMS into a highly sustainable WordPress platform running on self-managed AWS servers, leading to a significant improvement to the site experience by while saving 40% of the server costs and improved user experience and workflows."
+      "company": { "value": "Setare E-Commerce Co. (Tehran, Iran)", "fixed": true },
+      "title": { "value": "Co-Founder / Business Developer / Technical Project Manager", "fixed": true },
+      "dateRange": { "value": "04/2015 – 06/2019", "fixed": true },
+      "description": { "value": "Held a pivotal role in creating and managing a company, consisting of 50 personnel, from the ground up.\n\nSuccessfully designed and developed an online platform that provided approximately 55.000 unique resources (Articles, Podcasts, Forums, and online resources in Farsi language), categorized in +800 different categories, and approximately 10M visitors monthly, resulting in a ranking of 999 in the world (20 in Iran) within a 3-year timeframe.\n\nHeld a pivotal role in developing content management strategies, leading to the website being ranked among the top 80 websites in Iran and top 2000 websites in the world, as well as having +15M sessions monthly with 80% organic traffic.\n\nProactively hired, managed, and oversaw a diverse cross-functional team, to include SEO specialists and copywriters, with a focus towards organizing workflow based on efficiency and performance.\n\nDisplayed exceptional abilities in planning a guideline for cross-functional department collaboration on marketing plans and business strategies based on keyword research, copywriting, content optimization, and SEO/SEM techniques, Monetization, and operations of the team.\n\nDemonstrated exceptional abilities in implementing continuous improvements to systems in a developing country with limited access to knowledge and infrastructures.\n\nSkillfully managed a large-scale migration of data from the old CMS into a highly sustainable WordPress platform running on self-managed AWS servers, leading to a significant improvement to the site experience by while saving 40% of the server costs and improved user experience and workflows.", "editable": true }
     },
     {
-      "company": "Lam Research (Oregon, USA)",
-      "title": "QA / Testing Technician",
-      "dateRange": "01/2015 – 09/2016",
-      "description": ""
+      "company": { "value": "Lam Research (Oregon, USA)", "fixed": true },
+      "title": { "value": "QA / Testing Technician", "fixed": true },
+      "dateRange": { "value": "01/2015 – 09/2016", "fixed": true },
+      "description": { "value": "", "editable": true }
     },
     {
-      "company": "Nilgasht Travel Agency (Tehran, Iran)",
-      "title": "Digital Marketing Manager / CRM Project Manager",
-      "dateRange": "01/2015 – 09/2016",
-      "description": ""
+      "company": { "value": "Nilgasht Travel Agency (Tehran, Iran)", "fixed": true },
+      "title": { "value": "Digital Marketing Manager / CRM Project Manager", "fixed": true },
+      "dateRange": { "value": "01/2015 – 09/2016", "fixed": true },
+      "description": { "value": "", "editable": true }
     },
     {
-      "company": "Hamrah Ltd, (London, UK)",
-      "title": "Jr. Digital Marketer / SEO Specialist / Copywriter",
-      "dateRange": "04/2013 – 02/2016",
-      "description": ""
+      "company": { "value": "Hamrah Ltd, (London, UK)", "fixed": true },
+      "title": { "value": "Jr. Digital Marketer / SEO Specialist / Copywriter", "fixed": true },
+      "dateRange": { "value": "04/2013 – 02/2016", "fixed": true },
+      "description": { "value": "", "editable": true }
     }
   ],
   "education": [
     {
-      "school": "Tehran University (Tehran, Iran)",
-      "dateRange": "09/2013 – 11/2015",
-      "degree": "Master of Business Management; Minor in Marketing"
+      "school": { "value": "Tehran University (Tehran, Iran)", "fixed": true },
+      "dateRange": { "value": "09/2013 – 11/2015", "fixed": true },
+      "degree": { "value": "Master of Business Management; Minor in Marketing", "fixed": true }
     },
     {
-      "school": "Shahrekord University (Shahrekord, Iran)",
-      "dateRange": "09/2006 – 07/2010",
-      "degree": "Bachelor of Science, Mechanical Engineering"
+      "school": { "value": "Shahrekord University (Shahrekord, Iran)", "fixed": true },
+      "dateRange": { "value": "09/2006 – 07/2010", "fixed": true },
+      "degree": { "value": "Bachelor of Science, Mechanical Engineering", "fixed": true }
     }
   ],
   "certifications": [
-    "Google Analytics Certification, 07/2017",
-    "Google Tag Manager Certification, 07/2017",
-    "Google Search Certification, 07/2017"
+    { "value": "Google Analytics Certification, 07/2017", "fixed": true },
+    { "value": "Google Tag Manager Certification, 07/2017", "fixed": true },
+    { "value": "Google Search Certification, 07/2017", "fixed": true }
   ]
 } 
