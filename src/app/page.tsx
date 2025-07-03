@@ -115,21 +115,22 @@ export default function Home() {
 
         {/* Education */}
         <section className="mb-4">
-          <h2 className="section-header">Advanced Education</h2>
-          <ul className="text-sm">
-            {resumeData.education.map((edu, i) => (
-              <li key={i} className="mb-1">
-                <span className="font-semibold">{edu.school}</span>, {edu.dateRange}<br />
-                {edu.degree}
-              </li>
-            ))}
-          </ul>
+          <h2 className="section-header">Education</h2>
+          {resumeData.education.map((edu, i) => (
+            <div key={i} className="mb-2">
+              <div className="flex justify-between text-sm font-semibold">
+                <span>{edu.school}</span>
+                <span>{edu.dateRange}</span>
+              </div>
+              <div className="text-sm">{edu.degree}</div>
+            </div>
+          ))}
         </section>
 
         {/* Certifications */}
-        <section className="mb-4">
-          <h2 className="section-header">Specialized Training & Certifications</h2>
-          <ul className="text-sm list-disc list-inside ml-4">
+        <section>
+          <h2 className="section-header">Certifications</h2>
+          <ul className="text-sm list-disc list-inside">
             {resumeData.certifications.map((cert, i) => (
               <li key={i}>{cert}</li>
             ))}
