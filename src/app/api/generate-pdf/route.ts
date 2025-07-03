@@ -12,6 +12,12 @@ async function getBrowser() {
 
 export async function GET() {
   try {
+    // Debug: log working directory and __dirname
+    console.log('process.cwd():', process.cwd());
+    console.log('__dirname:', __dirname);
+    console.log('chromium.executablePath():', await chromium.executablePath());
+    console.log('chromium.args:', chromium.args);
+
     // Extract just the resume content (main element)
     const resumeHtml = `
       <!DOCTYPE html>
