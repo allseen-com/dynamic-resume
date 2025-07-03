@@ -59,7 +59,7 @@ export default function Resume({
   isGenerating = false
 }: ResumeProps) {
   // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
-  const coreItems = resumeData.coreCompetencies.value.slice(0, 10);
+  const coreItems = resumeData.coreCompetencies.slice(0, 10);
   while (coreItems.length < 10) coreItems.push('');
   const rows = Array.from({ length: 5 }, (_, i) => [coreItems[i], coreItems[i + 5]]);
 
