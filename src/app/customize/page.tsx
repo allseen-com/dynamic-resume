@@ -9,6 +9,14 @@ import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOv
 import { PROMPT_TEMPLATES, getDefaultPrompt } from "../../utils/promptTemplates";
 import resumeData from "../../../data/resume.json";
 
+type ResumeArchiveItem = {
+  label: string;
+  data: ResumeData;
+  config: ResumeConfig;
+  isCurrent: boolean;
+  date: string;
+};
+
 export default function CustomizePage() {
   const [jobDescription, setJobDescription] = useState("");
   const [jobUrl, setJobUrl] = useState("");
@@ -34,7 +42,7 @@ export default function CustomizePage() {
   const { handleErrorWithState } = useErrorHandler();
 
   // Archive state
-  const [archive, setArchive] = useState<any[]>([]);
+  const [archive, setArchive] = useState<ResumeArchiveItem[]>([]);
   const [archiveLabel, setArchiveLabel] = useState("");
 
   useEffect(() => {

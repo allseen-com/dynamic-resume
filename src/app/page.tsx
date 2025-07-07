@@ -2,8 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import Resume from '../components/Resume';
-import { ResumeData } from '../types/resume';
+import { ResumeData, ResumeConfig } from '../types/resume';
 import resumeData from '../../data/resume.json';
+
+type ResumeArchiveItem = {
+  label: string;
+  data: ResumeData;
+  config: ResumeConfig;
+  isCurrent: boolean;
+  date: string;
+};
 
 export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -12,10 +20,9 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true);
-    // Load current resume from localStorage archive
     if (typeof window !== 'undefined') {
-      const archive = JSON.parse(localStorage.getItem('resumeArchive') || '[]');
-      const current = archive.find((item: any) => item.isCurrent);
+      const archive: ResumeArchiveItem[] = JSON.parse(localStorage.getItem('resumeArchive') || '[]');
+      const current = archive.find((item) => item.isCurrent);
       setCurrentResume(current ? current.data : null);
     }
   }, []);
