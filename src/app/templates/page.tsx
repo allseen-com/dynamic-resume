@@ -87,9 +87,9 @@ export default function DemoPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Dynamic Resume Demo</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Resume Templates</h1>
           <p className="mt-2 text-gray-600">
-            Showcase different resume versions tailored for specific job types
+            Explore pre-made resume templates optimized for different job types and industries
           </p>
         </div>
       </div>
@@ -97,7 +97,10 @@ export default function DemoPage() {
       {/* Controls */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Resume Type Selector</h2>
+          <h2 className="text-xl font-semibold mb-4">Template Selector</h2>
+          <p className="text-gray-600 mb-4">
+            Choose from our pre-designed templates. For AI-powered customization based on specific job descriptions, visit the <a href="/apply" className="text-blue-600 hover:text-blue-800 font-medium">Apply page</a>.
+          </p>
           <div className="flex flex-wrap gap-3 mb-4">
             {[
               { key: 'default', label: 'Default Resume', desc: 'General purpose resume' },

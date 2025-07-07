@@ -51,8 +51,15 @@ export interface ResumeData {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function tailorResumeForJD(_jobDescription: string): ResumeData {
-  // TODO: Integrate AI endpoint
-  return resumeData;
+export async function tailorResumeForJD(jobDescription: string): Promise<ResumeData> {
+  try {
+    const { callAIService } = await import('./aiResumeGenerator');
+    const prompt = `Analyze this job description and customize the resume to match the requirements while keeping the same JSON structure. Only modify fields marked with "_dynamic": true.`;
+    
+    return await callAIService(prompt, jobDescription, resumeData);
+  } catch (error) {
+    console.error('Failed to tailor resume:', error);
+    // Return original data if AI service fails
+    return resumeData;
+  }
 } 

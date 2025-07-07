@@ -10,8 +10,8 @@ import {
   generateDataAnalysisResume, 
   generateManagementResume 
 } from '../../../utils/resumeGenerator';
-import path from 'path';
-import fs from 'fs';
+import { ensureFontsLoaded } from '../../../utils/fontManager';
+import { handleError } from '../../../utils/errorHandler';
 
 export async function GET(request: Request) {
   try {
@@ -19,30 +19,26 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const resumeType = searchParams.get('type') || 'default';
     
-    // Verify fonts exist before attempting to generate PDF
-    const fontPath = path.resolve(process.cwd(), 'public', 'fonts');
-    const requiredFonts = ['Lato-Regular.ttf', 'Lato-Bold.ttf', 'Lato-Italic.ttf'];
-    
-    for (const font of requiredFonts) {
-      const fontFile = path.join(fontPath, font);
-      if (!fs.existsSync(fontFile)) {
-        console.error(`Font file not found: ${fontFile}`);
-        return new NextResponse(
-          JSON.stringify({ 
-            error: 'Font files not found',
-            details: `Missing font: ${font}`
-          }), 
-          {
-            status: 500,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-      }
+    // Initialize and verify fonts
+    const fontResult = await ensureFontsLoaded();
+    if (!fontResult.isValid) {
+      console.error('Font initialization failed:', fontResult.errors);
+      const appError = handleError.pdf(new Error(`Font verification failed: ${fontResult.missingFonts.join(', ')}`));
+      return new NextResponse(
+        JSON.stringify({ 
+          error: appError.userMessage,
+          details: fontResult.errors.join('; ')
+        }), 
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     }
 
-    console.log(`Fonts verified, generating ${resumeType} PDF...`);
+    console.log(`Fonts verified (${fontResult.availableFonts.length} fonts loaded), generating ${resumeType} PDF...`);
     
     // Generate appropriate resume based on type
     let resumeData: ResumeData;
@@ -111,32 +107,33 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Parse custom resume data from POST body
-    const { resumeData, config } = await request.json();
+    const { resumeData, config, jobDescription } = await request.json();
     
-    // Verify fonts exist before attempting to generate PDF
-    const fontPath = path.resolve(process.cwd(), 'public', 'fonts');
-    const requiredFonts = ['Lato-Regular.ttf', 'Lato-Bold.ttf', 'Lato-Italic.ttf'];
-    
-    for (const font of requiredFonts) {
-      const fontFile = path.join(fontPath, font);
-      if (!fs.existsSync(fontFile)) {
-        console.error(`Font file not found: ${fontFile}`);
-        return new NextResponse(
-          JSON.stringify({ 
-            error: 'Font files not found',
-            details: `Missing font: ${font}`
-          }), 
-          {
-            status: 500,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-      }
+    // Initialize and verify fonts
+    const fontResult = await ensureFontsLoaded();
+    if (!fontResult.isValid) {
+      console.error('Font initialization failed:', fontResult.errors);
+      const appError = handleError.pdf(new Error(`Font verification failed: ${fontResult.missingFonts.join(', ')}`));
+      return new NextResponse(
+        JSON.stringify({ 
+          error: appError.userMessage,
+          details: fontResult.errors.join('; ')
+        }), 
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     }
 
-    console.log('Fonts verified, generating custom PDF...');
+    console.log(`Fonts verified (${fontResult.availableFonts.length} fonts loaded), generating custom PDF...`);
+    
+    // Determine filename based on whether it's AI-generated or not
+    const filename = jobDescription 
+      ? 'AI-Customized-Resume.pdf' 
+      : 'Custom-Resume.pdf';
     
     // Generate the PDF as a Node.js ReadableStream
     const pdfStream = await renderToStream(
@@ -149,7 +146,7 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="Custom-Resume.pdf"',
+        'Content-Disposition': `attachment; filename="${filename}"`,
         'Cache-Control': 'no-cache',
       },
     });

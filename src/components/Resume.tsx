@@ -12,7 +12,7 @@ type FlexibleResumeData = {
     phone: FlexibleField;
   };
   summary: FlexibleField;
-  coreCompetencies: FlexibleField[];
+  coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
   technicalProficiency: {
     programming: FlexibleField[];
     cloudData: FlexibleField[];
@@ -31,12 +31,16 @@ type FlexibleResumeData = {
     school: FlexibleField;
     dateRange: FlexibleField;
     degree: FlexibleField;
-  }[];
-  certifications: FlexibleField[];
+  }[] | { value: {
+    school: FlexibleField;
+    dateRange: FlexibleField;
+    degree: FlexibleField;
+  }[] };
+  certifications: FlexibleField[] | { value: FlexibleField[] };
 };
 
 interface ResumeProps {
-  resumeData: FlexibleResumeData;
+  resumeData: FlexibleResumeData | ResumeData;
   config?: ResumeConfig;
   onDownloadPDF?: () => void;
   showDownloadButton?: boolean;
@@ -44,24 +48,94 @@ interface ResumeProps {
 }
 
 // Utility function to get value from either string or { value, ... }
-function getFieldValue(field: any) {
+function getFieldValue(field: FlexibleField | string): string {
   if (typeof field === 'object' && field !== null && 'value' in field) {
     return field.value;
   }
-  return field;
+  return field as string;
+}
+
+// Utility function to get array from either direct array or { value: array }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getArrayValue(field: FlexibleField[] | { value: FlexibleField[] } | { value: any[] }): any[] {
+  if (Array.isArray(field)) {
+    return field;
+  }
+  if (typeof field === 'object' && field !== null && 'value' in field && Array.isArray(field.value)) {
+    return field.value;
+  }
+  return [];
+}
+
+// Utility function specifically for education arrays
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getEducationArray(field: any): any[] {
+  if (Array.isArray(field)) {
+    return field;
+  }
+  if (typeof field === 'object' && field !== null && 'value' in field && Array.isArray(field.value)) {
+    return field.value;
+  }
+  return [];
+}
+
+// Convert ResumeData to FlexibleResumeData format
+function convertToFlexibleResumeData(data: ResumeData | FlexibleResumeData): FlexibleResumeData {
+  // If it's already in FlexibleResumeData format, return as is
+  if ('header' in data && typeof data.header.name === 'string') {
+    return data as FlexibleResumeData;
+  }
+  
+  // Convert from ResumeData format
+  const resumeData = data as ResumeData;
+  return {
+    header: {
+      name: resumeData.header.name,
+      address: resumeData.header.address,
+      email: resumeData.header.email,
+      phone: resumeData.header.phone,
+    },
+    summary: resumeData.summary,
+    coreCompetencies: resumeData.coreCompetencies,
+    technicalProficiency: resumeData.technicalProficiency,
+    professionalExperience: resumeData.professionalExperience,
+    education: resumeData.education,
+    certifications: resumeData.certifications,
+  } as FlexibleResumeData;
 }
 
 export default function Resume({ 
-  resumeData, 
+  resumeData: inputResumeData, 
   config = defaultResumeConfig, 
   onDownloadPDF,
   showDownloadButton = true,
   isGenerating = false
 }: ResumeProps) {
+  // Convert the input data to FlexibleResumeData format
+  const resumeData = convertToFlexibleResumeData(inputResumeData);
+
   // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
-  const coreItems = resumeData.coreCompetencies.slice(0, 10);
+  const coreCompetenciesArr = getArrayValue(resumeData.coreCompetencies);
+  const coreItems = coreCompetenciesArr.slice(0, 10);
   while (coreItems.length < 10) coreItems.push('');
-  const rows = Array.from({ length: 5 }, (_, i) => [coreItems[i], coreItems[i + 5]]);
+
+  // Get education and certifications arrays properly
+  const educationArray = getEducationArray(resumeData.education);
+  const certificationsArray = getArrayValue(resumeData.certifications);
+
+  // Generate dynamic technical proficiency text
+  const generateTechnicalProficiencyText = () => {
+    const tech = resumeData.technicalProficiency;
+    const allSkills = [
+      ...tech.programming.map(getFieldValue),
+      ...tech.cloudData.map(getFieldValue),
+      ...tech.analytics.map(getFieldValue),
+      ...tech.mlAi.map(getFieldValue),
+      ...tech.productivity.map(getFieldValue),
+      ...tech.marketingAds.map(getFieldValue)
+    ];
+    return allSkills.join(', ') + '.';
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -109,7 +183,6 @@ export default function Resume({
         {/* Summary */}
         <section className="mb-3.5">
           <h2 className="section-header text-[16px]">Career Summary</h2>
-          {/* Example: marking this field as fixed in resume.json: "summary": { "value": "...", "fixed": true } */}
           <p className="text-[12px] leading-relaxed text-justify">{getFieldValue(resumeData.summary)}</p>
         </section>
 
@@ -118,10 +191,9 @@ export default function Resume({
           <section className="mb-3.5">
             <h2 className="section-header text-[16px]">Core Competencies</h2>
             <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
-              {resumeData.coreCompetencies.map((item, i) => (
+              {coreCompetenciesArr.map((item: string, i: number) => (
                 <li key={i} className="flex items-start mb-0.5">
                   <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                  {/* Example: marking this field as editable in resume.json: "coreCompetencies": [{ "value": "Growth Marketing Strategy & Digital Acquisition", "editable": true }, ...] */}
                   <span className="leading-snug">{getFieldValue(item)}</span>
                 </li>
               ))}
@@ -129,13 +201,12 @@ export default function Resume({
           </section>
         )}
 
-        {/* Technical Proficiency */}
+        {/* Technical Proficiency - Now Dynamic */}
         {config.sections.showTechnicalProficiency && (
           <section className="mb-5">
             <h2 className="section-header">Technical Proficiency</h2>
-            {/* Use normal font, comma separator, not bold */}
             <div className="text-base font-normal leading-relaxed">
-              {`SQL, MySQL Database, AWS, Looker Data Studio, AI Automation, Google Tag Manager, PHP, HTML, CSS, WordPress Development, Google Search Console, Google Analytics, Adobe Analytics, Google AdWords, Google Optimize, A/B Testing, Similar Web, Zapier, HubSpot, Adobe CC.`}
+              {generateTechnicalProficiencyText()}
             </div>
           </section>
         )}
@@ -164,11 +235,11 @@ export default function Resume({
           </section>
         )}
 
-        {/* Education */}
+        {/* Education - Fixed to handle both array and object structures */}
         {config.sections.showEducation && (
           <section className="mb-5">
             <h2 className="section-header">Education</h2>
-            {resumeData.education.map((edu, i) => (
+            {educationArray.map((edu: { school: string; dateRange: string; degree: string }, i: number) => (
               <div key={i} className="mb-1.5">
                 <div className="flex justify-between items-start text-xs font-bold mb-0.5">
                   <span className="flex-1">{getFieldValue(edu.school)}</span>
@@ -180,12 +251,12 @@ export default function Resume({
           </section>
         )}
 
-        {/* Certifications */}
+        {/* Certifications - Fixed to handle both array and object structures */}
         {config.sections.showCertifications && (
           <section>
             <h2 className="section-header">Certifications</h2>
             <ul className="text-xs ml-3">
-              {resumeData.certifications.map((cert, i) => (
+              {certificationsArray.map((cert: string, i: number) => (
                 <li key={i} className="flex items-start mb-0.5">
                   <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
                   <span className="leading-snug">{getFieldValue(cert)}</span>

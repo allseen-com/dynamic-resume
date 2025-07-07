@@ -64,21 +64,56 @@ export function generateCustomizedResume(
     titleBarSub = "Business Development | Digital Marketing Strategy | Performance Optimizations";
   }
   
-  // Filter and prioritize core competencies based on job requirements
-  if (jobRequirements.keywords.length > 0) {
-    const prioritizedCompetencies = resumeData.coreCompetencies.value.filter(competency =>
-      jobRequirements.keywords.some(keyword => 
-        competency.toLowerCase().includes(keyword.toLowerCase())
-      )
-    );
+  // Enhanced competency prioritization with scoring
+  if (jobRequirements.keywords.length > 0 || jobRequirements.preferredSkills.length > 0) {
+    const allKeywords = [...jobRequirements.keywords, ...jobRequirements.preferredSkills];
     
-    const otherCompetencies = resumeData.coreCompetencies.value.filter(competency =>
-      !jobRequirements.keywords.some(keyword => 
-        competency.toLowerCase().includes(keyword.toLowerCase())
-      )
-    );
+    const scoredCompetencies = resumeData.coreCompetencies.value.map(competency => {
+      let score = 0;
+      const competencyLower = competency.toLowerCase();
+      
+      // Score based on exact keyword matches
+      allKeywords.forEach(keyword => {
+        if (competencyLower.includes(keyword.toLowerCase())) {
+          score += keyword === keyword.toLowerCase() ? 3 : 2; // Prefer exact case matches
+        }
+      });
+      
+      // Bonus for job type specific competencies
+      switch (jobRequirements.jobType) {
+        case 'marketing':
+          if (competencyLower.includes('marketing') || competencyLower.includes('growth') || 
+              competencyLower.includes('digital') || competencyLower.includes('performance')) {
+            score += 2;
+          }
+          break;
+        case 'technical':
+          if (competencyLower.includes('technical') || competencyLower.includes('project') || 
+              competencyLower.includes('development') || competencyLower.includes('automation')) {
+            score += 2;
+          }
+          break;
+        case 'management':
+          if (competencyLower.includes('leadership') || competencyLower.includes('management') || 
+              competencyLower.includes('strategic') || competencyLower.includes('business')) {
+            score += 2;
+          }
+          break;
+        case 'data-analysis':
+          if (competencyLower.includes('analysis') || competencyLower.includes('data') || 
+              competencyLower.includes('optimization') || competencyLower.includes('performance')) {
+            score += 2;
+          }
+          break;
+      }
+      
+      return { competency, score };
+    });
     
-    resumeData.coreCompetencies.value = [...prioritizedCompetencies, ...otherCompetencies];
+    // Sort by score (highest first) and extract competencies
+    resumeData.coreCompetencies.value = scoredCompetencies
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.competency);
   }
   
   // Limit professional experience if specified
@@ -109,16 +144,16 @@ export function generateCustomizedResume(
  */
 export function generateMarketingResume(baseResumeData: ResumeData): { resumeData: ResumeData; config: ResumeConfig } {
   const jobRequirements: JobRequirements = {
-    keywords: ['marketing', 'growth', 'seo', 'digital', 'campaign', 'analytics'],
-    preferredSkills: ['Google Analytics', 'SEO', 'SEM', 'Social Media', 'Content Marketing'],
+    keywords: ['marketing', 'growth', 'seo', 'digital', 'campaign', 'analytics', 'roi', 'conversion', 'acquisition'],
+    preferredSkills: ['Google Analytics', 'SEO', 'SEM', 'Social Media', 'Content Marketing', 'Email Marketing', 'CRM', 'A/B Testing'],
     jobType: 'marketing',
     experienceLevel: 'senior'
   };
   
   const customization: ResumeCustomization = {
     titleBar: {
-      main: "Growth Marketing Specialist / Digital Marketing Manager / SEO Expert",
-      sub: "Digital Marketing Strategy | Performance Marketing | Growth Hacking"
+      main: "Growth Marketing Specialist / Digital Marketing Manager / Performance Marketing Expert",
+      sub: "Digital Marketing Strategy | Performance Optimization | Customer Acquisition"
     },
     sections: {
       showTechnicalProficiency: true,
@@ -126,7 +161,8 @@ export function generateMarketingResume(baseResumeData: ResumeData): { resumeDat
       showProfessionalExperience: true,
       showEducation: true,
       showCertifications: true,
-    }
+    },
+    emphasizeSkills: ['Google Analytics', 'Facebook Ads', 'Google Ads', 'SEO', 'SEM', 'Growth Hacking']
   };
   
   return generateCustomizedResume(baseResumeData, jobRequirements, customization);
@@ -137,16 +173,16 @@ export function generateMarketingResume(baseResumeData: ResumeData): { resumeDat
  */
 export function generateTechnicalResume(baseResumeData: ResumeData): { resumeData: ResumeData; config: ResumeConfig } {
   const jobRequirements: JobRequirements = {
-    keywords: ['technical', 'development', 'sql', 'aws', 'python', 'automation'],
-    preferredSkills: ['Python', 'SQL', 'AWS', 'JavaScript', 'API Development'],
+    keywords: ['technical', 'development', 'sql', 'aws', 'python', 'automation', 'api', 'cloud', 'architecture', 'scalability'],
+    preferredSkills: ['Python', 'SQL', 'AWS', 'JavaScript', 'API Development', 'Docker', 'Kubernetes', 'CI/CD', 'Git'],
     jobType: 'technical',
     experienceLevel: 'senior'
   };
   
   const customization: ResumeCustomization = {
     titleBar: {
-      main: "Technical Project Manager / Full-Stack Developer / Data Engineer",
-      sub: "Software Development | Cloud Architecture | Technical Leadership"
+      main: "Senior Technical Project Manager / Full-Stack Developer / Cloud Solutions Architect",
+      sub: "Software Development | Cloud Architecture | DevOps & Automation"
     },
     sections: {
       showTechnicalProficiency: true,
@@ -154,7 +190,8 @@ export function generateTechnicalResume(baseResumeData: ResumeData): { resumeDat
       showProfessionalExperience: true,
       showEducation: true,
       showCertifications: true,
-    }
+    },
+    emphasizeSkills: ['Python', 'AWS', 'SQL', 'JavaScript', 'Docker', 'API Development']
   };
   
   return generateCustomizedResume(baseResumeData, jobRequirements, customization);
@@ -165,16 +202,16 @@ export function generateTechnicalResume(baseResumeData: ResumeData): { resumeDat
  */
 export function generateDataAnalysisResume(baseResumeData: ResumeData): { resumeData: ResumeData; config: ResumeConfig } {
   const jobRequirements: JobRequirements = {
-    keywords: ['data', 'analysis', 'sql', 'analytics', 'reporting', 'insights'],
-    preferredSkills: ['SQL', 'Python', 'Looker', 'Google Analytics', 'Data Visualization'],
+    keywords: ['data', 'analysis', 'sql', 'analytics', 'reporting', 'insights', 'visualization', 'dashboard', 'metrics', 'kpi'],
+    preferredSkills: ['SQL', 'Python', 'Looker Studio', 'Google Analytics', 'Data Visualization', 'BigQuery', 'Tableau', 'Excel'],
     jobType: 'data-analysis',
     experienceLevel: 'senior'
   };
   
   const customization: ResumeCustomization = {
     titleBar: {
-      main: "Data Analyst / Business Intelligence Specialist / Marketing Data Analysis",
-      sub: "Data Analysis | Business Intelligence | Performance Analytics"
+      main: "Senior Data Analyst / Business Intelligence Specialist / Marketing Analytics Expert",
+      sub: "Data Analysis | Business Intelligence | Performance Analytics & Insights"
     },
     sections: {
       showTechnicalProficiency: true,
@@ -182,7 +219,8 @@ export function generateDataAnalysisResume(baseResumeData: ResumeData): { resume
       showProfessionalExperience: true,
       showEducation: true,
       showCertifications: true,
-    }
+    },
+    emphasizeSkills: ['SQL', 'Python', 'Looker Studio', 'Google Analytics', 'BigQuery', 'Data Visualization']
   };
   
   return generateCustomizedResume(baseResumeData, jobRequirements, customization);

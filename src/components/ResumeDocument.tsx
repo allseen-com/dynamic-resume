@@ -8,7 +8,7 @@ import {
   Font,
 } from '@react-pdf/renderer';
 import path from 'path';
-import { ResumeData, ResumeConfig, defaultResumeConfig } from '../types/resume';
+import { ResumeConfig, defaultResumeConfig } from '../types/resume';
 import defaultResumeData from '../../data/resume.json';
 
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -21,7 +21,7 @@ type FlexibleResumeData = {
     phone: FlexibleField;
   };
   summary: FlexibleField;
-  coreCompetencies: FlexibleField[];
+  coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
   technicalProficiency: {
     programming: FlexibleField[];
     cloudData: FlexibleField[];
@@ -40,8 +40,12 @@ type FlexibleResumeData = {
     school: FlexibleField;
     dateRange: FlexibleField;
     degree: FlexibleField;
-  }[];
-  certifications: FlexibleField[];
+  }[] | { value: {
+    school: FlexibleField;
+    dateRange: FlexibleField;
+    degree: FlexibleField;
+  }[] };
+  certifications: FlexibleField[] | { value: FlexibleField[] };
 };
 
 interface ResumeDocumentProps {
@@ -238,11 +242,35 @@ const styles = StyleSheet.create({
 });
 
 // Utility function to get value from either string or { value, ... }
-function getFieldValue(field: any) {
+function getFieldValue(field: FlexibleField | string): string {
   if (typeof field === 'object' && field !== null && 'value' in field) {
     return field.value;
   }
-  return field;
+  return field as string;
+}
+
+// Utility function to get array from either direct array or { value: array }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getArrayValue(field: FlexibleField[] | { value: FlexibleField[] } | { value: any[] }): any[] {
+  if (Array.isArray(field)) {
+    return field;
+  }
+  if (typeof field === 'object' && field !== null && 'value' in field && Array.isArray(field.value)) {
+    return field.value;
+  }
+  return [];
+}
+
+// Utility function specifically for education arrays
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getEducationArray(field: any): any[] {
+  if (Array.isArray(field)) {
+    return field;
+  }
+  if (typeof field === 'object' && field !== null && 'value' in field && Array.isArray(field.value)) {
+    return field.value;
+  }
+  return [];
 }
 
 export default function ResumeDocument({ resumeData, config }: ResumeDocumentProps) {
@@ -253,10 +281,27 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
   const resumeConfig = config || defaultResumeConfig;
 
   // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
-  const coreItems = (data.coreCompetencies.value || []).slice(0, 10);
+  const coreCompetenciesArray = getArrayValue(data.coreCompetencies);
+  const coreItems = coreCompetenciesArray.slice(0, 10);
   while (coreItems.length < 10) coreItems.push('');
-  const leftCol = coreItems.slice(0, 5);
-  const rightCol = coreItems.slice(5, 10);
+
+  // Get education and certifications arrays properly
+  const educationArray = getEducationArray(data.education);
+  const certificationsArray = getArrayValue(data.certifications);
+
+  // Generate dynamic technical proficiency text
+  const generateTechnicalProficiencyText = () => {
+    const tech = data.technicalProficiency;
+    const allSkills = [
+      ...tech.programming.map(getFieldValue),
+      ...tech.cloudData.map(getFieldValue),
+      ...tech.analytics.map(getFieldValue),
+      ...tech.mlAi.map(getFieldValue),
+      ...tech.productivity.map(getFieldValue),
+      ...tech.marketingAds.map(getFieldValue)
+    ];
+    return allSkills.join(', ') + '.';
+  };
 
   return (
     <Document>
@@ -288,36 +333,36 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
         </View>
 
         {/* Core Competencies */}
-        {resumeConfig.sections.showCoreCompetencies && getFieldValue(data.coreCompetencies).length > 0 && (
+        {resumeConfig.sections.showCoreCompetencies && coreCompetenciesArray.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Core Competencies</Text>
             <View style={styles.competenciesGrid}>
-              {getFieldValue(data.coreCompetencies).map((item: string, i: number) => (
+              {coreCompetenciesArray.map((item: string, i: number) => (
                 <View key={i} style={styles.competencyItem}>
                   <View style={styles.bullet} />
-                  <Text style={styles.competencyText}>{item}</Text>
+                  <Text style={styles.competencyText}>{getFieldValue(item)}</Text>
                 </View>
               ))}
             </View>
           </View>
         )}
 
-        {/* Technical Proficiency */}
+        {/* Technical Proficiency - Now Dynamic */}
         {resumeConfig.sections.showTechnicalProficiency && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Technical Proficiency</Text>
-            {/* Use normal font, comma separator, not bold */}
             <Text style={{ fontSize: 11, fontWeight: 'normal', lineHeight: 1.2 }}>
-              {`SQL, MySQL Database, AWS, Looker Data Studio, AI Automation, Google Tag Manager, PHP, HTML, CSS, WordPress Development, Google Search Console, Google Analytics, Adobe Analytics, Google AdWords, Google Optimize, A/B Testing, Similar Web, Zapier, HubSpot, Adobe CC.`}
+              {generateTechnicalProficiencyText()}
             </Text>
           </View>
         )}
 
         {/* Professional Experience */}
-        {resumeConfig.sections.showProfessionalExperience && getFieldValue(data.professionalExperience).length > 0 && (
+        {resumeConfig.sections.showProfessionalExperience && data.professionalExperience.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Professional Experience</Text>
-            {getFieldValue(data.professionalExperience).map((role: any, i: number) => {
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {data.professionalExperience.map((role: any, i: number) => {
               const hasDescription = getFieldValue(role.description) && getFieldValue(role.description).trim();
               const itemStyle = hasDescription 
                 ? styles.experienceItem 
@@ -340,11 +385,11 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
           </View>
         )}
 
-        {/* Education */}
-        {resumeConfig.sections.showEducation && getFieldValue(data.education).length > 0 && (
+        {/* Education - Fixed to handle both array and object structures */}
+        {resumeConfig.sections.showEducation && educationArray.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Education</Text>
-            {getFieldValue(data.education).map((edu: any, i: number) => (
+            {educationArray.map((edu: { school: string; dateRange: string; degree: string }, i: number) => (
               <View key={i} style={styles.educationItem}>
                 <View style={styles.educationHeader}>
                   <Text style={styles.educationSchool}>{getFieldValue(edu.school)}</Text>
@@ -356,15 +401,15 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
           </View>
         )}
 
-        {/* Certifications */}
-        {resumeConfig.sections.showCertifications && getFieldValue(data.certifications).length > 0 && (
+        {/* Certifications - Fixed to handle both array and object structures */}
+        {resumeConfig.sections.showCertifications && certificationsArray.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Certifications</Text>
             <View style={styles.certificationsList}>
-              {getFieldValue(data.certifications).map((cert: string, i: number) => (
+              {certificationsArray.map((cert: string, i: number) => (
                 <View key={i} style={styles.certificationItem}>
                   <View style={styles.bullet} />
-                  <Text style={styles.certificationText}>{cert}</Text>
+                  <Text style={styles.certificationText}>{getFieldValue(cert)}</Text>
                 </View>
               ))}
             </View>
