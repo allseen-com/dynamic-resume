@@ -160,6 +160,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 11.2,
     lineHeight: 1.32,
+    // Prevent wrapping and add ellipsis for overflow
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '95%',
   },
   experienceItem: {
     marginBottom: 8,
@@ -240,6 +245,12 @@ const styles = StyleSheet.create({
     lineHeight: 1.32,
   },
 });
+
+// Utility to truncate text to a max length and add ellipsis
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 1) + '…';
+}
 
 // Utility function to get value from either string or { value, ... }
 function getFieldValue(field: FlexibleField | string): string {
@@ -340,7 +351,7 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
               {coreCompetenciesArray.map((item: string, i: number) => (
                 <View key={i} style={styles.competencyItem}>
                   <View style={styles.bullet} />
-                  <Text style={styles.competencyText}>{getFieldValue(item)}</Text>
+                  <Text style={styles.competencyText}>{truncateText(getFieldValue(item), 48)}</Text>
                 </View>
               ))}
             </View>

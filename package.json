@@ -1,12 +1,13 @@
 {
   "name": "dynamic-resume",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postbuild": "echo Build complete for version 1.5.2"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.0",

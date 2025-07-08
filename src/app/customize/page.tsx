@@ -17,6 +17,19 @@ type ResumeArchiveItem = {
   date: string;
 };
 
+// Simple Toast component
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 2500);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+  return (
+    <div className="fixed top-6 right-6 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+      {message}
+    </div>
+  );
+}
+
 export default function CustomizePage() {
   const [jobDescription, setJobDescription] = useState("");
   const [jobUrl, setJobUrl] = useState("");
@@ -44,8 +57,12 @@ export default function CustomizePage() {
   // Archive state
   const [archive, setArchive] = useState<ResumeArchiveItem[]>([]);
   const [archiveLabel, setArchiveLabel] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [highlightSections, setHighlightSections] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     // Load archive from localStorage
     if (typeof window !== "undefined") {
       const stored = JSON.parse(localStorage.getItem("resumeArchive") || "[]");
@@ -123,6 +140,8 @@ export default function CustomizePage() {
       });
       setCustomizedResumeData(result.resumeData);
       setCustomizedConfig(result.config);
+      setShowSuccess(true);
+      setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]); // highlight all main sections for now
     } catch (error) {
       handleErrorWithState(error, setError, "ai");
     } finally {
@@ -194,8 +213,15 @@ export default function CustomizePage() {
     setSelectedTemplate("general");
   };
 
+  if (!isClient) {
+    return <div className="min-h-screen bg-gray-100" />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {showSuccess && (
+        <Toast message="Resume updated with AI customization!" onClose={() => setShowSuccess(false)} />
+      )}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold text-gray-900">AI-Powered Resume Customization</h1>
@@ -404,6 +430,7 @@ export default function CustomizePage() {
                 config={customizedConfig}
                 showDownloadButton={false}
                 isGenerating={isGenerating}
+                highlightSections={highlightSections}
               />
             </div>
             <LoadingOverlay isVisible={loadingType === "ai"}>

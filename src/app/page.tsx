@@ -1,5 +1,4 @@
-'use client';
-
+"use client";
 import React, { useState, useEffect } from 'react';
 import Resume from '../components/Resume';
 import { ResumeData, ResumeConfig } from '../types/resume';

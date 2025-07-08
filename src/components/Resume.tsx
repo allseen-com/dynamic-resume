@@ -45,6 +45,7 @@ interface ResumeProps {
   onDownloadPDF?: () => void;
   showDownloadButton?: boolean;
   isGenerating?: boolean;
+  highlightSections?: string[];
 }
 
 // Utility function to get value from either string or { value, ... }
@@ -109,7 +110,8 @@ export default function Resume({
   config = defaultResumeConfig, 
   onDownloadPDF,
   showDownloadButton = true,
-  isGenerating = false
+  isGenerating = false,
+  highlightSections = [],
 }: ResumeProps) {
   // Convert the input data to FlexibleResumeData format
   const resumeData = convertToFlexibleResumeData(inputResumeData);
@@ -181,14 +183,14 @@ export default function Resume({
         </div>
 
         {/* Summary */}
-        <section className="mb-3.5">
+        <section className={`mb-3.5${highlightSections.includes('summary') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
           <h2 className="section-header text-[16px]">Career Summary</h2>
           <p className="text-[12px] leading-relaxed text-justify">{getFieldValue(resumeData.summary)}</p>
         </section>
 
         {/* Core Competencies */}
         {config.sections.showCoreCompetencies && (
-          <section className="mb-3.5">
+          <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header text-[16px]">Core Competencies</h2>
             <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
               {coreCompetenciesArr.map((item: string, i: number) => (
@@ -203,7 +205,7 @@ export default function Resume({
 
         {/* Technical Proficiency - Now Dynamic */}
         {config.sections.showTechnicalProficiency && (
-          <section className="mb-5">
+          <section className={`mb-5${highlightSections.includes('technicalProficiency') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header">Technical Proficiency</h2>
             <div className="text-base font-normal leading-relaxed">
               {generateTechnicalProficiencyText()}
@@ -213,7 +215,7 @@ export default function Resume({
 
         {/* Professional Experience */}
         {config.sections.showProfessionalExperience && (
-          <section className="mb-5">
+          <section className={`mb-5${highlightSections.includes('professionalExperience') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header">Professional Experience</h2>
             {resumeData.professionalExperience.map((role, i) => {
               const hasDescription = getFieldValue(role.description) && getFieldValue(role.description).trim();
