@@ -53,6 +53,7 @@ export default function CustomizePage() {
   });
   const [error, setError] = useState<string | null>(null);
   const { handleErrorWithState } = useErrorHandler();
+  const [companyOrRole, setCompanyOrRole] = useState<string | undefined>(undefined);
 
   // Archive state
   const [archive, setArchive] = useState<ResumeArchiveItem[]>([]);
@@ -140,6 +141,7 @@ export default function CustomizePage() {
       });
       setCustomizedResumeData(result.resumeData);
       setCustomizedConfig(result.config);
+      setCompanyOrRole(result.companyOrRole); // Store extracted company/role
       setShowSuccess(true);
       setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]); // highlight all main sections for now
     } catch (error) {
@@ -155,6 +157,10 @@ export default function CustomizePage() {
     setLoadingType("pdf");
     setError(null);
     try {
+      // Sanitize companyOrRole for filename (remove special chars, spaces to underscores)
+      let safeName = companyOrRole ? companyOrRole.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') : '';
+      if (!safeName) safeName = 'Custom';
+      const filename = `Resume-${safeName}.pdf`;
       const res = await fetch("/api/generate-pdf", {
         method: "POST",
         headers: {
@@ -165,6 +171,7 @@ export default function CustomizePage() {
           config: customizedConfig,
           jobDescription: jobDescription,
           aiPrompt: aiPrompt,
+          filename, // Pass filename to API
         }),
       });
       if (!res.ok) {
@@ -177,7 +184,7 @@ export default function CustomizePage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "AI-Customized-Resume.pdf";
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();

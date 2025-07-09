@@ -107,7 +107,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Parse custom resume data from POST body
-    const { resumeData, config, jobDescription } = await request.json();
+    const { resumeData, config, jobDescription, filename } = await request.json();
     
     // Initialize and verify fonts
     const fontResult = await ensureFontsLoaded();
@@ -130,10 +130,8 @@ export async function POST(request: Request) {
 
     console.log(`Fonts verified (${fontResult.availableFonts.length} fonts loaded), generating custom PDF...`);
     
-    // Determine filename based on whether it's AI-generated or not
-    const filename = jobDescription 
-      ? 'AI-Customized-Resume.pdf' 
-      : 'Custom-Resume.pdf';
+    // Use provided filename or fallback
+    const safeFilename = filename && typeof filename === 'string' ? filename : (jobDescription ? 'AI-Customized-Resume.pdf' : 'Custom-Resume.pdf');
     
     // Generate the PDF as a Node.js ReadableStream
     const pdfStream = await renderToStream(
@@ -146,7 +144,7 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Disposition': `attachment; filename="${safeFilename}"`,
         'Cache-Control': 'no-cache',
       },
     });

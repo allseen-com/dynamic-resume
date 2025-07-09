@@ -13,52 +13,7 @@ export interface AICustomizationResponse {
   resumeData: ResumeData;
   config: ResumeConfig;
   reasoning?: string;
-}
-
-/**
- * Generate an AI-customized resume based on job description
- */
-export async function generateAICustomizedResume(
-  request: AICustomizationRequest
-): Promise<AICustomizationResponse> {
-  const { jobDescription, customPrompt, baseResumeData } = request;
-  
-  try {
-    // Create AI service instance
-    const aiService = createAIService();
-    
-    // Use real AI service to customize resume
-    const customizedData = await aiService.customizeResume(
-      jobDescription,
-      baseResumeData,
-      customPrompt
-    );
-    
-    // Analyze job description for config generation
-    const keywords = extractKeywords(jobDescription);
-    const requirements = analyzeRequirements(jobDescription);
-    const customizedConfig = generateCustomConfig(keywords, requirements);
-    
-    return {
-      resumeData: customizedData,
-      config: customizedConfig,
-      reasoning: `Resume customized using ${aiService.getProviderName()} based on job requirements`
-    };
-  } catch (error) {
-    console.error('AI customization failed, falling back to mock implementation:', error);
-    
-    // Fallback to mock implementation if AI service fails
-    const keywords = extractKeywords(jobDescription);
-    const requirements = analyzeRequirements(jobDescription);
-    const customizedData = await customizeResumeData(baseResumeData, keywords, requirements);
-    const customizedConfig = generateCustomConfig(keywords, requirements);
-    
-    return {
-      resumeData: customizedData,
-      config: customizedConfig,
-      reasoning: `Fallback customization based on ${keywords.length} key requirements (AI service unavailable)`
-    };
-  }
+  companyOrRole?: string; // Added for filename
 }
 
 /**
@@ -272,5 +227,76 @@ export async function callAIService(prompt: string, jobDescription: string, resu
   } catch (error) {
     console.error('AI service call failed:', error);
     throw error;
+  }
+} 
+
+// Extract company or role from job description using regex
+function extractCompanyOrRole(jobDescription: string): string | undefined {
+  // Try to find patterns like "at {Company}", "with {Company}", "Company: {Company}", etc.
+  const companyRegexes = [
+    /at ([A-Z][A-Za-z0-9&.,'\- ]{2,})/i,
+    /with ([A-Z][A-Za-z0-9&.,'\- ]{2,})/i,
+    /company[:\s]+([A-Z][A-Za-z0-9&.,'\- ]{2,})/i,
+    /for ([A-Z][A-Za-z0-9&.,'\- ]{2,})/i,
+    /([A-Z][A-Za-z0-9&.,'\- ]{2,}) is seeking/i,
+    /([A-Z][A-Za-z0-9&.,'\- ]{2,}) seeks/i,
+    /([A-Z][A-Za-z0-9&.,'\- ]{2,}) is hiring/i,
+    /([A-Z][A-Za-z0-9&.,'\- ]{2,}) has an opening/i
+  ];
+  for (const regex of companyRegexes) {
+    const match = jobDescription.match(regex);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  // Fallback: try to extract a role/title
+  const roleRegex = /(for|as|position:|role:|title:)\s*([A-Za-z0-9&.,'\- ]{2,})/i;
+  const roleMatch = jobDescription.match(roleRegex);
+  if (roleMatch && roleMatch[2]) {
+    return roleMatch[2].trim();
+  }
+  return undefined;
+}
+
+/**
+ * Generate an AI-customized resume based on job description
+ */
+export async function generateAICustomizedResume(
+  request: AICustomizationRequest
+): Promise<AICustomizationResponse> {
+  const { jobDescription, customPrompt, baseResumeData } = request;
+  const companyOrRole = extractCompanyOrRole(jobDescription);
+  try {
+    // Create AI service instance
+    const aiService = createAIService();
+    // Use real AI service to customize resume
+    const customizedData = await aiService.customizeResume(
+      jobDescription,
+      baseResumeData,
+      customPrompt
+    );
+    // Analyze job description for config generation
+    const keywords = extractKeywords(jobDescription);
+    const requirements = analyzeRequirements(jobDescription);
+    const customizedConfig = generateCustomConfig(keywords, requirements);
+    return {
+      resumeData: customizedData,
+      config: customizedConfig,
+      reasoning: `Resume customized using ${aiService.getProviderName()} based on job requirements`,
+      companyOrRole // Return extracted value
+    };
+  } catch (error) {
+    console.error('AI customization failed, falling back to mock implementation:', error);
+    // Fallback to mock implementation if AI service fails
+    const keywords = extractKeywords(jobDescription);
+    const requirements = analyzeRequirements(jobDescription);
+    const customizedData = await customizeResumeData(baseResumeData, keywords, requirements);
+    const customizedConfig = generateCustomConfig(keywords, requirements);
+    return {
+      resumeData: customizedData,
+      config: customizedConfig,
+      reasoning: `Fallback customization based on ${keywords.length} key requirements (AI service unavailable)`,
+      companyOrRole // Return extracted value
+    };
   }
 } 

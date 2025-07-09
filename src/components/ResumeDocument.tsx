@@ -351,7 +351,8 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
               {coreCompetenciesArray.map((item: string, i: number) => (
                 <View key={i} style={styles.competencyItem}>
                   <View style={styles.bullet} />
-                  <Text style={styles.competencyText}>{truncateText(getFieldValue(item), 48)}</Text>
+                  {/* Force single-line, ellipsis-truncated bullet for PDF */}
+                  <Text style={styles.competencyText}>{truncateText(getFieldValue(item), 40)}</Text>
                 </View>
               ))}
             </View>
