@@ -253,3 +253,12 @@ export function generateManagementResume(baseResumeData: ResumeData): { resumeDa
   
   return generateCustomizedResume(baseResumeData, jobRequirements, customization);
 } 
+
+// Helper to determine max experience and bullet items based on page count
+export function getMaxItemsForPages(targetPages: number) {
+  // Example: 2 pages = 5 experience, 10 bullets; 1 page = 2 experience, 6 bullets
+  if (targetPages <= 1) return { maxExperience: 2, maxBullets: 6 };
+  if (targetPages === 2) return { maxExperience: 5, maxBullets: 10 };
+  if (targetPages === 3) return { maxExperience: 8, maxBullets: 16 };
+  return { maxExperience: 12, maxBullets: 20 };
+} 

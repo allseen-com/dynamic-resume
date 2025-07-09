@@ -266,6 +266,18 @@ export async function generateAICustomizedResume(
 ): Promise<AICustomizationResponse> {
   const { jobDescription, customPrompt, baseResumeData } = request;
   const companyOrRole = extractCompanyOrRole(jobDescription);
+
+  // Get target page count from localStorage if available (default 2)
+  let targetPages = 2;
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('resumeTargetPages');
+    if (stored) targetPages = Number(stored);
+  }
+
+  // Add bullet and page count instructions to the prompt
+  const bulletInstruction = `\n- Each bullet point must be concise, fit on a single line, and not exceed 50 characters. Do not use ellipsis or truncation.\n- The resume must fit in ${targetPages} A4 pages. Prioritize critical information and summarize or shorten dynamic content as needed.\n`;
+  const effectivePrompt = (customPrompt || '') + bulletInstruction;
+
   try {
     // Create AI service instance
     const aiService = createAIService();
@@ -273,7 +285,7 @@ export async function generateAICustomizedResume(
     const customizedData = await aiService.customizeResume(
       jobDescription,
       baseResumeData,
-      customPrompt
+      effectivePrompt
     );
     // Analyze job description for config generation
     const keywords = extractKeywords(jobDescription);

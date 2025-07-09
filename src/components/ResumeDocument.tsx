@@ -246,12 +246,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Utility to truncate text to a max length and add ellipsis
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 1) + '…';
-}
-
 // Utility function to get value from either string or { value, ... }
 function getFieldValue(field: FlexibleField | string): string {
   if (typeof field === 'object' && field !== null && 'value' in field) {
@@ -351,8 +345,8 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
               {coreCompetenciesArray.map((item: string, i: number) => (
                 <View key={i} style={styles.competencyItem}>
                   <View style={styles.bullet} />
-                  {/* Force single-line, ellipsis-truncated bullet for PDF */}
-                  <Text style={styles.competencyText}>{truncateText(getFieldValue(item), 40)}</Text>
+                  {/* Force single-line bullet for PDF, no truncation */}
+                  <Text style={styles.competencyText}>{getFieldValue(item)}</Text>
                 </View>
               ))}
             </View>

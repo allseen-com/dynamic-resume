@@ -196,7 +196,8 @@ export default function Resume({
               {coreCompetenciesArr.map((item: string, i: number) => (
                 <li key={i} className="flex items-start mb-0.5">
                   <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                  <span className="leading-snug">{getFieldValue(item)}</span>
+                  {/* No truncation, no wrapping, one line only */}
+                  <span className="leading-snug whitespace-nowrap overflow-x-auto block" style={{maxWidth: '95%'}}>{getFieldValue(item)}</span>
                 </li>
               ))}
             </ul>

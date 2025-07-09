@@ -41,6 +41,11 @@ export default function Header() {
                 Resume Archive
               </Link>
             </li>
+            <li>
+              <Link href="/settings" className="block px-6 py-3 hover:bg-blue-50 text-blue-900 font-medium" onClick={() => setMenuOpen(false)}>
+                Settings
+              </Link>
+            </li>
           </ul>
         </nav>
       )}
