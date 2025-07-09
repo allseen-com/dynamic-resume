@@ -93,47 +93,49 @@ export default function ArchivePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-bold mb-6 text-blue-900">Resume Archive</h1>
-      <p className="mb-8 text-gray-600">Access your previously generated resumes, set one as current, or download as PDF or JSON.</p>
-      {archive.length === 0 ? (
-        <div className="text-gray-500">No archived resumes found.</div>
-      ) : (
-        <div className="space-y-6">
-          {archive.map((item, idx) => (
-            <div key={idx} className="border rounded-lg p-5 flex flex-col gap-2 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="font-semibold text-blue-900 flex-1 text-lg">{item.label}</span>
-                <span className="text-xs text-gray-400">{new Date(item.date).toLocaleString()}</span>
-                {item.isCurrent ? (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Current</span>
-                ) : (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-3xl mx-auto py-10 px-4">
+        <h1 className="text-2xl font-bold mb-6 text-blue-900">Resume Archive</h1>
+        <p className="mb-8 text-gray-600">Access your previously generated resumes, set one as current, or download as PDF or JSON.</p>
+        {archive.length === 0 ? (
+          <div className="text-gray-500">No archived resumes found.</div>
+        ) : (
+          <div className="space-y-6">
+            {archive.map((item, idx) => (
+              <div key={idx} className="border rounded-lg p-5 flex flex-col gap-2 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-semibold text-blue-900 flex-1 text-lg">{item.label}</span>
+                  <span className="text-xs text-gray-400">{new Date(item.date).toLocaleString()}</span>
+                  {item.isCurrent ? (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Current</span>
+                  ) : (
+                    <button
+                      onClick={() => setAsCurrent(idx)}
+                      className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                    >
+                      Set as Current
+                    </button>
+                  )}
                   <button
-                    onClick={() => setAsCurrent(idx)}
-                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                    onClick={() => downloadResume(item)}
+                    className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 ml-2 transition-colors"
                   >
-                    Set as Current
+                    Download JSON
                   </button>
-                )}
-                <button
-                  onClick={() => downloadResume(item)}
-                  className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 ml-2 transition-colors"
-                >
-                  Download JSON
-                </button>
-                <button
-                  onClick={() => downloadPDF(item, idx)}
-                  className={`px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 ml-2 transition-colors ${pdfLoadingIdx === idx ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  disabled={pdfLoadingIdx === idx}
-                >
-                  {pdfLoadingIdx === idx ? 'Generating PDF...' : 'Download PDF'}
-                </button>
+                  <button
+                    onClick={() => downloadPDF(item, idx)}
+                    className={`px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 ml-2 transition-colors ${pdfLoadingIdx === idx ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    disabled={pdfLoadingIdx === idx}
+                  >
+                    {pdfLoadingIdx === idx ? 'Generating PDF...' : 'Download PDF'}
+                  </button>
+                </div>
+                <JobDescription data={item.data} />
               </div>
-              <JobDescription data={item.data} />
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 } 
