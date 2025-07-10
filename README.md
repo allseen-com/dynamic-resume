@@ -115,6 +115,7 @@ npm run build
 npm start
 ```
 
+Fonts are provided locally in `public/fonts`. `FontManager` loads these fonts for PDF generation so no external downloads are needed.
 ## 📱 Application Pages
 
 ### `/apply` - AI Resume Customization
@@ -206,6 +207,7 @@ Analyze this job description and adapt the resume to emphasize:
 ## 🚀 Deployment
 
 Optimized for deployment on Vercel and other serverless platforms. The AI-powered PDF generation works without additional configuration.
+Fonts for PDF generation are included in `public/fonts` and loaded by `FontManager`, so no external font downloads are required during deployment.
 
 ## 🔮 Future Enhancements
 

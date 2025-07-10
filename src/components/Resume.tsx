@@ -42,6 +42,7 @@ type FlexibleResumeData = {
 interface ResumeProps {
   resumeData: FlexibleResumeData | ResumeData;
   config?: ResumeConfig;
+  sectionOrder?: string[];
   onDownloadPDF?: () => void;
   showDownloadButton?: boolean;
   isGenerating?: boolean;
@@ -105,9 +106,10 @@ function convertToFlexibleResumeData(data: ResumeData | FlexibleResumeData): Fle
   } as FlexibleResumeData;
 }
 
-export default function Resume({ 
-  resumeData: inputResumeData, 
-  config = defaultResumeConfig, 
+export default function Resume({
+  resumeData: inputResumeData,
+  config = defaultResumeConfig,
+  sectionOrder,
   onDownloadPDF,
   showDownloadButton = true,
   isGenerating = false,
@@ -115,6 +117,15 @@ export default function Resume({
 }: ResumeProps) {
   // Convert the input data to FlexibleResumeData format
   const resumeData = convertToFlexibleResumeData(inputResumeData);
+
+  const order = sectionOrder ?? [
+    'summary',
+    'coreCompetencies',
+    'technicalProficiency',
+    'professionalExperience',
+    'education',
+    'certifications'
+  ];
 
   // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
   const coreCompetenciesArr = getArrayValue(resumeData.coreCompetencies);
@@ -137,6 +148,145 @@ export default function Resume({
       ...tech.marketingAds.map(getFieldValue)
     ];
     return allSkills.join(', ') + '.';
+  };
+
+  const renderSection = (name: string) => {
+    switch (name) {
+      case 'summary':
+        return (
+          <section
+            key="summary"
+            className={`mb-3.5${
+              highlightSections.includes('summary')
+                ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500'
+                : ''
+            }`}
+          >
+            <h2 className="section-header text-[16px]">Career Summary</h2>
+            <p className="text-[12px] leading-relaxed text-justify">
+              {getFieldValue(resumeData.summary)}
+            </p>
+          </section>
+        );
+      case 'coreCompetencies':
+        return (
+          config.sections.showCoreCompetencies && (
+            <section
+              key="coreCompetencies"
+              className={`mb-3.5${
+                highlightSections.includes('coreCompetencies')
+                  ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500'
+                  : ''
+              }`}
+            >
+              <h2 className="section-header text-[16px]">Core Competencies</h2>
+              <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
+                {coreCompetenciesArr.map((item: string, i: number) => (
+                  <li key={i} className="flex items-start mb-0.5">
+                    <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
+                    <span className="leading-snug whitespace-nowrap overflow-x-auto block" style={{ maxWidth: '95%' }}>
+                      {getFieldValue(item)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        );
+      case 'technicalProficiency':
+        return (
+          config.sections.showTechnicalProficiency && (
+            <section
+              key="technicalProficiency"
+              className={`mb-5${
+                highlightSections.includes('technicalProficiency')
+                  ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500'
+                  : ''
+              }`}
+            >
+              <h2 className="section-header">Technical Proficiency</h2>
+              <div className="text-base font-normal leading-relaxed">
+                {generateTechnicalProficiencyText()}
+              </div>
+            </section>
+          )
+        );
+      case 'professionalExperience':
+        return (
+          config.sections.showProfessionalExperience && (
+            <section
+              key="professionalExperience"
+              className={`mb-5${
+                highlightSections.includes('professionalExperience')
+                  ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500'
+                  : ''
+              }`}
+            >
+              <h2 className="section-header">Professional Experience</h2>
+              {resumeData.professionalExperience.map((role, i) => {
+                const hasDescription =
+                  getFieldValue(role.description) &&
+                  getFieldValue(role.description).trim();
+                return (
+                  <div key={i} className={`${hasDescription ? 'mb-4' : 'mb-2'}`}>
+                    <div className="flex justify-between items-start mb-0.5">
+                      <span className="text-xs font-bold underline underline-offset-1 flex-1">
+                        {getFieldValue(role.company)}
+                      </span>
+                      <span className="text-xs font-bold text-gray-700 ml-2">
+                        {getFieldValue(role.dateRange)}
+                      </span>
+                    </div>
+                    <div className="font-bold text-xs text-blue-900 leading-tight mb-0.5">
+                      {getFieldValue(role.title)}
+                    </div>
+                    {hasDescription && (
+                      <div className="text-xs whitespace-pre-line leading-relaxed text-justify mt-1">
+                        {getFieldValue(role.description)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </section>
+          )
+        );
+      case 'education':
+        return (
+          config.sections.showEducation && (
+            <section key="education" className="mb-5">
+              <h2 className="section-header">Education</h2>
+              {educationArray.map((edu: { school: string; dateRange: string; degree: string }, i: number) => (
+                <div key={i} className="mb-1.5">
+                  <div className="flex justify-between items-start text-xs font-bold mb-0.5">
+                    <span className="flex-1">{getFieldValue(edu.school)}</span>
+                    <span className="text-gray-700 ml-2">{getFieldValue(edu.dateRange)}</span>
+                  </div>
+                  <div className="text-xs text-gray-700 leading-snug">{getFieldValue(edu.degree)}</div>
+                </div>
+              ))}
+            </section>
+          )
+        );
+      case 'certifications':
+        return (
+          config.sections.showCertifications && (
+            <section key="certifications">
+              <h2 className="section-header">Certifications</h2>
+              <ul className="text-xs ml-3">
+                {certificationsArray.map((cert: string, i: number) => (
+                  <li key={i} className="flex items-start mb-0.5">
+                    <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
+                    <span className="leading-snug">{getFieldValue(cert)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -182,92 +332,7 @@ export default function Resume({
           </div>
         </div>
 
-        {/* Summary */}
-        <section className={`mb-3.5${highlightSections.includes('summary') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-          <h2 className="section-header text-[16px]">Career Summary</h2>
-          <p className="text-[12px] leading-relaxed text-justify">{getFieldValue(resumeData.summary)}</p>
-        </section>
-
-        {/* Core Competencies */}
-        {config.sections.showCoreCompetencies && (
-          <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header text-[16px]">Core Competencies</h2>
-            <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
-              {coreCompetenciesArr.map((item: string, i: number) => (
-                <li key={i} className="flex items-start mb-0.5">
-                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                  {/* No truncation, no wrapping, one line only */}
-                  <span className="leading-snug whitespace-nowrap overflow-x-auto block" style={{maxWidth: '95%'}}>{getFieldValue(item)}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Technical Proficiency - Now Dynamic */}
-        {config.sections.showTechnicalProficiency && (
-          <section className={`mb-5${highlightSections.includes('technicalProficiency') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header">Technical Proficiency</h2>
-            <div className="text-base font-normal leading-relaxed">
-              {generateTechnicalProficiencyText()}
-            </div>
-          </section>
-        )}
-
-        {/* Professional Experience */}
-        {config.sections.showProfessionalExperience && (
-          <section className={`mb-5${highlightSections.includes('professionalExperience') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header">Professional Experience</h2>
-            {resumeData.professionalExperience.map((role, i) => {
-              const hasDescription = getFieldValue(role.description) && getFieldValue(role.description).trim();
-              return (
-                <div key={i} className={`${hasDescription ? 'mb-4' : 'mb-2'}`}>
-                  <div className="flex justify-between items-start mb-0.5">
-                    <span className="text-xs font-bold underline underline-offset-1 flex-1">{getFieldValue(role.company)}</span>
-                    <span className="text-xs font-bold text-gray-700 ml-2">{getFieldValue(role.dateRange)}</span>
-                  </div>
-                  <div className="font-bold text-xs text-blue-900 leading-tight mb-0.5">{getFieldValue(role.title)}</div>
-                  {hasDescription && (
-                    <div className="text-xs whitespace-pre-line leading-relaxed text-justify mt-1">
-                      {getFieldValue(role.description)}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </section>
-        )}
-
-        {/* Education - Fixed to handle both array and object structures */}
-        {config.sections.showEducation && (
-          <section className="mb-5">
-            <h2 className="section-header">Education</h2>
-            {educationArray.map((edu: { school: string; dateRange: string; degree: string }, i: number) => (
-              <div key={i} className="mb-1.5">
-                <div className="flex justify-between items-start text-xs font-bold mb-0.5">
-                  <span className="flex-1">{getFieldValue(edu.school)}</span>
-                  <span className="text-gray-700 ml-2">{getFieldValue(edu.dateRange)}</span>
-                </div>
-                <div className="text-xs text-gray-700 leading-snug">{getFieldValue(edu.degree)}</div>
-              </div>
-            ))}
-          </section>
-        )}
-
-        {/* Certifications - Fixed to handle both array and object structures */}
-        {config.sections.showCertifications && (
-          <section>
-            <h2 className="section-header">Certifications</h2>
-            <ul className="text-xs ml-3">
-              {certificationsArray.map((cert: string, i: number) => (
-                <li key={i} className="flex items-start mb-0.5">
-                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                  <span className="leading-snug">{getFieldValue(cert)}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        {order.map((section) => renderSection(section))}
       </main>
     </div>
   );
