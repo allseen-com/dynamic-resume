@@ -116,8 +116,6 @@ npm start
 ```
 
 Fonts are provided locally in `public/fonts`. `FontManager` loads these fonts for PDF generation so no external downloads are needed.
-
-
 ## 📱 Application Pages
 
 ### `/apply` - AI Resume Customization

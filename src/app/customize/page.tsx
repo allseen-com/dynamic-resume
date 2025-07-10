@@ -1,6 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import SortableItem from "../../components/SortableItem";
 import Resume from "../../components/Resume";
 import { ResumeData, ResumeConfig } from "../../types/resume";
 import { generateAICustomizedResume } from "../../utils/aiResumeGenerator";
@@ -60,6 +74,16 @@ export default function CustomizePage() {
   const [archiveLabel, setArchiveLabel] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [highlightSections, setHighlightSections] = useState<string[]>([]);
+  const defaultSectionOrder = [
+    "summary",
+    "coreCompetencies",
+    "technicalProficiency",
+    "professionalExperience",
+    "education",
+    "certifications",
+  ];
+  const [sectionOrder, setSectionOrder] = useState<string[]>(defaultSectionOrder);
+  const sensors = useSensors(useSensor(PointerSensor));
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -68,6 +92,13 @@ export default function CustomizePage() {
     if (typeof window !== "undefined") {
       const stored = JSON.parse(localStorage.getItem("resumeArchive") || "[]");
       setArchive(stored);
+      const savedOrder = localStorage.getItem("sectionOrder");
+      if (savedOrder) {
+        try {
+          const parsed = JSON.parse(savedOrder);
+          if (Array.isArray(parsed)) setSectionOrder(parsed);
+        } catch {}
+      }
     }
   }, []);
 
@@ -197,6 +228,19 @@ export default function CustomizePage() {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = sectionOrder.indexOf(active.id as string);
+      const newIndex = sectionOrder.indexOf(over.id as string);
+      const newOrder = arrayMove(sectionOrder, oldIndex, newIndex);
+      setSectionOrder(newOrder);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sectionOrder", JSON.stringify(newOrder));
+      }
+    }
+  };
+
   const resetToDefault = () => {
     setCustomizedResumeData(resumeData as ResumeData);
     setCustomizedConfig({
@@ -218,6 +262,10 @@ export default function CustomizePage() {
     setLoadingType(null);
     setAiPrompt(getDefaultPrompt());
     setSelectedTemplate("general");
+    setSectionOrder(defaultSectionOrder);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("sectionOrder");
+    }
   };
 
   if (!isClient) {
@@ -238,9 +286,9 @@ export default function CustomizePage() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Left Panel - Input Controls */}
-          <div className="space-y-6">
+          <div className="space-y-6 xl:col-span-2">
             {/* Job Description Input */}
             <div className="bg-white rounded-lg shadow-sm p-6 relative">
               <h2 className="text-xl font-semibold mb-4">Job Description</h2>
@@ -395,6 +443,22 @@ export default function CustomizePage() {
                 </div>
               )}
             </div>
+            {/* Section Order */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-4">Section Order</h2>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
+                  {sectionOrder.map((id) => (
+                    <SortableItem key={id} id={id}>
+                      <div className="flex items-center gap-2 p-2 border rounded mb-2 cursor-grab bg-gray-50">
+                        <span className="flex-1 capitalize">{id}</span>
+                        <span className="text-gray-400">☰</span>
+                      </div>
+                    </SortableItem>
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </div>
             {/* Error Display */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -413,7 +477,7 @@ export default function CustomizePage() {
             )}
           </div>
           {/* Right Panel - Resume Preview */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden relative">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden relative xl:col-span-1">
             <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
@@ -435,6 +499,7 @@ export default function CustomizePage() {
               <Resume
                 resumeData={customizedResumeData}
                 config={customizedConfig}
+                sectionOrder={sectionOrder}
                 showDownloadButton={false}
                 isGenerating={isGenerating}
                 highlightSections={highlightSections}
