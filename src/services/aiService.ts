@@ -1,5 +1,10 @@
 import { ResumeData } from '../types/resume';
 import { handleError } from '../utils/errorHandler';
+import {
+  calculateSummaryWordCount,
+  calculateExperienceWordCounts,
+  getWordCountStats
+} from '../utils/wordCountUtils';
 
 export interface AIProvider {
   name: string;
@@ -212,46 +217,6 @@ export class AIService {
     }
   }
 
-  async customizeResume(
-    jobDescription: string,
-    baseResumeData: ResumeData,
-    customPrompt?: string
-  ): Promise<ResumeData> {
-    const prompt = customPrompt || this.getDefaultPrompt();
-    
-    const fullPrompt = `${prompt}
-
-Job Description:
-${jobDescription}
-
-Base Resume Data:
-${JSON.stringify(baseResumeData, null, 2)}
-
-Please return ONLY a valid JSON object with the customized resume data. Modify only fields marked with "_dynamic": true. Keep all other fields exactly as they are.`;
-
-    try {
-      const response = await this.provider.generateResponse(fullPrompt);
-      
-      // Try to extract JSON from the response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No valid JSON found in AI response');
-      }
-      
-      const customizedData = JSON.parse(jsonMatch[0]);
-      
-      // Validate that the response has the expected structure
-      if (!customizedData.header || !customizedData.summary || !customizedData.coreCompetencies) {
-        throw new Error('Invalid resume data structure in AI response');
-      }
-      
-      return customizedData as ResumeData;
-    } catch (error) {
-      const appError = handleError.ai(error);
-      throw new Error(appError.userMessage);
-    }
-  }
-
   private getDefaultPrompt(): string {
     return `Analyze the following job description and adapt the resume to match the requirements:
 
@@ -269,6 +234,85 @@ Focus on:
 - Maintaining professional tone
 - Ensuring ATS compatibility
 - Preserving accuracy and truthfulness`;
+  }
+
+  private getWordCountConstraints(baseResumeData: ResumeData): string {
+    const summaryWordCount = calculateSummaryWordCount(baseResumeData);
+    const experienceWordCounts = calculateExperienceWordCounts(baseResumeData);
+    
+    let constraints = `\nWORD COUNT CONSTRAINTS - STRICTLY FOLLOW THESE LIMITS:\n`;
+    constraints += `- Professional Summary: Maximum ${summaryWordCount} words (currently ${summaryWordCount} words)\n`;
+    
+    if (baseResumeData.professionalExperience && Array.isArray(baseResumeData.professionalExperience)) {
+      baseResumeData.professionalExperience.forEach((experience: ResumeData['professionalExperience'][0], index: number) => {
+        const currentWordCount = experienceWordCounts[`experience_${index}`] || 0;
+        constraints += `- Experience ${index + 1} (${experience.company}): Maximum ${currentWordCount} words (currently ${currentWordCount} words)\n`;
+      });
+    }
+    
+    constraints += `\nIMPORTANT: You MUST NOT exceed these word counts for any section. Do NOT truncate. Instead, REWRITE and SUMMARIZE the content so it fits within the word limit while remaining complete and professional. If you exceed the word count, your response will be rejected.\n`;
+    constraints += `\nDo not use ellipsis or incomplete sentences. Each section must be a complete, well-written summary within the specified word count.\n`;
+    
+    return constraints;
+  }
+
+  async customizeResume(
+    jobDescription: string,
+    baseResumeData: ResumeData,
+    customPrompt?: string
+  ): Promise<ResumeData> {
+    const prompt = customPrompt || this.getDefaultPrompt();
+    
+    // Add word count constraints to the prompt
+    const wordCountConstraints = this.getWordCountConstraints(baseResumeData);
+    
+    const fullPrompt = `${prompt}\n\n${wordCountConstraints}\n\nJob Description:\n${jobDescription}\n\nBase Resume Data:\n${JSON.stringify(baseResumeData, null, 2)}\n\nPlease return ONLY a valid JSON object with the customized resume data. Modify only fields marked with "_dynamic": true. Keep all other fields exactly as they are.`;
+
+    try {
+      const response = await this.provider.generateResponse(fullPrompt);
+      
+      // Try to extract JSON from the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in AI response');
+      }
+      
+      const customizedData = JSON.parse(jsonMatch[0]);
+      
+      // Validate that the response has the expected structure
+      if (!customizedData.header || !customizedData.summary || !customizedData.coreCompetencies) {
+        throw new Error('Invalid resume data structure in AI response');
+      }
+      
+      // Check word count limits (no truncation)
+      const summaryWordCount = calculateSummaryWordCount(baseResumeData);
+      const experienceWordCounts = calculateExperienceWordCounts(baseResumeData);
+      const summaryWordCountAI = calculateSummaryWordCount(customizedData);
+      if (summaryWordCountAI > summaryWordCount) {
+        throw new Error(`AI-generated summary exceeds word count limit (${summaryWordCountAI} > ${summaryWordCount})`);
+      }
+      const aiExperienceWordCounts = calculateExperienceWordCounts(customizedData);
+      for (const key in aiExperienceWordCounts) {
+        if (Object.prototype.hasOwnProperty.call(aiExperienceWordCounts, key)) {
+          const idx = parseInt(key.split('_')[1], 10);
+          const max = experienceWordCounts[key] || 0;
+          if (aiExperienceWordCounts[key] > max) {
+            throw new Error(`AI-generated experience section ${idx + 1} exceeds word count limit (${aiExperienceWordCounts[key]} > ${max})`);
+          }
+        }
+      }
+      
+      // Log word count statistics for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        const stats = getWordCountStats(baseResumeData, customizedData);
+        console.log('Word count statistics:', stats);
+      }
+      
+      return customizedData as ResumeData;
+    } catch (error) {
+      const appError = handleError.ai(error);
+      throw new Error(appError.userMessage);
+    }
   }
 
   getProviderName(): string {

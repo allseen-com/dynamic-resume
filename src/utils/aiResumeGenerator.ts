@@ -1,5 +1,6 @@
 import { ResumeData, ResumeConfig } from '../types/resume';
 import { createAIService } from '../services/aiService';
+import { getWordCountStats } from './wordCountUtils';
 
 export interface AICustomizationRequest {
   jobDescription: string;
@@ -291,10 +292,18 @@ export async function generateAICustomizedResume(
     const keywords = extractKeywords(jobDescription);
     const requirements = analyzeRequirements(jobDescription);
     const customizedConfig = generateCustomConfig(keywords, requirements);
+    
+    // Get word count statistics for reasoning
+    const wordCountStats = getWordCountStats(baseResumeData, customizedData);
+    const summaryInfo = `Summary: ${wordCountStats.summary.original}→${wordCountStats.summary.limited} words`;
+    const experienceInfo = wordCountStats.experiences.map((exp, i) => 
+      `Exp${i+1}: ${exp.original}→${exp.limited} words`
+    ).join(', ');
+    
     return {
       resumeData: customizedData,
       config: customizedConfig,
-      reasoning: `Resume customized using ${aiService.getProviderName()} based on job requirements`,
+      reasoning: `Resume customized using ${aiService.getProviderName()} based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
       companyOrRole // Return extracted value
     };
   } catch (error) {
@@ -304,10 +313,18 @@ export async function generateAICustomizedResume(
     const requirements = analyzeRequirements(jobDescription);
     const customizedData = await customizeResumeData(baseResumeData, keywords, requirements);
     const customizedConfig = generateCustomConfig(keywords, requirements);
+    
+    // Get word count statistics for reasoning
+    const wordCountStats = getWordCountStats(baseResumeData, customizedData);
+    const summaryInfo = `Summary: ${wordCountStats.summary.original}→${wordCountStats.summary.limited} words`;
+    const experienceInfo = wordCountStats.experiences.map((exp, i) => 
+      `Exp${i+1}: ${exp.original}→${exp.limited} words`
+    ).join(', ');
+    
     return {
       resumeData: customizedData,
       config: customizedConfig,
-      reasoning: `Fallback customization based on ${keywords.length} key requirements (AI service unavailable)`,
+      reasoning: `Fallback customization based on ${keywords.length} key requirements (AI service unavailable). Word counts: ${summaryInfo}; ${experienceInfo}`,
       companyOrRole // Return extracted value
     };
   }
