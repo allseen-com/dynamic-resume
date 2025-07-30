@@ -51,7 +51,6 @@ type FlexibleResumeData = {
 interface ResumeDocumentProps {
   resumeData?: FlexibleResumeData;
   config?: ResumeConfig;
-  template?: string;
 }
 
 // Register Lato fonts with absolute paths
@@ -279,7 +278,7 @@ function getEducationArray(field: any): any[] {
   return [];
 }
 
-export default function ResumeDocument({ resumeData, config, template }: ResumeDocumentProps) {
+export default function ResumeDocument({ resumeData, config }: ResumeDocumentProps) {
   // If no resume data is provided, use default data
   const data: FlexibleResumeData = resumeData || defaultResumeData;
 

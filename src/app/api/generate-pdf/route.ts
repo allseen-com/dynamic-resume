@@ -165,8 +165,7 @@ export async function POST(request: Request) {
     const pdfStream = await renderToStream(
       React.createElement(ResumeDocument, { 
         resumeData, 
-        config: finalConfig || config,
-        template // Pass template for potential layout optimizations
+        config: finalConfig || config
       })
     );
 
