@@ -163,10 +163,11 @@ export async function POST(request: Request) {
     
     // Generate the PDF as a Node.js ReadableStream
     const pdfStream = await renderToStream(
-      React.createElement(ResumeDocument, { 
-        resumeData, 
-        config: finalConfig || config
-      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <ResumeDocument 
+        resumeData={resumeData} 
+        config={finalConfig || config}
+      /> as any
     );
 
     // Set headers for download
