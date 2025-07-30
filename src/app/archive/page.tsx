@@ -17,9 +17,9 @@ function hasJobDescription(data: ResumeData): data is ResumeData & { jobDescript
 function JobDescription({ data }: { data: ResumeData }) {
   if (hasJobDescription(data)) {
     return (
-      <div className="text-xs text-gray-700 mt-2">
-        <span className="font-semibold">Job Description:</span>
-        <pre className="whitespace-pre-wrap bg-gray-50 p-2 rounded mt-1">{data.jobDescription}</pre>
+      <div className="mt-4 pt-4 border-t border-slate-200">
+        <span className="text-sm font-medium text-slate-700 block mb-2">Job Description:</span>
+        <pre className="whitespace-pre-wrap bg-slate-50 p-3 rounded-lg text-xs text-slate-600 max-h-32 overflow-y-auto">{data.jobDescription}</pre>
       </div>
     );
   }
@@ -89,47 +89,69 @@ export default function ArchivePage() {
   };
 
   if (!isClient) {
-    return <div className="min-h-screen bg-gray-100" />;
+    return <div className="min-h-screen bg-slate-50" />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto py-10 px-4">
-        <h1 className="text-2xl font-bold mb-6 text-blue-900">Resume Archive</h1>
-        <p className="mb-8 text-gray-600">Access your previously generated resumes, set one as current, or download as PDF or JSON.</p>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-3 text-slate-900">Resume Archive</h1>
+          <p className="text-slate-600">Access your previously generated resumes, set one as current, or download as PDF or JSON.</p>
+        </div>
         {archive.length === 0 ? (
-          <div className="text-gray-500">No archived resumes found.</div>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">📁</span>
+            </div>
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No archived resumes found</h3>
+            <p className="text-slate-500">Start optimizing your resume to build your archive.</p>
+          </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {archive.map((item, idx) => (
-              <div key={idx} className="border rounded-lg p-5 flex flex-col gap-2 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-semibold text-blue-900 flex-1 text-lg">{item.label}</span>
-                  <span className="text-xs text-gray-400">{new Date(item.date).toLocaleString()}</span>
-                  {item.isCurrent ? (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Current</span>
-                  ) : (
-                    <button
-                      onClick={() => setAsCurrent(idx)}
-                      className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
-                    >
-                      Set as Current
-                    </button>
-                  )}
+              <div key={idx} className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-all duration-200 hover:border-slate-300">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-900 text-lg mb-1">{item.label}</h3>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <span>{new Date(item.date).toLocaleDateString()}</span>
+                      <span>•</span>
+                      <span>{new Date(item.date).toLocaleTimeString()}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.isCurrent ? (
+                      <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium">Current</span>
+                    ) : (
+                      <button
+                        onClick={() => setAsCurrent(idx)}
+                        className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                      >
+                        Set as Current
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => downloadResume(item)}
-                    className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 ml-2 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
                   >
+                    <span>📄</span>
                     Download JSON
                   </button>
                   <button
                     onClick={() => downloadPDF(item, idx)}
-                    className={`px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 ml-2 transition-colors ${pdfLoadingIdx === idx ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors ${pdfLoadingIdx === idx ? 'opacity-60 cursor-not-allowed' : ''}`}
                     disabled={pdfLoadingIdx === idx}
                   >
+                    <span>📊</span>
                     {pdfLoadingIdx === idx ? 'Generating PDF...' : 'Download PDF'}
                   </button>
                 </div>
+                
                 <JobDescription data={item.data} />
               </div>
             ))}

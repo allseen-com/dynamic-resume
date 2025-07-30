@@ -107,7 +107,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Parse custom resume data from POST body
-    const { resumeData, config, jobDescription, filename } = await request.json();
+    const { resumeData, config, template, jobDescription, filename } = await request.json();
     
     // Initialize and verify fonts
     const fontResult = await ensureFontsLoaded();
@@ -128,15 +128,47 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`Fonts verified (${fontResult.availableFonts.length} fonts loaded), generating custom PDF...`);
+    console.log(`Fonts verified (${fontResult.availableFonts.length} fonts loaded), generating template-aware PDF...`);
     
-    // Use provided filename or fallback
-    const safeFilename = filename && typeof filename === 'string' ? filename : (jobDescription ? 'AI-Customized-Resume.pdf' : 'Custom-Resume.pdf');
+    // Generate appropriate config based on template if provided
+    let finalConfig = config;
+    if (template && !config) {
+      // Convert template to ResumeConfig format
+      finalConfig = {
+        titleBar: {
+          main: template.name,
+          sub: template.description
+        },
+        sections: {
+          showTechnicalProficiency: template.constraints.layout.showTechnicalProficiency ?? true,
+          showCoreCompetencies: true,
+          showProfessionalExperience: true,
+          showEducation: true,
+          showCertifications: true,
+        }
+      };
+    }
+    
+    // Use provided filename or generate based on template
+    let safeFilename = filename;
+    if (!safeFilename) {
+      if (template) {
+        safeFilename = `Resume-${template.name.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
+      } else if (jobDescription) {
+        safeFilename = 'AI-Customized-Resume.pdf';
+      } else {
+        safeFilename = 'Custom-Resume.pdf';
+      }
+    }
     
     // Generate the PDF as a Node.js ReadableStream
     const pdfStream = await renderToStream(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      React.createElement(ResumeDocument, { resumeData, config }) as any
+      React.createElement(ResumeDocument, { 
+        resumeData, 
+        config: finalConfig || config,
+        template // Pass template for potential layout optimizations
+      }) as any
     );
 
     // Set headers for download

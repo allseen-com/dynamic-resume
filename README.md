@@ -1,39 +1,44 @@
-# Dynamic Resume - AI-Powered Resume Customization
+# Dynamic Resume - AI-Powered Resume Optimization
 
-A Next.js application that generates **AI-customized, ATS-friendly PDF resumes** using React PDF Renderer with **intelligent content adaptation** based on job descriptions and requirements.
+**Version 0.1.0** - A streamlined Next.js application that generates **AI-optimized, ATS-friendly PDF resumes** with intelligent template-aware content adaptation based on job descriptions.
 
 ## 🚀 Key Features
 
-- **🤖 AI-Powered Resume Customization**: Automatically adapt your resume content to match specific job requirements
-- **📄 Job Description Analysis**: Paste job descriptions or URLs to automatically tailor your resume
-- **✏️ Editable AI Prompts**: Customize the AI logic to match your preferences and industry
-- **🎯 Dynamic Content Replacement**: Smart replacement of dynamic fields while preserving static information
-- **📱 Real-time Preview**: See your customized resume update live as you input job requirements
-- **📄 ATS-Friendly PDF Generation**: Uses `@react-pdf/renderer` for optimal ATS (Applicant Tracking System) compatibility
-- **🔄 Multiple Resume Variants**: Generate different versions for different job applications
-- **⚡ Serverless Ready**: No headless browser dependencies, perfect for serverless deployments
+- **🎯 One-Page Optimization Hub**: Streamlined interface for quick resume optimization
+- **🤖 Template-Aware AI**: Smart optimization that respects template constraints and page limits
+- **📄 Job Description Analysis**: Paste job descriptions to automatically tailor your resume
+- **📋 Multiple Resume Templates**: Choose from professional templates with different layouts and constraints
+- **📱 Real-time Preview**: See your optimized resume update live as you make changes
+- **📄 ATS-Friendly PDF Generation**: Uses `@react-pdf/renderer` for optimal ATS compatibility
+- **🗂️ Resume Archive**: Save and manage multiple optimized versions
+- **⚡ Modern UI**: Clean, minimal design with consistent color scheme and typography
 
 ## 🎯 How It Works
 
-### 1. **AI-Powered Apply Page** (`/apply`)
-- **Job Description Input**: Paste job description text or provide a URL
-- **AI Prompt Customization**: Edit the AI prompt to control how your resume is adapted
-- **Dynamic Field Replacement**: AI analyzes job requirements and updates dynamic fields
-- **Live Preview**: See your customized resume in real-time
-- **One-Click PDF**: Generate and download your tailored resume
+### 1. **Main Optimization Hub** (`/`)
+Our redesigned homepage provides a complete optimization workflow:
+- **Step 1**: Paste job description text
+- **Step 2**: Select from available resume templates (2-3 page options)
+- **Step 3**: AI optimization with real-time feedback
+- **Step 4**: Save to archive and download PDF
 
-### 2. **Resume Templates** (`/templates`)
-- View pre-made resume types: Marketing, Technical, Data Analysis, Management
-- Compare different approaches to resume customization
-- Download template-based PDFs
+### 2. **Template System**
+Choose from professionally designed templates:
+- **Professional Template**: 2-page format emphasizing experience
+- **Technical Template**: 2-page format highlighting technical skills
+- **Compact Template**: 2-page format for concise presentation
+- Each template has specific constraints and word limits for optimal ATS compatibility
 
-### 3. **Smart Content Adaptation**
-The AI analyzes job descriptions and intelligently updates:
-- **Core Competencies**: Prioritizes relevant skills
-- **Technical Proficiency**: Highlights matching technologies
-- **Professional Experience**: Emphasizes relevant experience
-- **Summary**: Adapts career summary to match role requirements
-- **Title Bar**: Creates role-specific professional titles
+### 3. **Smart Archive Management** (`/archive`)
+- **Version Control**: Save multiple optimized versions with custom labels
+- **Quick Access**: Load previous versions instantly
+- **Export Options**: Download as PDF or JSON for backup
+
+### 4. **Advanced Customization** (`/customize`)
+For power users who need fine-grained control:
+- **Custom AI Prompts**: Edit AI instructions for specific industries
+- **URL Extraction**: Automatically extract job descriptions from job posting URLs
+- **Prompt Templates**: Pre-configured prompts for different job types
 
 ## 🧠 AI Integration
 
@@ -62,106 +67,129 @@ Users can edit the AI prompt to control:
 
 ## 🛠 Technology Stack
 
-- **Next.js 15**: React framework with App Router
-- **@react-pdf/renderer**: PDF generation library
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first CSS framework
-- **AI Integration**: Ready for OpenAI, Anthropic, or local LLM integration
+- **Next.js 15**: React framework with App Router and TypeScript
+- **@react-pdf/renderer**: PDF generation library for ATS-friendly documents  
+- **Tailwind CSS 4**: Modern utility-first CSS framework with custom design system
+- **React 19**: Latest React with enhanced performance
+- **AI Integration**: Compatible with OpenAI, Anthropic, or local LLM services
 
-## 📋 Key Benefits Over Traditional Resume Tools
+## 📋 Key Benefits
 
-1. **AI-Powered Customization**: Automatically adapts content to job requirements
-2. **No Manual Editing**: Reduces time spent manually tweaking resumes
-3. **ATS Optimization**: Generates true text-based PDFs with relevant keywords
-4. **Real-time Adaptation**: See changes instantly as you input job requirements
-5. **Consistent Formatting**: Maintains professional appearance across all versions
-6. **Serverless Friendly**: Fast, lightweight, and scalable
+1. **🎯 Streamlined Workflow**: One-page interface for complete resume optimization
+2. **🤖 Template-Aware AI**: Respects page limits and formatting constraints
+3. **⚡ Faster Workflow**: Reduced clicks and simplified navigation
+4. **🎨 Modern Design**: Clean, minimal interface following design best practices
+5. **📱 Better UX**: Consistent colors, typography, and responsive design
+6. **🗂️ Better Organization**: Integrated archive with version management
 
 ## 🔧 API Endpoints
 
-### Generate AI-Customized PDF (POST)
+### Generate PDF (POST)
 ```
 POST /api/generate-pdf
 Content-Type: application/json
 
 {
-  "jobDescription": "Job description text...",
-  "customPrompt": "Custom AI prompt...",
-  "resumeType": "custom"
+  "resumeData": { /* resume data object */ },
+  "template": { /* template configuration */ },
+  "filename": "resume.pdf"
 }
 ```
 
-### Generate Template PDF (GET)
+### Extract URL Content (POST)
 ```
-GET /api/generate-pdf?type={resumeType}
-```
+POST /api/extract-url
+Content-Type: application/json
 
-**Parameters:**
-- `type` (optional): Resume type (`marketing`, `technical`, `data-analysis`, `management`)
+{
+  "url": "https://company.com/job-posting"
+}
+```
 
 ## 🚀 Quick Start
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd dynamic-resume
+
 # Install dependencies
 npm install
+
+# Set up environment variables
+cp .env.example .env
+# Add your AI service API keys
 
 # Run development server
 npm run dev
 
 # Build for production
 npm run build
-
-# Start production server
 npm start
 ```
 
-## 📱 Application Pages
+## 📱 Application Structure
 
-### `/apply` - AI Resume Customization
-- **Job Description Input**: Paste job posting or URL
-- **AI Prompt Editor**: Customize how AI adapts your resume
-- **Live Preview**: Real-time resume updates
-- **PDF Generation**: Download customized resume
+### `/` - Main Optimization Hub
+- **Complete Workflow**: Job description → Template selection → AI optimization → Download
+- **Integrated Archive**: View and load recent optimized versions
+- **Real-time Preview**: See changes as you optimize
 
-### `/templates` - Pre-made Resume Types
-- **Marketing Focus**: Emphasizes growth, SEO, and digital marketing
-- **Technical Focus**: Highlights programming, cloud, and technical skills
-- **Data Analysis**: Focuses on analytics, SQL, and business intelligence
-- **Management Focus**: Emphasizes leadership and strategic planning
+### `/archive` - Resume Archive
+- **Version Management**: All your optimized resume versions in one place
+- **Export Options**: Download as PDF or JSON
+- **Quick Load**: Restore any previous version instantly
 
-### `/` - Homepage
-- Overview of the application
-- Quick access to apply and templates
+### `/customize` - Advanced Customization
+- **Custom AI Prompts**: Fine-tune AI behavior for specific industries
+- **URL Extraction**: Automatically extract job descriptions from URLs
+- **Prompt Templates**: Pre-configured prompts for different job types
+
+### `/settings` - Configuration
+- **Page Limits**: Set target resume page count (1-3 pages)
+- **Data Management**: Clear archive data
+- **Version Info**: Track application updates
 
 ## 🏗 Architecture
 
-### AI-Powered Resume System
+### Streamlined Resume Optimization System
 
 ```
 src/
 ├── app/
-│   ├── apply/              # AI-powered resume customization
-│   ├── templates/          # Pre-made resume templates
-│   └── api/generate-pdf/   # PDF generation with AI support
+│   ├── page.tsx            # Main optimization hub
+│   ├── archive/            # Resume archive management
+│   ├── customize/          # Advanced customization with URL extraction
+│   ├── settings/           # User preferences and data management
+│   └── api/
+│       ├── generate-pdf/   # PDF generation with template support
+│       └── extract-url/    # Job posting URL extraction
 ├── components/
-│   ├── Resume.tsx          # Web resume component
-│   ├── ResumeDocument.tsx  # PDF resume component
-│   └── ApplyForm.tsx       # Job description and AI prompt interface
+│   ├── Header.tsx          # Navigation with burger menu
+│   ├── Resume.tsx          # Web resume preview component
+│   ├── ResumeDocument.tsx  # PDF resume generation component
+│   └── LoadingSpinner.tsx  # Loading states and feedback
 ├── utils/
-│   ├── aiResumeGenerator.ts # AI-powered resume customization
-│   ├── resumeGenerator.ts   # Template-based generation
-│   └── jobDescriptionParser.ts # Job posting analysis
-└── types/
-    └── resume.ts           # Shared interfaces
+│   ├── aiResumeGenerator.ts        # AI optimization logic
+│   ├── templateAwarePrompts.ts     # Template-specific AI prompts
+│   ├── templateAwareAIService.ts   # Template-constrained AI processing
+│   └── errorHandler.ts             # Centralized error handling
+├── types/
+│   ├── resume.ts           # Resume data interfaces
+│   └── template.ts         # Template definitions and constraints
+└── services/
+    ├── aiService.ts        # AI service integration
+    └── urlExtractor.ts     # URL content extraction
 ```
 
-## 🤖 AI Resume Generation Process
+## 🤖 Template-Aware Optimization Process
 
-1. **Job Analysis**: AI analyzes job description for key requirements
-2. **Skill Matching**: Identifies relevant skills from your profile
-3. **Content Adaptation**: Updates dynamic fields while preserving static info
-4. **Keyword Optimization**: Ensures ATS-friendly keyword inclusion
-5. **Professional Formatting**: Maintains consistent, professional appearance
+1. **Template Analysis**: System analyzes selected template constraints (page limits, word counts)
+2. **Content Preprocessing**: Fits mother resume content to template requirements
+3. **Job Analysis**: AI analyzes job description for key requirements and skills
+4. **Smart Optimization**: AI optimizes content while respecting template constraints
+5. **ATS Optimization**: Ensures keyword inclusion and proper formatting
+6. **Quality Assurance**: Validates final output meets all template requirements
 
 ## 📝 Customization
 

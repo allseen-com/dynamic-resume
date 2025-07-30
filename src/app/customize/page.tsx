@@ -221,55 +221,54 @@ export default function CustomizePage() {
   };
 
   if (!isClient) {
-    return <div className="min-h-screen bg-gray-100" />;
+    return <div className="min-h-screen bg-slate-50" />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {showSuccess && (
         <Toast message="Resume updated with AI customization!" onClose={() => setShowSuccess(false)} />
       )}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">AI-Powered Resume Customization</h1>
-          <p className="mt-2 text-gray-600">
-            Paste a job description and let AI adapt your resume to match the requirements
+      
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-3">Advanced Customization</h1>
+          <p className="text-slate-600">
+            Fine-tune your resume with custom AI prompts and advanced URL extraction features.
           </p>
         </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Input Controls */}
           <div className="space-y-6">
             {/* Job Description Input */}
-            <div className="bg-white rounded-lg shadow-sm p-6 relative">
-              <h2 className="text-xl font-semibold mb-4">Job Description</h2>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Job Description</h2>
               <LoadingOverlay isVisible={loadingType === "url"}>
                 <URLExtractionLoader />
               </LoadingOverlay>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Job Posting URL (Optional)
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <input
                     type="url"
                     value={jobUrl}
                     onChange={(e) => setJobUrl(e.target.value)}
                     placeholder="https://company.com/jobs/position"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 placeholder-slate-500"
                   />
                   <button
                     onClick={handleJobUrlExtraction}
                     disabled={isGenerating || !jobUrl.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium transition-colors"
                   >
                     {loadingType === "url" ? "🔄 Extracting..." : "🔗 Extract"}
                   </button>
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Job Description Text
                 </label>
                 <textarea
@@ -277,37 +276,37 @@ export default function CustomizePage() {
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste the job description here..."
                   rows={8}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 placeholder-slate-500"
                 />
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={handleGenerateResume}
                   disabled={isGenerating || !jobDescription.trim()}
-                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
                     isGenerating || !jobDescription.trim()
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-green-600 hover:bg-green-700 text-white"
+                      ? "bg-slate-400 cursor-not-allowed text-white"
+                      : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg"
                   }`}
                 >
                   {loadingType === "ai" ? "🤖 AI Customizing..." : "🤖 Generate Custom Resume"}
                 </button>
                 <button
                   onClick={resetToDefault}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                  className="px-4 py-3 bg-slate-500 text-white rounded-lg hover:bg-slate-600 font-medium transition-colors"
                 >
                   Reset
                 </button>
               </div>
             </div>
             {/* AI Prompt Editor */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold mb-4">AI Prompt Customization</h2>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">AI Prompt Customization</h2>
+              <p className="text-sm text-slate-600 mb-4">
                 Choose a template optimized for your target role, or customize the prompt to control how AI adapts your resume.
               </p>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Prompt Template
                 </label>
                 <select
@@ -319,7 +318,7 @@ export default function CustomizePage() {
                       setAiPrompt(template.prompt);
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900"
                 >
                   {PROMPT_TEMPLATES.map((template) => (
                     <option key={template.id} value={template.id}>
@@ -332,7 +331,7 @@ export default function CustomizePage() {
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
                 rows={12}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm text-black"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm text-slate-900"
               />
               <div className="mt-4 flex gap-2">
                 <button
@@ -342,7 +341,7 @@ export default function CustomizePage() {
                       setAiPrompt(template.prompt);
                     }
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
                 >
                   Reset to Template
                 </button>
@@ -351,29 +350,29 @@ export default function CustomizePage() {
                     setSelectedTemplate("general");
                     setAiPrompt(getDefaultPrompt());
                   }}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                  className="px-4 py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 font-medium transition-colors"
                 >
                   Reset to Default
                 </button>
               </div>
             </div>
             {/* Archive Feature */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold mb-4">Resume Archive</h2>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Resume Archive</h2>
               <div className="flex gap-2 mb-4">
                 <input
                   type="text"
                   value={archiveLabel}
                   onChange={(e) => setArchiveLabel(e.target.value)}
                   placeholder="Label for this version (e.g. 'Google PM', 'Meta Data Analyst')"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                />
-                <button
-                  onClick={saveToArchive}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                >
-                  Save to Archive
-                </button>
+                                      className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 placeholder-slate-500"
+                  />
+                  <button
+                    onClick={saveToArchive}
+                    className="px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
+                  >
+                    Save to Archive
+                  </button>
               </div>
               {archive.length > 0 && (
                 <div className="space-y-2">
@@ -397,7 +396,7 @@ export default function CustomizePage() {
             </div>
             {/* Error Display */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -413,19 +412,19 @@ export default function CustomizePage() {
             )}
           </div>
           {/* Right Panel - Resume Preview */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden relative">
-            <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
-                <p className="text-sm text-gray-600">Your customized resume</p>
+                <h2 className="text-lg font-semibold text-slate-900">Live Preview</h2>
+                <p className="text-sm text-slate-600">Your customized resume</p>
               </div>
               <button
                 onClick={handleDownloadPDF}
                 disabled={isGenerating}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   isGenerating
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-slate-400 cursor-not-allowed text-white"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg"
                 }`}
               >
                 {loadingType === "pdf" ? "🔄 Generating..." : "📄 Download PDF"}
