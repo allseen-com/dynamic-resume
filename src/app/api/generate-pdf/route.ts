@@ -163,10 +163,10 @@ export async function POST(request: Request) {
     
     // Generate the PDF as a Node.js ReadableStream
     const pdfStream = await renderToStream(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       React.createElement(ResumeDocument, { 
         resumeData, 
         config: finalConfig || config
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any
     );
 
