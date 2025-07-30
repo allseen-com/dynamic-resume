@@ -223,10 +223,10 @@ VALIDATION CHECKLIST:
 export function createTemplateAwareAIService(config?: AIServiceConfig): TemplateAwareAIService {
   // Use environment variables or defaults
   const finalConfig: AIServiceConfig = config || {
-    provider: (process.env.NEXT_PUBLIC_AI_PROVIDER as 'openai' | 'anthropic' | 'google' | 'ollama') || 'openai',
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY,
-    model: process.env.NEXT_PUBLIC_AI_MODEL,
-    baseUrl: process.env.NEXT_PUBLIC_AI_BASE_URL
+    provider: (process.env.AI_PROVIDER as 'openai' | 'anthropic' | 'google' | 'ollama') || 'openai',
+    apiKey: process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GOOGLE_AI_API_KEY,
+    model: process.env.OPENAI_MODEL || process.env.ANTHROPIC_MODEL || process.env.GOOGLE_AI_MODEL || process.env.OLLAMA_MODEL,
+    baseUrl: process.env.OLLAMA_BASE_URL
   };
   
   return new TemplateAwareAIService(finalConfig);
