@@ -5,6 +5,8 @@
  * to ensure resumes fit within specified page limits without truncation.
  */
 
+import { ResumeData } from './resume';
+
 export interface TemplateConstraints {
   /** Maximum number of pages (2 or 3) */
   maxPages: 2 | 3;
@@ -171,7 +173,7 @@ export interface ContentFitAnalysis {
 }
 
 export function analyzeContentFit(
-  resumeData: any,
+  resumeData: ResumeData,
   template: ResumeTemplate
 ): ContentFitAnalysis {
   const violations: string[] = [];
@@ -186,7 +188,7 @@ export function analyzeContentFit(
   
   // Check experience word counts
   if (resumeData.professionalExperience) {
-    resumeData.professionalExperience.forEach((exp: any, i: number) => {
+    resumeData.professionalExperience.forEach((exp, i: number) => {
       const expWords = exp.description?.value?.split(' ').length || 0;
       if (expWords > template.constraints.wordLimits.experiencePerJob) {
         violations.push(`Experience ${i+1} exceeds ${template.constraints.wordLimits.experiencePerJob} words (${expWords})`);

@@ -138,7 +138,7 @@ export default function Home() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       setError('Failed to generate PDF');
     }
   };

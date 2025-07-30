@@ -64,7 +64,7 @@ export default function SettingsPage() {
                     {[1, 2, 3].map((pages) => (
                       <button
                         key={pages}
-                        onClick={() => handleChange({ target: { value: pages.toString() } } as any)}
+                        onClick={() => handleChange({ target: { value: pages.toString() } } as React.ChangeEvent<HTMLInputElement>)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           targetPages === pages
                             ? 'bg-indigo-100 text-indigo-700 border border-indigo-300'

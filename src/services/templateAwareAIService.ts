@@ -1,5 +1,5 @@
 import { ResumeData } from '../types/resume';
-import { ResumeTemplate, analyzeContentFit } from '../types/template';
+import { ResumeTemplate, analyzeContentFit, ContentFitAnalysis } from '../types/template';
 import { AIService, AIServiceConfig } from './aiService';
 
 /**
@@ -20,8 +20,8 @@ export interface TemplateOptimizationResponse {
   optimizedResume: ResumeData;
   template: ResumeTemplate;
   contentAnalysis: {
-    beforeOptimization: any;
-    afterOptimization: any;
+    beforeOptimization: ContentFitAnalysis;
+    afterOptimization: ContentFitAnalysis;
     improvements: string[];
   };
   reasoning: string;
@@ -164,7 +164,7 @@ VALIDATION CHECKLIST:
   /**
    * Generate improvement summary comparing before/after analysis
    */
-  private generateImprovementSummary(before: any, after: any): string[] {
+  private generateImprovementSummary(before: ContentFitAnalysis, after: ContentFitAnalysis): string[] {
     const improvements: string[] = [];
     
     // Check if violations were resolved
@@ -223,7 +223,7 @@ VALIDATION CHECKLIST:
 export function createTemplateAwareAIService(config?: AIServiceConfig): TemplateAwareAIService {
   // Use environment variables or defaults
   const finalConfig: AIServiceConfig = config || {
-    provider: (process.env.NEXT_PUBLIC_AI_PROVIDER as any) || 'openai',
+    provider: (process.env.NEXT_PUBLIC_AI_PROVIDER as 'openai' | 'anthropic' | 'google' | 'ollama') || 'openai',
     apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY,
     model: process.env.NEXT_PUBLIC_AI_MODEL,
     baseUrl: process.env.NEXT_PUBLIC_AI_BASE_URL

@@ -1,4 +1,4 @@
-import { ResumeTemplate, analyzeContentFit } from '../types/template';
+import { ResumeTemplate, analyzeContentFit, ContentFitAnalysis } from '../types/template';
 import { ResumeData } from '../types/resume';
 
 /**
@@ -19,7 +19,7 @@ export interface TemplateAwarePromptConfig {
  * Generate a comprehensive AI prompt that understands template constraints
  */
 export function generateTemplateAwarePrompt(config: TemplateAwarePromptConfig): string {
-  const { template, jobDescription, baseResumeData, customInstructions } = config;
+  const { template, baseResumeData, customInstructions } = config;
   
   // Analyze current content fit
   const contentAnalysis = analyzeContentFit(baseResumeData, template);
@@ -82,7 +82,7 @@ Before returning, ensure:
 /**
  * Generate optimization strategy based on template and current content analysis
  */
-function generateOptimizationStrategy(template: ResumeTemplate, analysis: any): string {
+function generateOptimizationStrategy(template: ResumeTemplate, analysis: ContentFitAnalysis): string {
   const strategies: string[] = [];
   
   if (template.constraints.layout.emphasizeSection === 'technical') {
