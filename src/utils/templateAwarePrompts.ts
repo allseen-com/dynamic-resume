@@ -24,7 +24,13 @@ export function generateTemplateAwarePrompt(config: TemplateAwarePromptConfig): 
   // Analyze current content fit
   const contentAnalysis = analyzeContentFit(baseResumeData, template);
   
-  const basePrompt = `
+  // Get custom prompt from settings or use default
+  let customBasePrompt = '';
+  if (typeof window !== 'undefined') {
+    customBasePrompt = localStorage.getItem('customAIPrompt') || '';
+  }
+  
+  const basePrompt = customBasePrompt || `
 You are an expert resume writer specializing in creating ATS-optimized resumes that fit precise page constraints.
 
 CRITICAL TEMPLATE CONSTRAINTS - MUST BE FOLLOWED:

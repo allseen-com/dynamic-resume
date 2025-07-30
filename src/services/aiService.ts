@@ -323,10 +323,11 @@ Focus on:
 // Factory function to create AI service instance
 export function createAIService(): AIService {
   const provider = process.env.AI_PROVIDER as AIServiceConfig['provider'] || 'openai';
+  const apiKey = getApiKey(provider);
   
   const config: AIServiceConfig = {
     provider,
-    apiKey: getApiKey(provider),
+    apiKey,
     model: getModel(provider),
     baseUrl: provider === 'ollama' ? process.env.OLLAMA_BASE_URL : undefined,
   };

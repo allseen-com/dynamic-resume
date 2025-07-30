@@ -281,4 +281,14 @@ export function getPromptsByCategory(category: PromptTemplate['category']): Prom
 
 export function getDefaultPrompt(): string {
   return getPromptTemplate('general')?.prompt || PROMPT_TEMPLATES[0].prompt;
+}
+
+export function getCurrentPrompt(): string {
+  if (typeof window !== 'undefined') {
+    const customPrompt = localStorage.getItem('customAIPrompt');
+    if (customPrompt) {
+      return customPrompt;
+    }
+  }
+  return getDefaultPrompt();
 } 

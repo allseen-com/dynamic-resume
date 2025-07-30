@@ -1,13 +1,20 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { getDefaultPrompt } from '../../utils/promptTemplates';
 
 export default function SettingsPage() {
   const [targetPages, setTargetPages] = useState<number>(2);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState<string>('');
+  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('resumeTargetPages');
     if (stored) setTargetPages(Number(stored));
+    
+    // Load custom prompt or default
+    const storedPrompt = localStorage.getItem('customAIPrompt');
+    setCustomPrompt(storedPrompt || getDefaultPrompt());
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,6 +28,23 @@ export default function SettingsPage() {
   const clearAllData = () => {
     if (confirm('Are you sure you want to clear all archived resumes? This cannot be undone.')) {
       localStorage.removeItem('resumeArchive');
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 2000);
+    }
+  };
+
+  const savePrompt = () => {
+    localStorage.setItem('customAIPrompt', customPrompt);
+    setIsEditingPrompt(false);
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 2000);
+  };
+
+  const resetToDefault = () => {
+    if (confirm('Reset to default prompt? This will lose any custom changes.')) {
+      const defaultPrompt = getDefaultPrompt();
+      setCustomPrompt(defaultPrompt);
+      localStorage.setItem('customAIPrompt', defaultPrompt);
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 2000);
     }
@@ -79,6 +103,76 @@ export default function SettingsPage() {
                 <p className="text-sm text-slate-500 mt-2">
                   The AI will optimize your resume to fit within this page limit. Most employers prefer 1-2 pages.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Prompt Management */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 className="text-xl font-semibold text-slate-900 mb-4">AI Prompt Configuration</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Custom AI Prompt
+                </label>
+                <p className="text-sm text-slate-500 mb-3">
+                  Customize the prompt used for AI optimization. This controls how the AI analyzes and optimizes your resume.
+                </p>
+                
+                {isEditingPrompt ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      className="w-full h-64 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 text-sm font-mono"
+                      placeholder="Enter your custom AI prompt..."
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={savePrompt}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                      >
+                        Save Prompt
+                      </button>
+                      <button
+                        onClick={() => setIsEditingPrompt(false)}
+                        className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={resetToDefault}
+                        className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
+                      >
+                        Reset to Default
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      <pre className="text-sm text-slate-700 whitespace-pre-wrap font-mono max-h-48 overflow-y-auto">
+                        {customPrompt.slice(0, 300)}
+                        {customPrompt.length > 300 && '...'}
+                      </pre>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setIsEditingPrompt(true)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                      >
+                        Edit Prompt
+                      </button>
+                      <button
+                        onClick={resetToDefault}
+                        className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
+                      >
+                        Reset to Default
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

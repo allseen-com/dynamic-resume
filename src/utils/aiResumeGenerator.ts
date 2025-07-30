@@ -223,8 +223,25 @@ function generateCustomConfig(keywords: string[], requirements: { role: string; 
  */
 export async function callAIService(prompt: string, jobDescription: string, resumeData: ResumeData): Promise<ResumeData> {
   try {
-    const aiService = createAIService();
-    return await aiService.customizeResume(jobDescription, resumeData, prompt);
+    const response = await fetch('/api/optimize-resume', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt,
+        jobDescription,
+        resumeData
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'AI optimization failed');
+    }
+
+    const result = await response.json();
+    return result.data;
   } catch (error) {
     console.error('AI service call failed:', error);
     throw error;
