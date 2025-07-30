@@ -4,7 +4,11 @@ import { ResumeData } from '../../../types/resume';
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, jobDescription, resumeData } = await request.json();
+    const { prompt, jobDescription, resumeData }: {
+      prompt: string;
+      jobDescription: string;
+      resumeData: ResumeData;
+    } = await request.json();
 
     if (!prompt || !jobDescription || !resumeData) {
       return NextResponse.json(
