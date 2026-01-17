@@ -1,5 +1,6 @@
 import React from 'react';
 import { ResumeData, ResumeConfig, defaultResumeConfig } from '../types/resume';
+import { pairItemsByLength } from '../utils/bulletUtils';
 
 // Add this type override at the top of the file (after imports):
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -120,6 +121,7 @@ export default function Resume({
   const coreCompetenciesArr = getArrayValue(resumeData.coreCompetencies);
   const coreItems = coreCompetenciesArr.slice(0, 10);
   while (coreItems.length < 10) coreItems.push('');
+  const orderedCoreItems = pairItemsByLength(coreItems);
 
   // Get education and certifications arrays properly
   const educationArray = getEducationArray(resumeData.education);
@@ -193,11 +195,10 @@ export default function Resume({
           <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header text-[16px]">Core Competencies</h2>
             <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
-              {coreCompetenciesArr.map((item: string, i: number) => (
+              {orderedCoreItems.map((item: string, i: number) => (
                 <li key={i} className="flex items-start mb-0.5">
                   <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                  {/* No truncation, no wrapping, one line only */}
-                  <span className="leading-snug whitespace-nowrap overflow-x-auto block" style={{maxWidth: '95%'}}>{getFieldValue(item)}</span>
+                  <span className="leading-snug whitespace-nowrap overflow-hidden block" style={{maxWidth: '95%'}}>{getFieldValue(item)}</span>
                 </li>
               ))}
             </ul>

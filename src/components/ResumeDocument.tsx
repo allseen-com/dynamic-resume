@@ -10,6 +10,7 @@ import {
 import path from 'path';
 import { ResumeConfig, defaultResumeConfig } from '../types/resume';
 import defaultResumeData from '../../data/resume.json';
+import { pairItemsByLength } from '../utils/bulletUtils';
 
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
 
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 3,
     alignItems: 'flex-start',
-    paddingRight: 32,
+    paddingRight: 16,
   },
   bullet: {
     width: 4,
@@ -160,10 +161,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 11.2,
     lineHeight: 1.32,
-    // Prevent wrapping and add ellipsis for overflow
-    whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
     maxWidth: '95%',
   },
   experienceItem: {
@@ -289,6 +287,7 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
   const coreCompetenciesArray = getArrayValue(data.coreCompetencies);
   const coreItems = coreCompetenciesArray.slice(0, 10);
   while (coreItems.length < 10) coreItems.push('');
+  const orderedCoreItems = pairItemsByLength(coreItems);
 
   // Get education and certifications arrays properly
   const educationArray = getEducationArray(data.education);
@@ -342,7 +341,7 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Core Competencies</Text>
             <View style={styles.competenciesGrid}>
-              {coreCompetenciesArray.map((item: string, i: number) => (
+              {orderedCoreItems.map((item: string, i: number) => (
                 <View key={i} style={styles.competencyItem}>
                   <View style={styles.bullet} />
                   {/* Force single-line bullet for PDF, no truncation */}
