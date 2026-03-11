@@ -294,4 +294,23 @@ export function getCurrentPrompt(): string {
     }
   }
   return getDefaultPrompt();
+}
+
+/** Infer prompt template id from job description (for Auto mode). */
+function inferTemplateIdFromJobDescription(jobDescription: string): string {
+  const text = jobDescription.toLowerCase();
+  if (text.includes('marketing') || text.includes('growth') || text.includes('digital marketing')) return 'marketing';
+  if (text.includes('engineer') || text.includes('developer') || text.includes('technical') || text.includes('software')) return 'technical';
+  if (text.includes('data') || text.includes('analyst') || text.includes('analytics') || text.includes('scientist')) return 'technical';
+  if (text.includes('manager') || text.includes('lead') || text.includes('director') || text.includes('leadership')) return 'management';
+  if (text.includes('sales') || text.includes('business development')) return 'sales';
+  if (text.includes('design') || text.includes('creative') || text.includes('ux') || text.includes('ui')) return 'creative';
+  return 'general';
+}
+
+/** Get the prompt to use for a job description (Auto mode: system picks strategy from JD). */
+export function getPromptForJobDescription(jobDescription: string): string {
+  const id = inferTemplateIdFromJobDescription(jobDescription);
+  const template = getPromptTemplate(id);
+  return template?.prompt ?? getDefaultPrompt();
 } 

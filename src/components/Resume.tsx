@@ -13,8 +13,14 @@ type FlexibleResumeData = {
   };
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
-  technicalProficiency: Record<string, string[]>;
-  technicalProficiencyLabels?: Record<string, string>;
+  technicalProficiency: {
+    programming: FlexibleField[];
+    cloudData: FlexibleField[];
+    analytics: FlexibleField[];
+    mlAi: FlexibleField[];
+    productivity: FlexibleField[];
+    marketingAds: FlexibleField[];
+  };
   professionalExperience: {
     company: FlexibleField;
     title: FlexibleField;
@@ -93,7 +99,6 @@ function convertToFlexibleResumeData(data: ResumeData | FlexibleResumeData): Fle
     summary: resumeData.summary,
     coreCompetencies: resumeData.coreCompetencies,
     technicalProficiency: resumeData.technicalProficiency,
-    technicalProficiencyLabels: resumeData.technicalProficiencyLabels,
     professionalExperience: resumeData.professionalExperience,
     education: resumeData.education,
     certifications: resumeData.certifications,
@@ -120,18 +125,18 @@ export default function Resume({
   const educationArray = getEducationArray(resumeData.education);
   const certificationsArray = getArrayValue(resumeData.certifications);
 
-  // Generate dynamic technical proficiency text (any categories)
+  // Generate dynamic technical proficiency text
   const generateTechnicalProficiencyText = () => {
     const tech = resumeData.technicalProficiency;
-    if (!tech || typeof tech !== 'object') return '';
-    const parts: string[] = [];
-    for (const [key, items] of Object.entries(tech)) {
-      if (key.startsWith('_')) continue;
-      const arr = Array.isArray(items) ? items : [];
-      const label = resumeData.technicalProficiencyLabels?.[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
-      if (arr.length) parts.push(`${label}: ${arr.join(', ')}`);
-    }
-    return parts.join('. ') + (parts.length ? '.' : '');
+    const allSkills = [
+      ...tech.programming.map(getFieldValue),
+      ...tech.cloudData.map(getFieldValue),
+      ...tech.analytics.map(getFieldValue),
+      ...tech.mlAi.map(getFieldValue),
+      ...tech.productivity.map(getFieldValue),
+      ...tech.marketingAds.map(getFieldValue)
+    ];
+    return allSkills.join(', ') + '.';
   };
 
   return (
@@ -177,13 +182,13 @@ export default function Resume({
           </div>
         </div>
 
-        {/* Summary */}
+        {/* Professional Summary */}
         <section className={`mb-3.5${highlightSections.includes('summary') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
           <h2 className="section-header text-[16px]">Professional Summary</h2>
           <p className="text-[12px] leading-relaxed text-justify">{getFieldValue(resumeData.summary)}</p>
         </section>
 
-        {/* Skills (Core Competencies) */}
+        {/* Skills */}
         {config.sections.showCoreCompetencies && (
           <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header text-[16px]">Skills</h2>

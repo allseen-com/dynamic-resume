@@ -6,9 +6,11 @@ import { ResumeData, ResumeConfig } from "../types/resume";
 import { generateAICustomizedResume } from "../utils/aiResumeGenerator";
 import { useErrorHandler } from "../utils/errorHandler";
 import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../components/LoadingSpinner";
-import { getDefaultPrompt } from "../utils/promptTemplates";
-import { normalizeResumeData } from "../lib/normalizeResumeData";
+import { getDefaultPrompt, getPromptForJobDescription } from "../utils/promptTemplates";
 import resumeData from "../../data/resume.json";
+
+const PROMPT_MODE_KEY = "promptMode";
+const LAST_INDEXED_KEY = "resumeLastIndexedAt";
 
 const DRAFT_VERSION_LABELS = ["Technical", "Leadership", "Growth"] as const;
 type DraftVersionLabel = (typeof DRAFT_VERSION_LABELS)[number];
@@ -40,8 +42,8 @@ export default function HomePage() {
   const [savedPrompt, setSavedPrompt] = useState(getDefaultPrompt());
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingType, setLoadingType] = useState<"url" | "ai" | "pdf" | null>(null);
-  const [motherResumeData, setMotherResumeData] = useState<ResumeData>(() => normalizeResumeData(resumeData as Record<string, unknown>));
-  const [customizedResumeData, setCustomizedResumeData] = useState<ResumeData>(() => normalizeResumeData(resumeData as Record<string, unknown>));
+  const [motherResumeData, setMotherResumeData] = useState<ResumeData>(resumeData as ResumeData);
+  const [customizedResumeData, setCustomizedResumeData] = useState<ResumeData>(resumeData as ResumeData);
   const [customizedConfig, setCustomizedConfig] = useState<ResumeConfig>({
     titleBar: {
       main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",
@@ -65,6 +67,7 @@ export default function HomePage() {
   const [isClient, setIsClient] = useState(false);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [groundingVerified, setGroundingVerified] = useState(false);
+  const [pineconeConfigured, setPineconeConfigured] = useState(false);
   const [lastIndexedAt, setLastIndexedAt] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"single" | "side-by-side">("single");
   const [archiveVersion, setArchiveVersion] = useState<DraftVersionLabel | "">("");
@@ -74,31 +77,28 @@ export default function HomePage() {
     if (typeof window !== "undefined") {
       setArchive(JSON.parse(localStorage.getItem("resumeArchive") || "[]"));
       setSavedPrompt(localStorage.getItem("customAIPrompt") || getDefaultPrompt());
-      setLastIndexedAt(localStorage.getItem("resumeLastIndexedAt"));
+      setLastIndexedAt(localStorage.getItem(LAST_INDEXED_KEY));
     }
   }, []);
+
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "resumeLastIndexedAt" && e.newValue) setLastIndexedAt(e.newValue);
-    };
-    const onVisibility = () => {
-      if (document.visibilityState === "visible" && typeof window !== "undefined") {
-        setLastIndexedAt(localStorage.getItem("resumeLastIndexedAt"));
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
+    fetch("/api/admin/pinecone-status")
+      .then((r) => r.json())
+      .then((d) => setPineconeConfigured(d.configured === true))
+      .catch(() => setPineconeConfigured(false));
   }, []);
 
   useEffect(() => {
     fetch("/api/resume")
       .then((r) => r.json())
-      .then((data) => setMotherResumeData(normalizeResumeData(data)))
+      .then((data) => setMotherResumeData(data as ResumeData))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const onStorageOrFocus = () => setLastIndexedAt(localStorage.getItem(LAST_INDEXED_KEY));
+    window.addEventListener("focus", onStorageOrFocus);
+    return () => window.removeEventListener("focus", onStorageOrFocus);
   }, []);
 
   const saveToArchive = () => {
@@ -162,13 +162,15 @@ export default function HomePage() {
       handleErrorWithState("Please provide a job description", setError, "validation", "job description");
       return;
     }
+    const promptMode = typeof window !== "undefined" ? localStorage.getItem(PROMPT_MODE_KEY) || "auto" : "auto";
+    const promptToUse = promptMode === "auto" ? getPromptForJobDescription(jobDescription) : savedPrompt;
     setIsGenerating(true);
     setLoadingType("ai");
     setError(null);
     try {
       const result = await generateAICustomizedResume({
         jobDescription,
-        customPrompt: savedPrompt,
+        customPrompt: promptToUse,
         baseResumeData: motherResumeData,
       });
       setCustomizedResumeData(result.resumeData);
@@ -192,7 +194,7 @@ export default function HomePage() {
     setError(null);
     try {
       const { getExportFilenameFromResume } = await import("../utils/safeParseFilename");
-      const fullName = customizedResumeData?.header?.name ?? "Resume";
+      const fullName = (customizedResumeData as ResumeData)?.header?.name ?? "Resume";
       const filename = getExportFilenameFromResume(fullName, companyOrRole);
       const res = await fetch("/api/generate-pdf", {
         method: "POST",
@@ -326,9 +328,9 @@ export default function HomePage() {
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="heading-section mb-0">Live preview</h2>
-              {lastIndexedAt && (
-                <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded">
-                  Mother resume vectorized on {new Date(lastIndexedAt).toLocaleDateString()}
+              {pineconeConfigured && lastIndexedAt && (
+                <span className="text-xs text-emerald-700 font-medium">
+                  Mother resume is vectorized on {new Date(lastIndexedAt).toLocaleDateString()}
                 </span>
               )}
               <div className="flex rounded-lg border border-slate-300 overflow-hidden">

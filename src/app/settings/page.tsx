@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { getDefaultPrompt, PROMPT_TEMPLATES, getPromptTemplate } from "../../utils/promptTemplates";
 
+const PROMPT_MODE_KEY = "promptMode";
+
 type CredentialsStatus = {
   openai: { configured: boolean; provider: string };
   pinecone: { configured: boolean; indexName?: string; namespace?: string };
@@ -11,9 +13,9 @@ type CredentialsStatus = {
 export default function SettingsPage() {
   const [targetPages, setTargetPages] = useState(2);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [promptMode, setPromptMode] = useState<"auto" | "manual">("auto");
   const [promptTemplateId, setPromptTemplateId] = useState("general");
   const [customPrompt, setCustomPrompt] = useState("");
-
   const [credentialsStatus, setCredentialsStatus] = useState<CredentialsStatus>(null);
   const [openaiTest, setOpenaiTest] = useState<{ ok: boolean; error?: string } | null>(null);
   const [pineconeTest, setPineconeTest] = useState<{ ok: boolean; error?: string } | null>(null);
@@ -23,6 +25,8 @@ export default function SettingsPage() {
   useEffect(() => {
     const storedPages = localStorage.getItem("resumeTargetPages");
     if (storedPages) setTargetPages(Number(storedPages));
+    const storedMode = localStorage.getItem(PROMPT_MODE_KEY) as "auto" | "manual" | null;
+    setPromptMode(storedMode === "manual" ? "manual" : "auto");
     const storedPrompt = localStorage.getItem("customAIPrompt");
     const storedTemplateId = localStorage.getItem("promptTemplateId") || "general";
     setPromptTemplateId(storedTemplateId);
@@ -67,6 +71,12 @@ export default function SettingsPage() {
       localStorage.setItem("customAIPrompt", template.prompt);
       showToast();
     }
+  };
+
+  const setMode = (mode: "auto" | "manual") => {
+    setPromptMode(mode);
+    localStorage.setItem(PROMPT_MODE_KEY, mode);
+    showToast();
   };
 
   const savePrompt = () => {
@@ -168,42 +178,69 @@ export default function SettingsPage() {
           <p className="text-slate-500 text-sm mt-2">AI will fit the resume within this page limit.</p>
         </section>
 
-        {/* 2. AI prompt – used every run */}
+        {/* 2. AI prompt – Auto (recommended) or Manual */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 className="heading-section">AI prompt</h2>
-          <p className="text-slate-600 text-sm mb-2">
-            Choose a template or edit the prompt below. Changing the template updates the prompt text. This is used on the home page when you generate a custom resume.
+          <h2 className="heading-section">Resume customization</h2>
+          <p className="text-slate-600 text-sm mb-4">
+            How the system chooses how to optimize your resume for each job.
           </p>
-          <p className="text-slate-500 text-xs mb-4">
-            The AI adapts to the job description: it uses keywords and role cues from the JD to tailor your resume. You can keep the default (General) for automatic optimization, or pick a template for a specific focus.
-          </p>
-          <label className="label-app">Prompt template</label>
-          <select
-            value={promptTemplateId}
-            onChange={handleTemplateChange}
-            className="input-app w-full"
-          >
-            {PROMPT_TEMPLATES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} – {t.description}
-              </option>
-            ))}
-          </select>
-          <label className="label-app mt-4">Prompt text (editable)</label>
-          <textarea
-            value={customPrompt}
-            onChange={(e) => setCustomPrompt(e.target.value)}
-            className="textarea-app w-full font-mono h-64"
-            placeholder="AI prompt..."
-          />
-          <div className="flex gap-2 flex-wrap mt-3">
-            <button onClick={savePrompt} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm">
-              Save prompt
-            </button>
-            <button onClick={resetPromptToDefault} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm">
-              Reset to default
-            </button>
+          <div className="flex flex-col gap-3 mb-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="promptMode"
+                checked={promptMode === "auto"}
+                onChange={() => setMode("auto")}
+                className="mt-1"
+              />
+              <span>
+                <strong className="text-slate-800">Auto (recommended)</strong> – The system picks the best strategy from the job description (e.g. technical, marketing, management). No need to change settings for each role.
+              </span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="promptMode"
+                checked={promptMode === "manual"}
+                onChange={() => setMode("manual")}
+                className="mt-1"
+              />
+              <span>
+                <strong className="text-slate-800">Manual</strong> – You choose a prompt template and can edit the prompt text below.
+              </span>
+            </label>
           </div>
+          {promptMode === "manual" && (
+            <>
+              <label className="label-app">Prompt template</label>
+              <select
+                value={promptTemplateId}
+                onChange={handleTemplateChange}
+                className="input-app w-full mb-4"
+              >
+                {PROMPT_TEMPLATES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} – {t.description}
+                  </option>
+                ))}
+              </select>
+              <label className="label-app">Custom prompt text (editable)</label>
+              <textarea
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                className="textarea-app w-full font-mono h-64"
+                placeholder="AI prompt..."
+              />
+              <div className="flex gap-2 flex-wrap mt-3">
+                <button onClick={savePrompt} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm">
+                  Save prompt
+                </button>
+                <button onClick={resetPromptToDefault} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm">
+                  Reset to default
+                </button>
+              </div>
+            </>
+          )}
         </section>
 
         {/* 3. Credentials & connection */}

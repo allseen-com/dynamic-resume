@@ -39,16 +39,16 @@ export function chunkResume(data: ResumeData): ResumeChunk[] {
     });
   }
 
-  // Technical proficiency (dynamic categories)
-  if (data.technicalProficiency && typeof data.technicalProficiency === 'object') {
+  // Technical proficiency (flatten categories)
+  if (data.technicalProficiency) {
     const tp = data.technicalProficiency;
-    const labels = data.technicalProficiencyLabels ?? {};
     const parts: string[] = [];
-    for (const [key, items] of Object.entries(tp)) {
-      if (key.startsWith('_') || !Array.isArray(items) || items.length === 0) continue;
-      const label = labels[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
-      parts.push(`${label}: ${items.join(', ')}`);
-    }
+    if (tp.programming?.length) parts.push(`Programming: ${tp.programming.join(', ')}`);
+    if (tp.cloudData?.length) parts.push(`Cloud/Data: ${tp.cloudData.join(', ')}`);
+    if (tp.analytics?.length) parts.push(`Analytics: ${tp.analytics.join(', ')}`);
+    if (tp.mlAi?.length) parts.push(`ML/AI: ${tp.mlAi.join(', ')}`);
+    if (tp.productivity?.length) parts.push(`Productivity: ${tp.productivity.join(', ')}`);
+    if (tp.marketingAds?.length) parts.push(`Marketing/Ads: ${tp.marketingAds.join(', ')}`);
     if (parts.length) {
       chunks.push({
         id: `chunk-${globalIndex++}`,

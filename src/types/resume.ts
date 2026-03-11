@@ -14,8 +14,15 @@ export interface ResumeData {
     _dynamic: boolean;
     value: string[];
   };
-  technicalProficiency: Record<string, string[]>;
-  technicalProficiencyLabels?: Record<string, string>;
+  technicalProficiency: {
+    _dynamic: boolean;
+    programming: string[];
+    cloudData: string[];
+    analytics: string[];
+    mlAi: string[];
+    productivity: string[];
+    marketingAds: string[];
+  };
   professionalExperience: {
     company: string;
     _dynamic_company: boolean;

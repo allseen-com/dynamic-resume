@@ -9,18 +9,15 @@ import { renderToStream } from '@react-pdf/renderer';
 import React from 'react';
 import ResumeDocument from '../../../components/ResumeDocument';
 import { ResumeData, ResumeConfig, defaultResumeConfig } from '../../../types/resume';
-import { normalizeResumeData } from '../../../lib/normalizeResumeData';
-import rawBaseResumeData from '../../../../data/resume.json';
-import {
-  generateMarketingResume,
-  generateTechnicalResume,
-  generateDataAnalysisResume,
-  generateManagementResume,
+import baseResumeData from '../../../../data/resume.json';
+import { 
+  generateMarketingResume, 
+  generateTechnicalResume, 
+  generateDataAnalysisResume, 
+  generateManagementResume 
 } from '../../../utils/resumeGenerator';
 import { ensureFontsLoaded } from '../../../utils/fontManager';
 import { handleError } from '../../../utils/errorHandler';
-
-const baseResumeData = normalizeResumeData(rawBaseResumeData as Record<string, unknown>);
 
 export async function GET(request: Request) {
   try {

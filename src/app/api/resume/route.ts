@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResumeOverride, setResumeOverride } from '../../../lib/resumeStore';
-import { normalizeResumeData } from '../../../lib/normalizeResumeData';
 import type { ResumeData } from '../../../types/resume';
 import defaultResumeData from '../../../../data/resume.json';
 
@@ -10,7 +9,7 @@ import defaultResumeData from '../../../../data/resume.json';
  */
 export async function GET() {
   const override = getResumeOverride();
-  const data = override ?? normalizeResumeData(defaultResumeData as Record<string, unknown>);
+  const data = override ?? (defaultResumeData as ResumeData);
   return NextResponse.json(data);
 }
 

@@ -13,7 +13,6 @@ import {
 } from '@react-pdf/renderer';
 import path from 'path';
 import { ResumeConfig, defaultResumeConfig } from '../types/resume';
-import { normalizeResumeData } from '../lib/normalizeResumeData';
 import defaultResumeData from '../../data/resume.json';
 
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -27,8 +26,14 @@ type FlexibleResumeData = {
   };
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
-  technicalProficiency: Record<string, string[]>;
-  technicalProficiencyLabels?: Record<string, string>;
+  technicalProficiency: {
+    programming: FlexibleField[];
+    cloudData: FlexibleField[];
+    analytics: FlexibleField[];
+    mlAi: FlexibleField[];
+    productivity: FlexibleField[];
+    marketingAds: FlexibleField[];
+  };
   professionalExperience: {
     company: FlexibleField;
     title: FlexibleField;
@@ -278,8 +283,8 @@ function getEducationArray(field: any): any[] {
 }
 
 export default function ResumeDocument({ resumeData, config }: ResumeDocumentProps) {
-  // If no resume data is provided, use default data (normalized so technicalProficiency has no _dynamic)
-  const data: FlexibleResumeData = resumeData || normalizeResumeData(defaultResumeData as Record<string, unknown>);
+  // If no resume data is provided, use default data
+  const data: FlexibleResumeData = resumeData || defaultResumeData;
 
   // Use provided config or default config
   const resumeConfig = config || defaultResumeConfig;
@@ -293,18 +298,18 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
   const educationArray = getEducationArray(data.education);
   const certificationsArray = getArrayValue(data.certifications);
 
-  // Generate dynamic technical proficiency text (any categories)
+  // Generate dynamic technical proficiency text
   const generateTechnicalProficiencyText = () => {
     const tech = data.technicalProficiency;
-    if (!tech || typeof tech !== 'object') return '';
-    const parts: string[] = [];
-    const labels = data.technicalProficiencyLabels ?? {};
-    for (const [key, items] of Object.entries(tech)) {
-      if (key.startsWith('_') || !Array.isArray(items) || items.length === 0) continue;
-      const label = labels[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (s: string) => s.toUpperCase());
-      parts.push(`${label}: ${items.join(', ')}`);
-    }
-    return parts.join('. ') + (parts.length ? '.' : '');
+    const allSkills = [
+      ...tech.programming.map(getFieldValue),
+      ...tech.cloudData.map(getFieldValue),
+      ...tech.analytics.map(getFieldValue),
+      ...tech.mlAi.map(getFieldValue),
+      ...tech.productivity.map(getFieldValue),
+      ...tech.marketingAds.map(getFieldValue)
+    ];
+    return allSkills.join(', ') + '.';
   };
 
   return (
@@ -328,7 +333,7 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
           </Text>
         </View>
 
-        {/* Summary */}
+        {/* Professional Summary */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Professional Summary</Text>
           <Text style={styles.sectionContent}>
