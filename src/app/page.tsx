@@ -64,7 +64,6 @@ export default function HomePage() {
   const [isClient, setIsClient] = useState(false);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [groundingVerified, setGroundingVerified] = useState(false);
-  const [pineconeConfigured, setPineconeConfigured] = useState(false);
   const [lastIndexedAt, setLastIndexedAt] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"single" | "side-by-side">("single");
   const [archiveVersion, setArchiveVersion] = useState<DraftVersionLabel | "">("");
@@ -92,13 +91,6 @@ export default function HomePage() {
       window.removeEventListener("storage", onStorage);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/admin/pinecone-status")
-      .then((r) => r.json())
-      .then((d) => setPineconeConfigured(d.configured === true))
-      .catch(() => setPineconeConfigured(false));
   }, []);
 
   useEffect(() => {

@@ -107,7 +107,8 @@ export default function MotherResumePage() {
       const json = await res.json();
       const tp = json.technicalProficiency;
       if (tp && typeof tp === "object" && "_dynamic" in tp) {
-        const { _dynamic: _, ...rest } = tp;
+        const rest = { ...tp };
+        delete (rest as Record<string, unknown>)._dynamic;
         json.technicalProficiency = rest;
       }
       setData(json as ResumeData);
