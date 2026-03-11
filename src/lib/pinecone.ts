@@ -8,11 +8,35 @@ export interface PineconeConfig {
   namespace: string;
 }
 
+/**
+ * PINECONE_INDEX must be the index name (e.g. "my-index"), not the index host URL.
+ * If the user pasted the host URL (e.g. https://my-index-xxx.svc.region.pinecone.io),
+ * we derive the index name from the host so describeIndex() and data operations work.
+ */
+export function normalizeIndexName(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  try {
+    const url = trimmed.startsWith('http') ? new URL(trimmed) : new URL(`https://${trimmed}`);
+    const host = url.hostname;
+    // Host format: <index-id>.svc.<region>.pinecone.io → use part before .svc. as index name
+    if (host.endsWith('.pinecone.io') && host.includes('.svc.')) {
+      const beforeSvc = host.split('.svc.')[0];
+      if (beforeSvc) return beforeSvc;
+    }
+  } catch {
+    // not a URL, use as-is (index name)
+  }
+  return trimmed;
+}
+
 function getConfig(): PineconeConfig | null {
   const apiKey = process.env.PINECONE_API_KEY;
-  const indexName = process.env.PINECONE_INDEX;
+  const rawIndex = process.env.PINECONE_INDEX;
   const namespace = process.env.PINECONE_NAMESPACE ?? 'resume-chunks';
-  if (!apiKey || !indexName) return null;
+  if (!apiKey || !rawIndex) return null;
+  const indexName = normalizeIndexName(rawIndex);
+  if (!indexName) return null;
   return { apiKey, indexName, namespace };
 }
 
@@ -118,13 +142,32 @@ export async function queryResumeChunks(
 
 /**
  * Validate Pinecone connection and index/namespace (for admin).
+ * Uses listIndexes + data-plane describeIndexStats so validation works even when
+ * the control-plane describeIndex returns 404 (e.g. some serverless/index names).
  */
 export async function validatePineconeConnection(
   config: PineconeConfig
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const client = new Pinecone({ apiKey: config.apiKey });
-    await client.describeIndex(config.indexName);
+    const list = await client.listIndexes();
+    const indexes = list?.indexes ?? [];
+    const match =
+      indexes.find((i) => i.name === config.indexName) ??
+      indexes.find((i) => i.host?.includes(config.indexName));
+    if (!match) {
+      const names = indexes.length ? indexes.map((i) => i.name).join(', ') : 'none';
+      return {
+        ok: false,
+        error: `Index "${config.indexName}" not found in this project. Available: ${names}. Check PINECONE_INDEX matches the index name in Pinecone console.`,
+      };
+    }
+    const host = match.host ?? match.name;
+    if (!host) {
+      return { ok: false, error: 'Index has no host; index may not be ready.' };
+    }
+    const index = client.index({ host });
+    await index.describeIndexStats();
     return { ok: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

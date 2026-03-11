@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validatePineconeConnection } from '../../../../lib/pinecone';
+import { validatePineconeConnection, normalizeIndexName } from '../../../../lib/pinecone';
 
 /**
  * POST /api/admin/pinecone-validate
@@ -19,9 +19,16 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    const normalizedIndex = normalizeIndexName(indexName.trim());
+    if (!normalizedIndex) {
+      return NextResponse.json(
+        { ok: false, error: 'indexName is invalid (use index name or index host URL)' },
+        { status: 400 }
+      );
+    }
     const result = await validatePineconeConnection({
       apiKey: apiKey.trim(),
-      indexName: indexName.trim(),
+      indexName: normalizedIndex,
       namespace: (namespace?.trim() as string) || 'resume-chunks',
     });
     return NextResponse.json(result);

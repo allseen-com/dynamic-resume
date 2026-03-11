@@ -1,16 +1,21 @@
 import { NextResponse } from 'next/server';
-import { validatePineconeConnection } from '../../../../lib/pinecone';
+import { validatePineconeConnection, normalizeIndexName } from '../../../../lib/pinecone';
 
 /**
  * GET /api/admin/test-pinecone
  * Test the current Pinecone credentials (from env). No request body.
+ * PINECONE_INDEX should be the index name; if you paste the index host URL, it is normalized automatically.
  */
 export async function GET() {
   try {
     const apiKey = process.env.PINECONE_API_KEY?.trim();
-    const indexName = process.env.PINECONE_INDEX?.trim();
-    if (!apiKey || !indexName) {
+    const rawIndex = process.env.PINECONE_INDEX?.trim();
+    if (!apiKey || !rawIndex) {
       return NextResponse.json({ ok: false, error: 'Pinecone not configured (set PINECONE_API_KEY, PINECONE_INDEX in Vercel)' });
+    }
+    const indexName = normalizeIndexName(rawIndex);
+    if (!indexName) {
+      return NextResponse.json({ ok: false, error: 'PINECONE_INDEX is invalid (use index name or index host URL)' });
     }
     const config = {
       apiKey,

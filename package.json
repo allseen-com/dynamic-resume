@@ -2,6 +2,9 @@
   "name": "dynamic-resume",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "node-domexception": "2.0.2"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
