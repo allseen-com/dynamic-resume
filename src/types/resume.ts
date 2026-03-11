@@ -63,6 +63,13 @@ export interface ResumeConfig {
   };
 }
 
+/** Response from AI customization; matchScore and groundingVerified when Pinecone RAG is used */
+export interface AICustomizationResponseMeta {
+  matchScore?: number;
+  groundingVerified?: boolean;
+  citations?: { chunkId: string; section: string; score?: number }[];
+}
+
 export const defaultResumeConfig: ResumeConfig = {
   titleBar: {
     main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",

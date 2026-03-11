@@ -1,3 +1,9 @@
+/**
+ * PDF generation uses @react-pdf/renderer (no browser/Chromium).
+ * Per Engineering.md: Puppeteer is avoided (large footprint, memory issues);
+ * IronPDF/Typst/QuestPDF are optional for other runtimes. This stack keeps
+ * @react-pdf/renderer for Next.js compatibility and ATS-safe output.
+ */
 import { NextResponse } from 'next/server';
 import { renderToStream } from '@react-pdf/renderer';
 import React from 'react';

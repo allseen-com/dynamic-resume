@@ -61,14 +61,24 @@ export default function CustomizePage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [highlightSections, setHighlightSections] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [matchScore, setMatchScore] = useState<number | null>(null);
+  const [groundingVerified, setGroundingVerified] = useState(false);
+  const [pineconeConfigured, setPineconeConfigured] = useState(false);
+  const [indexingResume, setIndexingResume] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    // Load archive from localStorage
     if (typeof window !== "undefined") {
       const stored = JSON.parse(localStorage.getItem("resumeArchive") || "[]");
       setArchive(stored);
     }
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/pinecone-status")
+      .then((r) => r.json())
+      .then((d) => setPineconeConfigured(d.configured === true))
+      .catch(() => setPineconeConfigured(false));
   }, []);
 
   const saveToArchive = () => {
@@ -141,9 +151,11 @@ export default function CustomizePage() {
       });
       setCustomizedResumeData(result.resumeData);
       setCustomizedConfig(result.config);
-      setCompanyOrRole(result.companyOrRole); // Store extracted company/role
+      setCompanyOrRole(result.companyOrRole);
+      setMatchScore(result.matchScore ?? null);
+      setGroundingVerified(result.groundingVerified === true);
       setShowSuccess(true);
-      setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]); // highlight all main sections for now
+      setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]);
     } catch (error) {
       handleErrorWithState(error, setError, "ai");
     } finally {
@@ -197,6 +209,27 @@ export default function CustomizePage() {
     }
   };
 
+  const handleIndexResume = async () => {
+    setIndexingResume(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/embed-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeData: resumeData }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to index resume");
+      }
+      setShowSuccess(true);
+    } catch (err) {
+      handleErrorWithState(err, setError, "validation");
+    } finally {
+      setIndexingResume(false);
+    }
+  };
+
   const resetToDefault = () => {
     setCustomizedResumeData(resumeData as ResumeData);
     setCustomizedConfig({
@@ -218,6 +251,8 @@ export default function CustomizePage() {
     setLoadingType(null);
     setAiPrompt(getDefaultPrompt());
     setSelectedTemplate("general");
+    setMatchScore(null);
+    setGroundingVerified(false);
   };
 
   if (!isClient) {
@@ -298,6 +333,20 @@ export default function CustomizePage() {
                   Reset
                 </button>
               </div>
+              {pineconeConfigured && (
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <p className="text-sm text-slate-600 mb-2">Vector search (Pinecone)</p>
+                  <button
+                    type="button"
+                    onClick={handleIndexResume}
+                    disabled={indexingResume}
+                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 text-sm font-medium"
+                  >
+                    {indexingResume ? "Indexing…" : "Index my resume"}
+                  </button>
+                  <p className="text-xs text-slate-500 mt-1">Index your base resume once so match score and RAG work.</p>
+                </div>
+              )}
             </div>
             {/* AI Prompt Editor */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -413,12 +462,13 @@ export default function CustomizePage() {
           </div>
           {/* Right Panel - Resume Preview */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Live Preview</h2>
-                <p className="text-sm text-slate-600">Your customized resume</p>
-              </div>
-              <button
+            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 space-y-2">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Live Preview</h2>
+                  <p className="text-sm text-slate-600">Your customized resume</p>
+                </div>
+                <button
                 onClick={handleDownloadPDF}
                 disabled={isGenerating}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -429,6 +479,21 @@ export default function CustomizePage() {
               >
                 {loadingType === "pdf" ? "🔄 Generating..." : "📄 Download PDF"}
               </button>
+              </div>
+              {(matchScore != null || groundingVerified) && (
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {matchScore != null && (
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800">
+                      Match score: {Math.round(matchScore * 100)}%
+                    </span>
+                  )}
+                  {groundingVerified && (
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800">
+                      Grounding verified
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="p-6 max-h-screen overflow-y-auto">
               <Resume

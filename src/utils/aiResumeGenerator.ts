@@ -15,6 +15,9 @@ export interface AICustomizationResponse {
   config: ResumeConfig;
   reasoning?: string;
   companyOrRole?: string; // Added for filename
+  matchScore?: number;
+  groundingVerified?: boolean;
+  citations?: { chunkId: string; section: string; score?: number }[];
 }
 
 /**
@@ -297,31 +300,40 @@ export async function generateAICustomizedResume(
   const effectivePrompt = (customPrompt || '') + bulletInstruction;
 
   try {
-    // Create AI service instance
-    const aiService = createAIService();
-    // Use real AI service to customize resume
-    const customizedData = await aiService.customizeResume(
-      jobDescription,
-      baseResumeData,
-      effectivePrompt
-    );
-    // Analyze job description for config generation
+    // Call server API so RAG (Pinecone) and MatchScore run server-side
+    const response = await fetch('/api/optimize-resume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: effectivePrompt,
+        jobDescription,
+        resumeData: baseResumeData,
+      }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'AI optimization failed');
+    }
+    const apiResult = await response.json();
+    const customizedData = apiResult.data;
+
     const keywords = extractKeywords(jobDescription);
     const requirements = analyzeRequirements(jobDescription);
     const customizedConfig = generateCustomConfig(keywords, requirements);
-    
-    // Get word count statistics for reasoning
     const wordCountStats = getWordCountStats(baseResumeData, customizedData);
     const summaryInfo = `Summary: ${wordCountStats.summary.original}→${wordCountStats.summary.limited} words`;
-    const experienceInfo = wordCountStats.experiences.map((exp, i) => 
+    const experienceInfo = wordCountStats.experiences.map((exp, i) =>
       `Exp${i+1}: ${exp.original}→${exp.limited} words`
     ).join(', ');
-    
+
     return {
       resumeData: customizedData,
       config: customizedConfig,
-      reasoning: `Resume customized using ${aiService.getProviderName()} based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
-      companyOrRole // Return extracted value
+      reasoning: `Resume customized based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
+      companyOrRole,
+      matchScore: apiResult.matchScore,
+      groundingVerified: apiResult.groundingVerified,
+      citations: apiResult.citations,
     };
   } catch (error) {
     console.error('AI customization failed, falling back to mock implementation:', error);

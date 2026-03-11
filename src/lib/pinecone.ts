@@ -1,0 +1,144 @@
+import { Pinecone } from '@pinecone-database/pinecone';
+import type { ResumeChunk } from '../utils/chunkResume';
+import { embedTexts } from '../utils/embeddings';
+
+export interface PineconeConfig {
+  apiKey: string;
+  indexName: string;
+  namespace: string;
+}
+
+function getConfig(): PineconeConfig | null {
+  const apiKey = process.env.PINECONE_API_KEY;
+  const indexName = process.env.PINECONE_INDEX;
+  const namespace = process.env.PINECONE_NAMESPACE ?? 'resume-chunks';
+  if (!apiKey || !indexName) return null;
+  return { apiKey, indexName, namespace };
+}
+
+export function isPineconeConfigured(): boolean {
+  return getConfig() !== null;
+}
+
+let _client: Pinecone | null = null;
+
+function getClient(config: PineconeConfig): Pinecone {
+  if (!_client) {
+    _client = new Pinecone({ apiKey: config.apiKey });
+  }
+  return _client;
+}
+
+/**
+ * Upsert resume chunks into Pinecone. Embeds each chunk and stores with metadata.
+ */
+export async function upsertResumeChunks(
+  chunks: ResumeChunk[],
+  configOverride?: Partial<PineconeConfig>
+): Promise<{ upsertedCount: number }> {
+  const config = configOverride ?? getConfig();
+  if (!config) throw new Error('Pinecone is not configured (PINECONE_API_KEY, PINECONE_INDEX)');
+
+  const texts = chunks.map((c) => c.text);
+  const vectors = await embedTexts(texts);
+
+  const client = getClient(config);
+  const index = client.index(config.indexName).namespace(config.namespace);
+
+  const records = chunks.map((chunk, i) => ({
+    id: chunk.id,
+    values: vectors[i],
+    metadata: {
+      section: chunk.metadata.section,
+      text: chunk.text.slice(0, 40_000), // Pinecone metadata limit
+      ...(chunk.metadata.index != null && { index: chunk.metadata.index }),
+      ...(chunk.metadata.company && { company: chunk.metadata.company }),
+      ...(chunk.metadata.title && { title: chunk.metadata.title }),
+      ...(chunk.metadata.dateRange && { dateRange: chunk.metadata.dateRange }),
+    },
+  }));
+
+  await index.upsert(records);
+  return { upsertedCount: records.length };
+}
+
+export interface RetrievedChunk {
+  id: string;
+  text: string;
+  score: number;
+  metadata: ResumeChunk['metadata'];
+}
+
+/**
+ * Query Pinecone for top-k resume chunks similar to the query vector (e.g. job description).
+ */
+export async function queryResumeChunks(
+  queryVector: number[],
+  topK: number = 15,
+  configOverride?: Partial<PineconeConfig>
+): Promise<RetrievedChunk[]> {
+  const config = configOverride ?? getConfig();
+  if (!config) throw new Error('Pinecone is not configured');
+
+  const client = getClient(config);
+  const index = client.index(config.indexName).namespace(config.namespace);
+
+  const res = await index.query({
+    vector: queryVector,
+    topK,
+    includeMetadata: true,
+  });
+
+  const matches = res.matches ?? [];
+  return matches
+    .filter((m): m is typeof m & { score: number; metadata?: Record<string, unknown> } => m.score != null && m.metadata != null)
+    .map((m) => ({
+      id: m.id ?? '',
+      text: (m.metadata?.text as string) ?? '',
+      score: m.score,
+      metadata: {
+        section: (m.metadata?.section as string) ?? 'unknown',
+        index: m.metadata?.index as number | undefined,
+        company: m.metadata?.company as string | undefined,
+        title: m.metadata?.title as string | undefined,
+        dateRange: m.metadata?.dateRange as string | undefined,
+      },
+    }));
+}
+
+/**
+ * Validate Pinecone connection and index/namespace (for admin).
+ */
+export async function validatePineconeConnection(
+  config: PineconeConfig
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const client = new Pinecone({ apiKey: config.apiKey });
+    await client.describeIndex(config.indexName);
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message };
+  }
+}
+
+/**
+ * Compute cosine similarity between two vectors (for MatchScore).
+ * Returns value in [0, 1] when using normalized vectors; OpenAI embeddings are normalized.
+ */
+export function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  if (denom === 0) return 0;
+  const sim = dot / denom;
+  // Normalize from [-1,1] to [0,1] for display as percentage
+  return Math.max(0, (sim + 1) / 2);
+}

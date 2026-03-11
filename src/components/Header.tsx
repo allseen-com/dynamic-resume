@@ -84,6 +84,16 @@ export default function Header() {
                   Settings
                 </Link>
               </li>
+              <li>
+                <Link 
+                  href="/admin" 
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-slate-600 hover:text-slate-700 font-medium transition-colors text-sm" 
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className="text-base">🔧</span>
+                  Admin
+                </Link>
+              </li>
             </ul>
           </nav>
         </>
