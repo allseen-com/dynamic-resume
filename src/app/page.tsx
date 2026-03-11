@@ -7,6 +7,7 @@ import { generateAICustomizedResume } from "../utils/aiResumeGenerator";
 import { useErrorHandler } from "../utils/errorHandler";
 import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../components/LoadingSpinner";
 import { getDefaultPrompt } from "../utils/promptTemplates";
+import { normalizeResumeData } from "../lib/normalizeResumeData";
 import resumeData from "../../data/resume.json";
 
 const DRAFT_VERSION_LABELS = ["Technical", "Leadership", "Growth"] as const;
@@ -39,8 +40,8 @@ export default function HomePage() {
   const [savedPrompt, setSavedPrompt] = useState(getDefaultPrompt());
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingType, setLoadingType] = useState<"url" | "ai" | "pdf" | null>(null);
-  const [motherResumeData, setMotherResumeData] = useState<ResumeData>(resumeData as ResumeData);
-  const [customizedResumeData, setCustomizedResumeData] = useState<ResumeData>(resumeData as ResumeData);
+  const [motherResumeData, setMotherResumeData] = useState<ResumeData>(() => normalizeResumeData(resumeData as Record<string, unknown>));
+  const [customizedResumeData, setCustomizedResumeData] = useState<ResumeData>(() => normalizeResumeData(resumeData as Record<string, unknown>));
   const [customizedConfig, setCustomizedConfig] = useState<ResumeConfig>({
     titleBar: {
       main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",
@@ -96,7 +97,7 @@ export default function HomePage() {
   useEffect(() => {
     fetch("/api/resume")
       .then((r) => r.json())
-      .then((data) => setMotherResumeData(data as ResumeData))
+      .then((data) => setMotherResumeData(normalizeResumeData(data)))
       .catch(() => {});
   }, []);
 
@@ -191,7 +192,7 @@ export default function HomePage() {
     setError(null);
     try {
       const { getExportFilenameFromResume } = await import("../utils/safeParseFilename");
-      const fullName = (customizedResumeData as ResumeData)?.header?.name ?? "Resume";
+      const fullName = customizedResumeData?.header?.name ?? "Resume";
       const filename = getExportFilenameFromResume(fullName, companyOrRole);
       const res = await fetch("/api/generate-pdf", {
         method: "POST",

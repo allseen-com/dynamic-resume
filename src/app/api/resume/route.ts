@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResumeOverride, setResumeOverride } from '../../../lib/resumeStore';
+import { normalizeResumeData } from '../../../lib/normalizeResumeData';
 import type { ResumeData } from '../../../types/resume';
 import defaultResumeData from '../../../../data/resume.json';
-
-/** Strip _dynamic from technicalProficiency so it matches ResumeData (Record<string, string[]>). */
-function normalizeTechnicalProficiency(data: Record<string, unknown>): ResumeData {
-  const d = { ...data } as unknown as ResumeData;
-  const tp = d.technicalProficiency as Record<string, unknown> | undefined;
-  if (tp && typeof tp === 'object' && '_dynamic' in tp) {
-    const rest = { ...tp };
-    delete rest._dynamic;
-    d.technicalProficiency = rest as Record<string, string[]>;
-  }
-  return d;
-}
 
 /**
  * GET /api/resume
@@ -21,7 +10,7 @@ function normalizeTechnicalProficiency(data: Record<string, unknown>): ResumeDat
  */
 export async function GET() {
   const override = getResumeOverride();
-  const data = override ?? normalizeTechnicalProficiency(defaultResumeData as Record<string, unknown>);
+  const data = override ?? normalizeResumeData(defaultResumeData as Record<string, unknown>);
   return NextResponse.json(data);
 }
 

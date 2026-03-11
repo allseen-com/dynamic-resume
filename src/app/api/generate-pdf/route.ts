@@ -9,6 +9,7 @@ import { renderToStream } from '@react-pdf/renderer';
 import React from 'react';
 import ResumeDocument from '../../../components/ResumeDocument';
 import { ResumeData, ResumeConfig, defaultResumeConfig } from '../../../types/resume';
+import { normalizeResumeData } from '../../../lib/normalizeResumeData';
 import rawBaseResumeData from '../../../../data/resume.json';
 import {
   generateMarketingResume,
@@ -19,19 +20,7 @@ import {
 import { ensureFontsLoaded } from '../../../utils/fontManager';
 import { handleError } from '../../../utils/errorHandler';
 
-/** Strip _dynamic from technicalProficiency so it matches ResumeData (Record<string, string[]>). */
-function normalizeTechnicalProficiency(data: Record<string, unknown>): ResumeData {
-  const d = { ...data } as unknown as ResumeData;
-  const tp = d.technicalProficiency as Record<string, unknown> | undefined;
-  if (tp && typeof tp === 'object' && '_dynamic' in tp) {
-    const rest = { ...tp };
-    delete rest._dynamic;
-    d.technicalProficiency = rest as Record<string, string[]>;
-  }
-  return d;
-}
-
-const baseResumeData = normalizeTechnicalProficiency(rawBaseResumeData as Record<string, unknown>);
+const baseResumeData = normalizeResumeData(rawBaseResumeData as Record<string, unknown>);
 
 export async function GET(request: Request) {
   try {
