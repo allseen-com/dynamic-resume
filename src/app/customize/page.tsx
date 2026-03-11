@@ -9,8 +9,8 @@ import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOv
 import { PROMPT_TEMPLATES, getDefaultPrompt } from "../../utils/promptTemplates";
 import resumeData from "../../../data/resume.json";
 
-export const DRAFT_VERSION_LABELS = ["Technical", "Leadership", "Growth"] as const;
-export type DraftVersionLabel = (typeof DRAFT_VERSION_LABELS)[number];
+const DRAFT_VERSION_LABELS = ["Technical", "Leadership", "Growth"] as const;
+type DraftVersionLabel = (typeof DRAFT_VERSION_LABELS)[number];
 
 type ResumeArchiveItem = {
   label: string;
