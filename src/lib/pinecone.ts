@@ -166,7 +166,8 @@ export async function validatePineconeConnection(
     if (!host) {
       return { ok: false, error: 'Index has no host; index may not be ready.' };
     }
-    const index = client.index({ host });
+    // SDK v4: index(name, host) — pass host so we skip control-plane describeIndex (which can 404)
+    const index = (client as unknown as { index: (name: string, host: string) => { describeIndexStats: () => Promise<unknown> } }).index(match.name, host);
     await index.describeIndexStats();
     return { ok: true };
   } catch (err) {
