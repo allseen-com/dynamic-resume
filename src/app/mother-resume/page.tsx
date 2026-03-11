@@ -20,6 +20,19 @@ const emptyEducation = (): { school: string; dateRange: string; degree: string }
   degree: "",
 });
 
+const DEFAULT_TECH_LABELS: Record<string, string> = {
+  programming: "Programming",
+  cloudData: "Cloud / Data",
+  analytics: "Analytics",
+  mlAi: "ML / AI",
+  productivity: "Productivity",
+  marketingAds: "Marketing / Ads",
+};
+
+function defaultTechLabel(key: string): string {
+  return DEFAULT_TECH_LABELS[key] ?? key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+}
+
 function ListEditor<T>({
   items,
   onChange,
@@ -76,10 +89,14 @@ function ListEditor<T>({
   );
 }
 
+const LAST_INDEXED_KEY = "resumeLastIndexedAt";
+
 export default function MotherResumePage() {
   const [data, setData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [indexing, setIndexing] = useState(false);
+  const [lastIndexedAt, setLastIndexedAt] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -88,6 +105,11 @@ export default function MotherResumePage() {
       const res = await fetch("/api/resume");
       if (!res.ok) throw new Error("Failed to load resume");
       const json = await res.json();
+      const tp = json.technicalProficiency;
+      if (tp && typeof tp === "object" && "_dynamic" in tp) {
+        const { _dynamic: _, ...rest } = tp;
+        json.technicalProficiency = rest;
+      }
       setData(json as ResumeData);
     } catch (e) {
       setMessage({ type: "err", text: e instanceof Error ? e.message : "Load failed" });
@@ -99,6 +121,35 @@ export default function MotherResumePage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setLastIndexedAt(localStorage.getItem(LAST_INDEXED_KEY));
+  }, []);
+
+  const indexResume = async () => {
+    if (!data) return;
+    setIndexing(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/embed-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeData: data }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to index resume");
+      }
+      const at = new Date().toISOString();
+      localStorage.setItem(LAST_INDEXED_KEY, at);
+      setLastIndexedAt(at);
+      setMessage({ type: "ok", text: "Resume indexed. Match score & RAG will use this version." });
+    } catch (e) {
+      setMessage({ type: "err", text: e instanceof Error ? e.message : "Index failed" });
+    } finally {
+      setIndexing(false);
+    }
+  };
 
   const save = async () => {
     if (!data) return;
@@ -133,13 +184,9 @@ export default function MotherResumePage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-2xl mx-auto py-6 px-4">
-        <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-slate-500 hover:text-slate-700"
-              aria-label="Back"
-            >
+            <Link href="/" className="text-slate-500 hover:text-slate-700" aria-label="Back">
               ←
             </Link>
             <h1 className="heading-page">Mother Resume</h1>
@@ -152,6 +199,23 @@ export default function MotherResumePage() {
           >
             {saving ? "Saving…" : "Save"}
           </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 mb-6 p-3 bg-white rounded-lg border border-slate-200">
+          <button
+            type="button"
+            onClick={indexResume}
+            disabled={indexing || !data}
+            className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 text-sm font-medium"
+          >
+            {indexing ? "Indexing…" : "Index resume"}
+          </button>
+          <span className="text-sm text-slate-500">
+            {lastIndexedAt ? (
+              <>Last indexed: {new Date(lastIndexedAt).toLocaleString()}</>
+            ) : (
+              "Not indexed yet. Index so match score & RAG use this resume."
+            )}
+          </span>
         </div>
 
         {message && (
@@ -196,7 +260,7 @@ export default function MotherResumePage() {
 
           {/* Summary */}
           <section>
-            <h2 className="heading-section">Summary</h2>
+            <h2 className="heading-section">Professional Summary</h2>
             <textarea
               className="textarea-app w-full min-h-[100px]"
               value={data.summary.value}
@@ -205,9 +269,9 @@ export default function MotherResumePage() {
             />
           </section>
 
-          {/* Core competencies */}
+          {/* Skills */}
           <section>
-            <h2 className="heading-section">Core competencies</h2>
+            <h2 className="heading-section">Skills</h2>
             <ListEditor
               items={data.coreCompetencies.value}
               onChange={(value) => setData({ ...data, coreCompetencies: { ...data.coreCompetencies, value } })}
@@ -224,47 +288,97 @@ export default function MotherResumePage() {
             />
           </section>
 
-          {/* Technical proficiency */}
+          {/* Technical proficiency – editable categories */}
           <section>
             <h2 className="heading-section">Technical proficiency</h2>
-            {(
-              [
-                { key: "programming", label: "Programming" },
-                { key: "cloudData", label: "Cloud / Data" },
-                { key: "analytics", label: "Analytics" },
-                { key: "mlAi", label: "ML / AI" },
-                { key: "productivity", label: "Productivity" },
-                { key: "marketingAds", label: "Marketing / Ads" },
-              ] as const
-            ).map(({ key, label }) => (
-              <div key={key} className="mb-4">
-                <span className="label-app">{label}</span>
-                <ListEditor
-                  items={data.technicalProficiency[key]}
-                  onChange={(value) =>
-                    setData({
-                      ...data,
-                      technicalProficiency: { ...data.technicalProficiency, [key]: value },
-                    })
-                  }
-                  emptyItem={() => ""}
-                  addLabel={`Add ${label}`}
-                  renderItem={(item, _, onChange) => (
-                    <input
-                      className="input-app w-full"
-                      value={item}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="e.g. Python"
+            <p className="text-xs text-slate-500 mb-3">Edit category names, add or remove categories, and list items in each.</p>
+            {Object.entries(data.technicalProficiency || {})
+              .filter(([k]) => !k.startsWith("_"))
+              .map(([key, items]) => {
+                const label = (data.technicalProficiencyLabels?.[key] ?? defaultTechLabel(key)).trim() || defaultTechLabel(key);
+                return (
+                  <div key={key} className="mb-4 p-3 border border-slate-200 rounded-lg bg-slate-50/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        className="input-app flex-1"
+                        value={data.technicalProficiencyLabels?.[key] ?? defaultTechLabel(key)}
+                        onChange={(e) =>
+                          setData({
+                            ...data,
+                            technicalProficiencyLabels: {
+                              ...(data.technicalProficiencyLabels || {}),
+                              [key]: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="Category name"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = { ...data.technicalProficiency };
+                          delete next[key];
+                          const nextLabels = { ...(data.technicalProficiencyLabels || {}) };
+                          delete nextLabels[key];
+                          setData({
+                            ...data,
+                            technicalProficiency: next,
+                            technicalProficiencyLabels: nextLabels,
+                          });
+                        }}
+                        className="shrink-0 w-8 h-8 flex items-center justify-center rounded border border-slate-300 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                        aria-label="Remove category"
+                      >
+                        −
+                      </button>
+                    </div>
+                    <ListEditor
+                      items={Array.isArray(items) ? items : []}
+                      onChange={(value) =>
+                        setData({
+                          ...data,
+                          technicalProficiency: { ...data.technicalProficiency, [key]: value },
+                        })
+                      }
+                      emptyItem={() => ""}
+                      addLabel={`Add to ${label}`}
+                      renderItem={(item, _, onChange) => (
+                        <input
+                          className="input-app w-full"
+                          value={item}
+                          onChange={(e) => onChange(e.target.value)}
+                          placeholder="e.g. Python"
+                        />
+                      )}
                     />
-                  )}
-                />
-              </div>
-            ))}
+                  </div>
+                );
+              })}
+            <button
+              type="button"
+              onClick={() => {
+                const newKey = "cat_" + Date.now();
+                setData({
+                  ...data,
+                  technicalProficiency: {
+                    ...(data.technicalProficiency || {}),
+                    [newKey]: [],
+                  },
+                  technicalProficiencyLabels: {
+                    ...(data.technicalProficiencyLabels || {}),
+                    [newKey]: "New category",
+                  },
+                });
+              }}
+              className="w-full py-2 rounded border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 hover:border-indigo-400 hover:text-indigo-600 text-sm"
+            >
+              + Add category
+            </button>
           </section>
 
-          {/* Professional experience */}
+          {/* Work History */}
           <section>
-            <h2 className="heading-section">Professional experience</h2>
+            <h2 className="heading-section">Work History</h2>
             <ListEditor
               items={data.professionalExperience}
               onChange={(value) => setData({ ...data, professionalExperience: value })}

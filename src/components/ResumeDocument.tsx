@@ -26,14 +26,8 @@ type FlexibleResumeData = {
   };
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
-  technicalProficiency: {
-    programming: FlexibleField[];
-    cloudData: FlexibleField[];
-    analytics: FlexibleField[];
-    mlAi: FlexibleField[];
-    productivity: FlexibleField[];
-    marketingAds: FlexibleField[];
-  };
+  technicalProficiency: Record<string, string[]>;
+  technicalProficiencyLabels?: Record<string, string>;
   professionalExperience: {
     company: FlexibleField;
     title: FlexibleField;
@@ -298,18 +292,18 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
   const educationArray = getEducationArray(data.education);
   const certificationsArray = getArrayValue(data.certifications);
 
-  // Generate dynamic technical proficiency text
+  // Generate dynamic technical proficiency text (any categories)
   const generateTechnicalProficiencyText = () => {
     const tech = data.technicalProficiency;
-    const allSkills = [
-      ...tech.programming.map(getFieldValue),
-      ...tech.cloudData.map(getFieldValue),
-      ...tech.analytics.map(getFieldValue),
-      ...tech.mlAi.map(getFieldValue),
-      ...tech.productivity.map(getFieldValue),
-      ...tech.marketingAds.map(getFieldValue)
-    ];
-    return allSkills.join(', ') + '.';
+    if (!tech || typeof tech !== 'object') return '';
+    const parts: string[] = [];
+    const labels = data.technicalProficiencyLabels ?? {};
+    for (const [key, items] of Object.entries(tech)) {
+      if (key.startsWith('_') || !Array.isArray(items) || items.length === 0) continue;
+      const label = labels[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (s: string) => s.toUpperCase());
+      parts.push(`${label}: ${items.join(', ')}`);
+    }
+    return parts.join('. ') + (parts.length ? '.' : '');
   };
 
   return (
@@ -335,16 +329,16 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
 
         {/* Summary */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Career Summary</Text>
+          <Text style={styles.sectionHeader}>Professional Summary</Text>
           <Text style={styles.sectionContent}>
             {getFieldValue(data.summary)}
           </Text>
         </View>
 
-        {/* Core Competencies */}
+        {/* Skills */}
         {resumeConfig.sections.showCoreCompetencies && coreCompetenciesArray.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Core Competencies</Text>
+            <Text style={styles.sectionHeader}>Skills</Text>
             <View style={styles.competenciesGrid}>
               {coreCompetenciesArray.map((item: string, i: number) => (
                 <View key={i} style={styles.competencyItem}>
@@ -367,10 +361,10 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
           </View>
         )}
 
-        {/* Professional Experience */}
+        {/* Work History */}
         {resumeConfig.sections.showProfessionalExperience && data.professionalExperience.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Professional Experience</Text>
+            <Text style={styles.sectionHeader}>Work History</Text>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {data.professionalExperience.map((role: any, i: number) => {
               const hasDescription = getFieldValue(role.description) && getFieldValue(role.description).trim();

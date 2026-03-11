@@ -13,7 +13,6 @@ export default function SettingsPage() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [promptTemplateId, setPromptTemplateId] = useState("general");
   const [customPrompt, setCustomPrompt] = useState("");
-  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
   const [credentialsStatus, setCredentialsStatus] = useState<CredentialsStatus>(null);
   const [openaiTest, setOpenaiTest] = useState<{ ok: boolean; error?: string } | null>(null);
@@ -72,7 +71,6 @@ export default function SettingsPage() {
 
   const savePrompt = () => {
     localStorage.setItem("customAIPrompt", customPrompt);
-    setIsEditingPrompt(false);
     showToast();
   };
 
@@ -173,8 +171,11 @@ export default function SettingsPage() {
         {/* 2. AI prompt – used every run */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="heading-section">AI prompt</h2>
-          <p className="text-slate-600 text-sm mb-4">
-            Choose a template or edit the prompt used to customize your resume. This is applied on the home page when you generate a custom resume.
+          <p className="text-slate-600 text-sm mb-2">
+            Choose a template or edit the prompt below. Changing the template updates the prompt text. This is used on the home page when you generate a custom resume.
+          </p>
+          <p className="text-slate-500 text-xs mb-4">
+            The AI adapts to the job description: it uses keywords and role cues from the JD to tailor your resume. You can keep the default (General) for automatic optimization, or pick a template for a specific focus.
           </p>
           <label className="label-app">Prompt template</label>
           <select
@@ -188,45 +189,21 @@ export default function SettingsPage() {
               </option>
             ))}
           </select>
-          <label className="label-app mt-4">Custom prompt text</label>
-          {isEditingPrompt ? (
-            <div className="space-y-3">
-              <textarea
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                className="textarea-app w-full font-mono h-64"
-                placeholder="AI prompt..."
-              />
-              <div className="flex gap-2 flex-wrap">
-                <button onClick={savePrompt} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm">
-                  Save prompt
-                </button>
-                <button onClick={() => setIsEditingPrompt(false)} className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-medium text-sm">
-                  Cancel
-                </button>
-                <button onClick={resetPromptToDefault} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm">
-                  Reset to default
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <pre className="text-sm text-slate-800 whitespace-pre-wrap font-mono max-h-48 overflow-y-auto">
-                  {customPrompt.slice(0, 400)}
-                  {customPrompt.length > 400 && "…"}
-                </pre>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setIsEditingPrompt(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm">
-                  Edit prompt
-                </button>
-                <button onClick={resetPromptToDefault} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm">
-                  Reset to default
-                </button>
-              </div>
-            </div>
-          )}
+          <label className="label-app mt-4">Prompt text (editable)</label>
+          <textarea
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            className="textarea-app w-full font-mono h-64"
+            placeholder="AI prompt..."
+          />
+          <div className="flex gap-2 flex-wrap mt-3">
+            <button onClick={savePrompt} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm">
+              Save prompt
+            </button>
+            <button onClick={resetPromptToDefault} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm">
+              Reset to default
+            </button>
+          </div>
         </section>
 
         {/* 3. Credentials & connection */}

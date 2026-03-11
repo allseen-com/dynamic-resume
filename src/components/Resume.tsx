@@ -13,14 +13,8 @@ type FlexibleResumeData = {
   };
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
-  technicalProficiency: {
-    programming: FlexibleField[];
-    cloudData: FlexibleField[];
-    analytics: FlexibleField[];
-    mlAi: FlexibleField[];
-    productivity: FlexibleField[];
-    marketingAds: FlexibleField[];
-  };
+  technicalProficiency: Record<string, string[]>;
+  technicalProficiencyLabels?: Record<string, string>;
   professionalExperience: {
     company: FlexibleField;
     title: FlexibleField;
@@ -99,6 +93,7 @@ function convertToFlexibleResumeData(data: ResumeData | FlexibleResumeData): Fle
     summary: resumeData.summary,
     coreCompetencies: resumeData.coreCompetencies,
     technicalProficiency: resumeData.technicalProficiency,
+    technicalProficiencyLabels: resumeData.technicalProficiencyLabels,
     professionalExperience: resumeData.professionalExperience,
     education: resumeData.education,
     certifications: resumeData.certifications,
@@ -125,18 +120,18 @@ export default function Resume({
   const educationArray = getEducationArray(resumeData.education);
   const certificationsArray = getArrayValue(resumeData.certifications);
 
-  // Generate dynamic technical proficiency text
+  // Generate dynamic technical proficiency text (any categories)
   const generateTechnicalProficiencyText = () => {
     const tech = resumeData.technicalProficiency;
-    const allSkills = [
-      ...tech.programming.map(getFieldValue),
-      ...tech.cloudData.map(getFieldValue),
-      ...tech.analytics.map(getFieldValue),
-      ...tech.mlAi.map(getFieldValue),
-      ...tech.productivity.map(getFieldValue),
-      ...tech.marketingAds.map(getFieldValue)
-    ];
-    return allSkills.join(', ') + '.';
+    if (!tech || typeof tech !== 'object') return '';
+    const parts: string[] = [];
+    for (const [key, items] of Object.entries(tech)) {
+      if (key.startsWith('_')) continue;
+      const arr = Array.isArray(items) ? items : [];
+      const label = resumeData.technicalProficiencyLabels?.[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+      if (arr.length) parts.push(`${label}: ${arr.join(', ')}`);
+    }
+    return parts.join('. ') + (parts.length ? '.' : '');
   };
 
   return (
@@ -184,14 +179,14 @@ export default function Resume({
 
         {/* Summary */}
         <section className={`mb-3.5${highlightSections.includes('summary') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-          <h2 className="section-header text-[16px]">Career Summary</h2>
+          <h2 className="section-header text-[16px]">Professional Summary</h2>
           <p className="text-[12px] leading-relaxed text-justify">{getFieldValue(resumeData.summary)}</p>
         </section>
 
-        {/* Core Competencies */}
+        {/* Skills (Core Competencies) */}
         {config.sections.showCoreCompetencies && (
           <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header text-[16px]">Core Competencies</h2>
+            <h2 className="section-header text-[16px]">Skills</h2>
             <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
               {coreCompetenciesArr.map((item: string, i: number) => (
                 <li key={i} className="flex items-start mb-0.5">
@@ -213,10 +208,10 @@ export default function Resume({
           </section>
         )}
 
-        {/* Professional Experience */}
+        {/* Work History */}
         {config.sections.showProfessionalExperience && (
           <section className={`mb-5${highlightSections.includes('professionalExperience') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header">Professional Experience</h2>
+            <h2 className="section-header">Work History</h2>
             {resumeData.professionalExperience.map((role, i) => {
               const hasDescription = getFieldValue(role.description) && getFieldValue(role.description).trim();
               return (

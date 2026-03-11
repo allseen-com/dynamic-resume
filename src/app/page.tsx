@@ -65,7 +65,7 @@ export default function HomePage() {
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [groundingVerified, setGroundingVerified] = useState(false);
   const [pineconeConfigured, setPineconeConfigured] = useState(false);
-  const [indexingResume, setIndexingResume] = useState(false);
+  const [lastIndexedAt, setLastIndexedAt] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"single" | "side-by-side">("single");
   const [archiveVersion, setArchiveVersion] = useState<DraftVersionLabel | "">("");
 
@@ -74,7 +74,24 @@ export default function HomePage() {
     if (typeof window !== "undefined") {
       setArchive(JSON.parse(localStorage.getItem("resumeArchive") || "[]"));
       setSavedPrompt(localStorage.getItem("customAIPrompt") || getDefaultPrompt());
+      setLastIndexedAt(localStorage.getItem("resumeLastIndexedAt"));
     }
+  }, []);
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "resumeLastIndexedAt" && e.newValue) setLastIndexedAt(e.newValue);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && typeof window !== "undefined") {
+        setLastIndexedAt(localStorage.getItem("resumeLastIndexedAt"));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   useEffect(() => {
@@ -217,27 +234,6 @@ export default function HomePage() {
     }
   };
 
-  const handleIndexResume = async () => {
-    setIndexingResume(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/embed-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeData: motherResumeData }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to index resume");
-      }
-      setShowSuccess(true);
-    } catch (e) {
-      handleErrorWithState(e, setError, "validation");
-    } finally {
-      setIndexingResume(false);
-    }
-  };
-
   const resetToDefault = () => {
     setCustomizedResumeData(motherResumeData);
     setCustomizedConfig({
@@ -324,19 +320,6 @@ export default function HomePage() {
             >
               Reset
             </button>
-            {pineconeConfigured && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleIndexResume}
-                  disabled={indexingResume}
-                  className="px-4 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 text-sm font-medium"
-                >
-                  {indexingResume ? "Indexing…" : "Index resume"}
-                </button>
-                <span className="text-xs text-slate-500">For match score & RAG</span>
-              </>
-            )}
           </div>
           {error && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -350,6 +333,11 @@ export default function HomePage() {
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="heading-section mb-0">Live preview</h2>
+              {lastIndexedAt && (
+                <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded">
+                  Mother resume vectorized on {new Date(lastIndexedAt).toLocaleDateString()}
+                </span>
+              )}
               <div className="flex rounded-lg border border-slate-300 overflow-hidden">
                 <button
                   type="button"
