@@ -1,5 +1,4 @@
 import { ResumeData, ResumeConfig } from '../types/resume';
-import { createAIService } from '../services/aiService';
 import { getWordCountStats } from './wordCountUtils';
 
 export interface AICustomizationRequest {

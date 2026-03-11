@@ -36,8 +36,13 @@ export async function upsertResumeChunks(
   chunks: ResumeChunk[],
   configOverride?: Partial<PineconeConfig>
 ): Promise<{ upsertedCount: number }> {
-  const config = configOverride ?? getConfig();
-  if (!config) throw new Error('Pinecone is not configured (PINECONE_API_KEY, PINECONE_INDEX)');
+  const raw = configOverride ?? getConfig();
+  if (!raw?.apiKey || !raw?.indexName) throw new Error('Pinecone is not configured (PINECONE_API_KEY, PINECONE_INDEX)');
+  const config: PineconeConfig = {
+    apiKey: raw.apiKey,
+    indexName: raw.indexName,
+    namespace: raw.namespace ?? 'resume-chunks',
+  };
 
   const texts = chunks.map((c) => c.text);
   const vectors = await embedTexts(texts);
@@ -77,8 +82,13 @@ export async function queryResumeChunks(
   topK: number = 15,
   configOverride?: Partial<PineconeConfig>
 ): Promise<RetrievedChunk[]> {
-  const config = configOverride ?? getConfig();
-  if (!config) throw new Error('Pinecone is not configured');
+  const raw = configOverride ?? getConfig();
+  if (!raw?.apiKey || !raw?.indexName) throw new Error('Pinecone is not configured');
+  const config: PineconeConfig = {
+    apiKey: raw.apiKey,
+    indexName: raw.indexName,
+    namespace: raw.namespace ?? 'resume-chunks',
+  };
 
   const client = getClient(config);
   const index = client.index(config.indexName).namespace(config.namespace);

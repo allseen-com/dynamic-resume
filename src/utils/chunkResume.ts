@@ -12,15 +12,6 @@ export interface ResumeChunk {
   };
 }
 
-const SECTION_ORDER = [
-  'summary',
-  'coreCompetencies',
-  'technicalProficiency',
-  'professionalExperience',
-  'education',
-  'certifications',
-] as const;
-
 /**
  * Split the Mother Resume into semantic chunks by section for RAG retrieval.
  * Each chunk has an id and metadata for citations.
