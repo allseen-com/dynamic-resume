@@ -1,3 +1,7 @@
+/**
+ * ATS Safe Parse (Engineering.md §4.3): no tables, text boxes, or graphics; contact in body.
+ * For strictest ATS compatibility use Arial or Calibri 10–12pt; this template uses Lato for consistency.
+ */
 import React from 'react';
 import {
   Document,

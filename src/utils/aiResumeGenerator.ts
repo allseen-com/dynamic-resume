@@ -220,8 +220,40 @@ function generateCustomConfig(keywords: string[], requirements: { role: string; 
   };
 }
 
+const POLL_INTERVAL_MS = 1800;
+const POLL_TIMEOUT_MS = 120000;
+
 /**
- * Call AI service to generate customized resume content
+ * Poll optimize-resume status until completed or failed. Returns result or throws.
+ */
+async function pollOptimizeStatus(jobId: string): Promise<{
+  data: ResumeData;
+  matchScore?: number;
+  groundingVerified?: boolean;
+  citations?: { chunkId: string; section: string; score?: number }[];
+}> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const res = await fetch(`/api/optimize-resume/status?jobId=${encodeURIComponent(jobId)}`);
+    const body = await res.json();
+    if (body.status === 'completed' && body.result?.data) {
+      return {
+        data: body.result.data,
+        matchScore: body.result.matchScore,
+        groundingVerified: body.result.groundingVerified,
+        citations: body.result.citations,
+      };
+    }
+    if (body.status === 'failed') {
+      throw new Error(body.error || 'Optimization failed');
+    }
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  }
+  throw new Error('Optimization timed out');
+}
+
+/**
+ * Call AI service to generate customized resume content (202 + polling).
  */
 export async function callAIService(prompt: string, jobDescription: string, resumeData: ResumeData): Promise<ResumeData> {
   try {
@@ -236,6 +268,13 @@ export async function callAIService(prompt: string, jobDescription: string, resu
         resumeData
       })
     });
+
+    if (response.status === 202) {
+      const { jobId } = await response.json();
+      if (!jobId) throw new Error('Missing jobId');
+      const result = await pollOptimizeStatus(jobId);
+      return result.data;
+    }
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -299,7 +338,7 @@ export async function generateAICustomizedResume(
   const effectivePrompt = (customPrompt || '') + bulletInstruction;
 
   try {
-    // Call server API so RAG (Pinecone) and MatchScore run server-side
+    // Call server API (202 + polling) so RAG (Pinecone) and MatchScore run server-side
     const response = await fetch('/api/optimize-resume', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -309,13 +348,35 @@ export async function generateAICustomizedResume(
         resumeData: baseResumeData,
       }),
     });
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'AI optimization failed');
+    if (response.status !== 202) {
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'AI optimization failed');
+      }
+      const apiResult = await response.json();
+      const customizedData = apiResult.data;
+      const keywords = extractKeywords(jobDescription);
+      const requirements = analyzeRequirements(jobDescription);
+      const customizedConfig = generateCustomConfig(keywords, requirements);
+      const wordCountStats = getWordCountStats(baseResumeData, customizedData);
+      const summaryInfo = `Summary: ${wordCountStats.summary.original}→${wordCountStats.summary.limited} words`;
+      const experienceInfo = wordCountStats.experiences.map((exp, i) =>
+        `Exp${i+1}: ${exp.original}→${exp.limited} words`
+      ).join(', ');
+      return {
+        resumeData: customizedData,
+        config: customizedConfig,
+        reasoning: `Resume customized based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
+        companyOrRole,
+        matchScore: apiResult.matchScore,
+        groundingVerified: apiResult.groundingVerified,
+        citations: apiResult.citations,
+      };
     }
-    const apiResult = await response.json();
-    const customizedData = apiResult.data;
-
+    const { jobId } = await response.json();
+    if (!jobId) throw new Error('Missing jobId');
+    const pollResult = await pollOptimizeStatus(jobId);
+    const customizedData = pollResult.data;
     const keywords = extractKeywords(jobDescription);
     const requirements = analyzeRequirements(jobDescription);
     const customizedConfig = generateCustomConfig(keywords, requirements);
@@ -330,9 +391,9 @@ export async function generateAICustomizedResume(
       config: customizedConfig,
       reasoning: `Resume customized based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
       companyOrRole,
-      matchScore: apiResult.matchScore,
-      groundingVerified: apiResult.groundingVerified,
-      citations: apiResult.citations,
+      matchScore: pollResult.matchScore,
+      groundingVerified: pollResult.groundingVerified,
+      citations: pollResult.citations,
     };
   } catch (error) {
     console.error('AI customization failed, falling back to mock implementation:', error);

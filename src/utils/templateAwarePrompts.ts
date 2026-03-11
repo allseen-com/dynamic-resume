@@ -163,7 +163,7 @@ TECHNICAL 2-PAGE OPTIMIZATION:
 }
 
 /**
- * Create the final prompt with job description and resume data
+ * Create the final prompt with Context Skyscraper layering (Upper Floors = JD + context, Lower Floors = Mother Resume).
  */
 export function createFinalPrompt(
   basePrompt: string,
@@ -173,19 +173,20 @@ export function createFinalPrompt(
   return `${basePrompt}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-JOB DESCRIPTION:
+UPPER FLOORS — Active context (JD + use last 10–15 years of experience from Mother Resume):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+JOB DESCRIPTION:
 ${jobDescription}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MOTHER RESUME DATA TO OPTIMIZE:
+LOWER FLOORS — Full Mother Resume (semantic source to tailor from):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${JSON.stringify(resumeData, null, 2)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RETURN: Optimized resume as valid JSON in exact same structure.
+RETURN: Optimized resume as valid JSON in exact same structure. Use MM/YYYY for all dates.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 }
 

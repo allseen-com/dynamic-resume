@@ -76,6 +76,16 @@ export default function Header() {
               <div className="border-t border-slate-200 my-2"></div>
               <li>
                 <Link 
+                  href="/mother-resume" 
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-slate-600 hover:text-slate-700 font-medium transition-colors text-sm" 
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className="text-base">📝</span>
+                  Mother Resume
+                </Link>
+              </li>
+              <li>
+                <Link 
                   href="/settings" 
                   className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-slate-600 hover:text-slate-700 font-medium transition-colors text-sm" 
                   onClick={() => setMenuOpen(false)}

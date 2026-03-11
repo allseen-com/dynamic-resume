@@ -62,7 +62,7 @@ Status Layering:  Informing users of backend states: "Grounding Verified" or "Co
 6. Implementation Roadmap & Best Practices
 6.1. Development Phases
 Phase 1 (Weeks 1-4):  Build Universal Professional Taxonomy and recursive character splitting for semantic chunking.
-Phase 2 (Weeks 5-8):  Implement  Async LLM pipelines (202 Accepted pattern) . This is mandatory as LLM calls take  2-30+ seconds , exceeding standard HTTP timeouts.
+Phase 2 (Weeks 5-8):  Implement  Async LLM pipelines (202 Accepted pattern) . This is mandatory as LLM calls take  2-30+ seconds , exceeding standard HTTP timeouts. **Done:** `POST /api/optimize-resume` returns `202` with `jobId`; client polls `GET /api/optimize-resume/status?jobId=...` until `completed` or `failed`.
 Phase 3 (Weeks 9-12):  High-fidelity rendering and  Adversarial Input Testing . The latter prevents "Model Collapse" when processing non-standard or low-quality JDs.
 6.2. Strategic Job Search Integration
 Advise users on "Strategic Application Reduction," targeting a 65-85% match score. High volume is a signal of low-value candidacy.

@@ -1,3 +1,5 @@
+import { getContextSkyscraperPrefix } from './contextSkyscraper';
+
 export interface PromptTemplate {
   id: string;
   name: string;
@@ -6,14 +8,15 @@ export interface PromptTemplate {
   category: 'general' | 'technical' | 'marketing' | 'management' | 'sales' | 'creative';
 }
 
-const BASE_INSTRUCTIONS = `You are an expert resume writer and ATS optimization specialist. Analyze the job description and customize the resume to maximize relevance and ATS compatibility.
-
+const BASE_CRITICAL = `
 **CRITICAL INSTRUCTIONS:**
 1. ONLY modify fields marked with "_dynamic": true
 2. Preserve all other data exactly as provided
 3. Return valid JSON in the exact same structure
 4. Use natural language - avoid keyword stuffing
 5. Maintain truthfulness - enhance, don't fabricate`;
+
+const BASE_INSTRUCTIONS = `${getContextSkyscraperPrefix()}${BASE_CRITICAL}`;
 
 const BASE_ENDING = `
 

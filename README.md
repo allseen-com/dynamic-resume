@@ -83,6 +83,7 @@ Copy [.env.example](.env.example) for reference. For Vercel, set these in **Proj
 | `/customize` | URL extraction, prompt templates, custom prompt; same AI backend | [src/app/customize/page.tsx](src/app/customize/page.tsx), [src/utils/promptTemplates.ts](src/utils/promptTemplates.ts) |
 | `/settings` | Target page count (1–5), custom AI prompt, clear archive | [src/app/settings/page.tsx](src/app/settings/page.tsx) |
 | `/admin` | Add and test OpenAI & Pinecone credentials; Vercel env setup instructions | [src/app/admin/page.tsx](src/app/admin/page.tsx) |
+| `/mother-resume` | Edit mother resume: add/remove items (summary, competencies, experience, education, certifications); save to API | [src/app/mother-resume/page.tsx](src/app/mother-resume/page.tsx), [src/app/api/resume/route.ts](src/app/api/resume/route.ts) |
 
 ---
 
@@ -115,7 +116,12 @@ flowchart LR
 
 ### Customize flow
 
-URL (optional) → `POST /api/extract-url` → job text; then prompt template + optional custom prompt → `generateAICustomizedResume` → `POST /api/optimize-resume` → same backend.
+URL (optional) → `POST /api/extract-url` → job text; then prompt template + optional custom prompt → `generateAICustomizedResume` → `POST /api/optimize-resume` (returns **202** + `jobId`) → client polls `GET /api/optimize-resume/status?jobId=...` → same backend.
+
+### Mother resume API
+
+- **GET /api/resume** – Returns current mother resume (in-memory override if set, else `data/resume.json`).
+- **POST /api/resume** – Saves mother resume (in-memory). For local file persistence, set `ALLOW_RESUME_FILE_WRITE=1` so the server writes to `data/resume.json` (not available on Vercel).
 
 ---
 

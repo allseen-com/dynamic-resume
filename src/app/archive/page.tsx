@@ -8,6 +8,7 @@ interface ResumeArchiveItem {
   config: ResumeConfig;
   isCurrent: boolean;
   date: string;
+  version?: "Technical" | "Leadership" | "Growth";
 }
 
 function hasJobDescription(data: ResumeData): data is ResumeData & { jobDescription: string } {
@@ -114,10 +115,13 @@ export default function ArchivePage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-slate-900 text-lg mb-1">{item.label}</h3>
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <div className="flex items-center gap-2 text-sm text-slate-500 flex-wrap">
                       <span>{new Date(item.date).toLocaleDateString()}</span>
                       <span>•</span>
                       <span>{new Date(item.date).toLocaleTimeString()}</span>
+                      {item.version && (
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium">{item.version}</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
