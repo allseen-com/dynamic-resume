@@ -21,7 +21,7 @@ import { handleError } from '../../../utils/errorHandler';
 
 /** Strip _dynamic from technicalProficiency so it matches ResumeData (Record<string, string[]>). */
 function normalizeTechnicalProficiency(data: Record<string, unknown>): ResumeData {
-  const d = { ...data } as ResumeData;
+  const d = { ...data } as unknown as ResumeData;
   const tp = d.technicalProficiency as Record<string, unknown> | undefined;
   if (tp && typeof tp === 'object' && '_dynamic' in tp) {
     const rest = { ...tp };
