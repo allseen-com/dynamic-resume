@@ -53,6 +53,41 @@ function getClient(config: PineconeConfig): Pinecone {
   return _client;
 }
 
+/** Cache index name -> host so we don't call listIndexes on every upsert/query. */
+let _indexHostCache: { name: string; host: string } | null = null;
+
+/**
+ * Resolve the index host via listIndexes (avoids control-plane describeIndex which can 404).
+ * Uses the same logic as validatePineconeConnection so embed/query work when test works.
+ */
+async function resolveIndexHost(client: Pinecone, indexName: string): Promise<string> {
+  if (_indexHostCache?.name === indexName) return _indexHostCache.host;
+  const list = await client.listIndexes();
+  const indexes = list?.indexes ?? [];
+  const match =
+    indexes.find((i) => i.name === indexName) ??
+    indexes.find((i) => i.host?.includes(indexName));
+  if (!match) {
+    const names = indexes.length ? indexes.map((i) => i.name).join(', ') : 'none';
+    throw new Error(`Index "${indexName}" not found. Available: ${names}. Check PINECONE_INDEX.`);
+  }
+  const host = match.host ?? match.name;
+  if (!host) throw new Error('Index has no host; index may not be ready.');
+  _indexHostCache = { name: match.name, host };
+  return host;
+}
+
+/** SDK v4: index(name, host) to skip describeIndex; typings only allow index(name). */
+function getIndexWithHost(
+  client: Pinecone,
+  indexName: string,
+  host: string,
+  namespace: string
+): ReturnType<Pinecone['index']> {
+  const index = (client as unknown as { index: (name: string, host: string) => ReturnType<Pinecone['index']> }).index(indexName, host);
+  return index.namespace(namespace) as ReturnType<Pinecone['index']>;
+}
+
 /**
  * Upsert resume chunks into Pinecone. Embeds each chunk and stores with metadata.
  */
@@ -72,7 +107,8 @@ export async function upsertResumeChunks(
   const vectors = await embedTexts(texts);
 
   const client = getClient(config);
-  const index = client.index(config.indexName).namespace(config.namespace);
+  const host = await resolveIndexHost(client, config.indexName);
+  const index = getIndexWithHost(client, config.indexName, host, config.namespace);
 
   const records = chunks.map((chunk, i) => ({
     id: chunk.id,
@@ -115,7 +151,8 @@ export async function queryResumeChunks(
   };
 
   const client = getClient(config);
-  const index = client.index(config.indexName).namespace(config.namespace);
+  const host = await resolveIndexHost(client, config.indexName);
+  const index = getIndexWithHost(client, config.indexName, host, config.namespace);
 
   const res = await index.query({
     vector: queryVector,
