@@ -13,6 +13,7 @@ import {
 } from '@react-pdf/renderer';
 import path from 'path';
 import { ResumeConfig, defaultResumeConfig } from '../types/resume';
+import { normalizeResumeData } from '../lib/normalizeResumeData';
 import defaultResumeData from '../../data/resume.json';
 
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -277,8 +278,8 @@ function getEducationArray(field: any): any[] {
 }
 
 export default function ResumeDocument({ resumeData, config }: ResumeDocumentProps) {
-  // If no resume data is provided, use default data
-  const data: FlexibleResumeData = resumeData || defaultResumeData;
+  // If no resume data is provided, use default data (normalized so technicalProficiency has no _dynamic)
+  const data: FlexibleResumeData = resumeData || normalizeResumeData(defaultResumeData as Record<string, unknown>);
 
   // Use provided config or default config
   const resumeConfig = config || defaultResumeConfig;
