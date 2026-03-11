@@ -142,7 +142,7 @@ export default function MotherResumePage() {
             >
               ←
             </Link>
-            <h1 className="text-xl font-bold text-slate-900">Mother Resume</h1>
+            <h1 className="heading-page">Mother Resume</h1>
           </div>
           <button
             type="button"
@@ -165,28 +165,28 @@ export default function MotherResumePage() {
         <div className="space-y-6 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           {/* Header */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Header</h2>
+            <h2 className="heading-section">Header</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                className="input-app w-full"
                 value={data.header.name}
                 onChange={(e) => setData({ ...data, header: { ...data.header, name: e.target.value } })}
                 placeholder="Name"
               />
               <input
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                className="input-app w-full"
                 value={data.header.email}
                 onChange={(e) => setData({ ...data, header: { ...data.header, email: e.target.value } })}
                 placeholder="Email"
               />
               <input
-                className="w-full sm:col-span-2 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                className="input-app w-full sm:col-span-2"
                 value={data.header.address}
                 onChange={(e) => setData({ ...data, header: { ...data.header, address: e.target.value } })}
                 placeholder="Address"
               />
               <input
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                className="input-app w-full"
                 value={data.header.phone}
                 onChange={(e) => setData({ ...data, header: { ...data.header, phone: e.target.value } })}
                 placeholder="Phone"
@@ -196,9 +196,9 @@ export default function MotherResumePage() {
 
           {/* Summary */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Summary</h2>
+            <h2 className="heading-section">Summary</h2>
             <textarea
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm min-h-[100px]"
+              className="textarea-app w-full min-h-[100px]"
               value={data.summary.value}
               onChange={(e) => setData({ ...data, summary: { ...data.summary, value: e.target.value } })}
               placeholder="Professional summary"
@@ -207,7 +207,7 @@ export default function MotherResumePage() {
 
           {/* Core competencies */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Core competencies</h2>
+            <h2 className="heading-section">Core competencies</h2>
             <ListEditor
               items={data.coreCompetencies.value}
               onChange={(value) => setData({ ...data, coreCompetencies: { ...data.coreCompetencies, value } })}
@@ -215,7 +215,7 @@ export default function MotherResumePage() {
               addLabel="Add competency"
               renderItem={(item, _, onChange) => (
                 <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  className="input-app w-full"
                   value={item}
                   onChange={(e) => onChange(e.target.value)}
                   placeholder="e.g. Growth Marketing"
@@ -226,7 +226,7 @@ export default function MotherResumePage() {
 
           {/* Technical proficiency */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Technical proficiency</h2>
+            <h2 className="heading-section">Technical proficiency</h2>
             {(
               [
                 { key: "programming", label: "Programming" },
@@ -238,7 +238,7 @@ export default function MotherResumePage() {
               ] as const
             ).map(({ key, label }) => (
               <div key={key} className="mb-4">
-                <span className="text-xs font-medium text-slate-500">{label}</span>
+                <span className="label-app">{label}</span>
                 <ListEditor
                   items={data.technicalProficiency[key]}
                   onChange={(value) =>
@@ -251,7 +251,7 @@ export default function MotherResumePage() {
                   addLabel={`Add ${label}`}
                   renderItem={(item, _, onChange) => (
                     <input
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                      className="input-app w-full"
                       value={item}
                       onChange={(e) => onChange(e.target.value)}
                       placeholder="e.g. Python"
@@ -264,34 +264,34 @@ export default function MotherResumePage() {
 
           {/* Professional experience */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Professional experience</h2>
+            <h2 className="heading-section">Professional experience</h2>
             <ListEditor
               items={data.professionalExperience}
               onChange={(value) => setData({ ...data, professionalExperience: value })}
               emptyItem={emptyExperience}
               addLabel="Add experience"
               renderItem={(item, _, onChange) => (
-                <div className="space-y-2 p-2 border border-slate-100 rounded-lg">
+                <div className="space-y-2 p-2 border border-slate-200 rounded-lg bg-slate-50/50">
                   <input
-                    className="w-full px-3 py-2 border border-slate-200 rounded text-sm"
+                    className="input-app w-full"
                     value={item.company}
                     onChange={(e) => onChange({ ...item, company: e.target.value })}
                     placeholder="Company"
                   />
                   <input
-                    className="w-full px-3 py-2 border border-slate-200 rounded text-sm"
+                    className="input-app w-full"
                     value={item.title}
                     onChange={(e) => onChange({ ...item, title: e.target.value })}
                     placeholder="Title"
                   />
                   <input
-                    className="w-full px-3 py-2 border border-slate-200 rounded text-sm"
+                    className="input-app w-full"
                     value={item.dateRange}
                     onChange={(e) => onChange({ ...item, dateRange: e.target.value })}
                     placeholder="Date range (e.g. 01/2020 – Present)"
                   />
                   <textarea
-                    className="w-full px-3 py-2 border border-slate-200 rounded text-sm min-h-[80px]"
+                    className="textarea-app w-full"
                     value={item.description.value}
                     onChange={(e) => onChange({ ...item, description: { ...item.description, value: e.target.value } })}
                     placeholder="Description"
@@ -303,28 +303,28 @@ export default function MotherResumePage() {
 
           {/* Education */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Education</h2>
+            <h2 className="heading-section">Education</h2>
             <ListEditor
               items={data.education.value}
               onChange={(value) => setData({ ...data, education: { ...data.education, value } })}
               emptyItem={emptyEducation}
               addLabel="Add education"
               renderItem={(item, _, onChange) => (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2 border border-slate-100 rounded-lg">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50/50">
                   <input
-                    className="sm:col-span-2 px-3 py-2 border border-slate-200 rounded text-sm"
+                    className="input-app sm:col-span-2"
                     value={item.school}
                     onChange={(e) => onChange({ ...item, school: e.target.value })}
                     placeholder="School"
                   />
                   <input
-                    className="px-3 py-2 border border-slate-200 rounded text-sm"
+                    className="input-app"
                     value={item.dateRange}
                     onChange={(e) => onChange({ ...item, dateRange: e.target.value })}
                     placeholder="Dates"
                   />
                   <input
-                    className="sm:col-span-3 px-3 py-2 border border-slate-200 rounded text-sm"
+                    className="input-app sm:col-span-3"
                     value={item.degree}
                     onChange={(e) => onChange({ ...item, degree: e.target.value })}
                     placeholder="Degree"
@@ -336,7 +336,7 @@ export default function MotherResumePage() {
 
           {/* Certifications */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Certifications</h2>
+            <h2 className="heading-section">Certifications</h2>
             <ListEditor
               items={data.certifications.value}
               onChange={(value) => setData({ ...data, certifications: { ...data.certifications, value } })}
@@ -344,7 +344,7 @@ export default function MotherResumePage() {
               addLabel="Add certification"
               renderItem={(item, _, onChange) => (
                 <input
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  className="input-app w-full"
                   value={item}
                   onChange={(e) => onChange(e.target.value)}
                   placeholder="e.g. Google Analytics Certification"

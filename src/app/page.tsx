@@ -2,153 +2,262 @@
 
 import React, { useState, useEffect } from "react";
 import Resume from "../components/Resume";
-import { ResumeData } from "../types/resume";
-import { ResumeTemplate, RESUME_TEMPLATES, getTemplateById, analyzeContentFit } from "../types/template";
-import { generateTemplateAwarePrompt, createFinalPrompt, preprocessResumeForTemplate } from "../utils/templateAwarePrompts";
-import { callAIService } from "../utils/aiResumeGenerator";
-import LoadingSpinner from "../components/LoadingSpinner";
-import motherResumeData from "../../data/resume.json";
+import { ResumeData, ResumeConfig } from "../types/resume";
+import { generateAICustomizedResume } from "../utils/aiResumeGenerator";
+import { useErrorHandler } from "../utils/errorHandler";
+import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../components/LoadingSpinner";
+import { getDefaultPrompt } from "../utils/promptTemplates";
+import resumeData from "../../data/resume.json";
+
+const DRAFT_VERSION_LABELS = ["Technical", "Leadership", "Growth"] as const;
+type DraftVersionLabel = (typeof DRAFT_VERSION_LABELS)[number];
 
 type ResumeArchiveItem = {
-  id: string;
   label: string;
   data: ResumeData;
-  template: ResumeTemplate;
-  jobDescription: string;
-  createdAt: string;
+  config: ResumeConfig;
+  isCurrent: boolean;
+  date: string;
+  version?: DraftVersionLabel;
 };
 
-export default function Home() {
-  // Core state
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 2500);
+    return () => clearTimeout(t);
+  }, [onClose]);
+  return (
+    <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+      {message}
+    </div>
+  );
+}
+
+export default function HomePage() {
   const [jobDescription, setJobDescription] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState(RESUME_TEMPLATES[0].id);
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [optimizedResume, setOptimizedResume] = useState<ResumeData | null>(null);
+  const [jobUrl, setJobUrl] = useState("");
+  const [savedPrompt, setSavedPrompt] = useState(getDefaultPrompt());
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingType, setLoadingType] = useState<"url" | "ai" | "pdf" | null>(null);
+  const [motherResumeData, setMotherResumeData] = useState<ResumeData>(resumeData as ResumeData);
+  const [customizedResumeData, setCustomizedResumeData] = useState<ResumeData>(resumeData as ResumeData);
+  const [customizedConfig, setCustomizedConfig] = useState<ResumeConfig>({
+    titleBar: {
+      main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",
+      sub: "Business Development | Digital Marketing Strategy | Performance Optimizations",
+    },
+    sections: {
+      showTechnicalProficiency: true,
+      showCoreCompetencies: true,
+      showProfessionalExperience: true,
+      showEducation: true,
+      showCertifications: true,
+    },
+  });
   const [error, setError] = useState<string | null>(null);
-  
-  // Archive state
+  const { handleErrorWithState } = useErrorHandler();
+  const [companyOrRole, setCompanyOrRole] = useState<string | undefined>(undefined);
   const [archive, setArchive] = useState<ResumeArchiveItem[]>([]);
   const [archiveLabel, setArchiveLabel] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
-  
-  // Client-side only
+  const [highlightSections, setHighlightSections] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [matchScore, setMatchScore] = useState<number | null>(null);
+  const [groundingVerified, setGroundingVerified] = useState(false);
+  const [pineconeConfigured, setPineconeConfigured] = useState(false);
+  const [indexingResume, setIndexingResume] = useState(false);
+  const [viewMode, setViewMode] = useState<"single" | "side-by-side">("single");
+  const [archiveVersion, setArchiveVersion] = useState<DraftVersionLabel | "">("");
 
   useEffect(() => {
     setIsClient(true);
-    // Load archive from localStorage
     if (typeof window !== "undefined") {
-      const stored = JSON.parse(localStorage.getItem("resumeArchive") || "[]");
-      setArchive(stored);
+      setArchive(JSON.parse(localStorage.getItem("resumeArchive") || "[]"));
+      setSavedPrompt(localStorage.getItem("customAIPrompt") || getDefaultPrompt());
     }
   }, []);
 
-  const selectedTemplate = getTemplateById(selectedTemplateId);
-  const motherResume = motherResumeData as ResumeData;
-  
-  // Analyze content fit with selected template
-  const contentAnalysis = analyzeContentFit(motherResume, selectedTemplate);
+  useEffect(() => {
+    fetch("/api/admin/pinecone-status")
+      .then((r) => r.json())
+      .then((d) => setPineconeConfigured(d.configured === true))
+      .catch(() => setPineconeConfigured(false));
+  }, []);
 
-  // Handle AI optimization
-  const handleOptimize = async () => {
-    if (!jobDescription.trim()) {
-      setError("Please enter a job description");
-      return;
-    }
+  useEffect(() => {
+    fetch("/api/resume")
+      .then((r) => r.json())
+      .then((data) => setMotherResumeData(data as ResumeData))
+      .catch(() => {});
+  }, []);
 
-    setIsOptimizing(true);
-    setError(null);
-
-    try {
-      // Preprocess mother resume to fit template constraints
-      const preprocessedResume = preprocessResumeForTemplate(motherResume, selectedTemplate);
-      
-      // Generate template-aware prompt
-      const basePrompt = generateTemplateAwarePrompt({
-        template: selectedTemplate,
-        jobDescription,
-        baseResumeData: preprocessedResume
-      });
-      
-      const finalPrompt = createFinalPrompt(basePrompt, jobDescription, preprocessedResume);
-      
-      // Call AI service
-      const optimizedData = await callAIService(finalPrompt, jobDescription, preprocessedResume);
-      
-      setOptimizedResume(optimizedData);
-      setShowSuccess(true);
-      
-      // Auto-generate archive label
-      const company = extractCompanyFromJobDescription(jobDescription);
-      setArchiveLabel(company ? `${company} - ${selectedTemplate.name}` : selectedTemplate.name);
-      
-    } catch (err) {
-      console.error('Optimization failed:', err);
-      setError(err instanceof Error ? err.message : 'Optimization failed');
-    } finally {
-      setIsOptimizing(false);
-    }
-  };
-
-  // Save to archive
   const saveToArchive = () => {
-    if (!optimizedResume || !archiveLabel.trim()) {
-      setError("Please enter a label for this optimized resume");
+    if (!archiveLabel.trim()) {
+      setError("Please enter a label for the archive.");
       return;
     }
-
-    const newItem: ResumeArchiveItem = {
-      id: Date.now().toString(),
-      label: archiveLabel,
-      data: optimizedResume,
-      template: selectedTemplate,
-      jobDescription,
-      createdAt: new Date().toISOString(),
-    };
-
-    const newArchive = [newItem, ...archive];
+    const newArchive: ResumeArchiveItem[] = [
+      ...archive,
+      {
+        label: archiveLabel,
+        data: customizedResumeData,
+        config: customizedConfig,
+        isCurrent: false,
+        date: new Date().toISOString(),
+        ...(archiveVersion ? { version: archiveVersion as DraftVersionLabel } : {}),
+      },
+    ];
     setArchive(newArchive);
     localStorage.setItem("resumeArchive", JSON.stringify(newArchive));
     setArchiveLabel("");
+    setArchiveVersion("");
     setError(null);
-    setShowSuccess(true);
   };
 
-  // Download PDF
-  const handleDownloadPDF = async (resumeToDownload = optimizedResume || motherResume, label = archiveLabel || 'Resume') => {
+  const setAsCurrent = (idx: number) => {
+    const next = archive.map((item, i) => ({ ...item, isCurrent: i === idx }));
+    setArchive(next);
+    localStorage.setItem("resumeArchive", JSON.stringify(next));
+    setError(null);
+  };
+
+  const handleJobUrlExtraction = async () => {
+    if (!jobUrl.trim()) {
+      handleErrorWithState("Please enter a valid URL", setError, "validation", "URL");
+      return;
+    }
+    setIsGenerating(true);
+    setLoadingType("url");
+    setError(null);
     try {
-      const res = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          resumeData: resumeToDownload,
-          template: selectedTemplate,
-          filename: `${label}.pdf`
+      const { createURLExtractor } = await import("../services/urlExtractor");
+      const extractor = createURLExtractor();
+      const result = await extractor.extractJobDescription(jobUrl);
+      if (result.success && result.content) {
+        setJobDescription(result.content);
+        setError(null);
+      } else {
+        handleErrorWithState(result.error || "Failed to extract job description from URL", setError, "url");
+      }
+    } catch (e) {
+      handleErrorWithState(e, setError, "url");
+    } finally {
+      setIsGenerating(false);
+      setLoadingType(null);
+    }
+  };
+
+  const handleGenerateResume = async () => {
+    if (!jobDescription.trim()) {
+      handleErrorWithState("Please provide a job description", setError, "validation", "job description");
+      return;
+    }
+    setIsGenerating(true);
+    setLoadingType("ai");
+    setError(null);
+    try {
+      const result = await generateAICustomizedResume({
+        jobDescription,
+        customPrompt: savedPrompt,
+        baseResumeData: motherResumeData,
+      });
+      setCustomizedResumeData(result.resumeData);
+      setCustomizedConfig(result.config);
+      setCompanyOrRole(result.companyOrRole);
+      setMatchScore(result.matchScore ?? null);
+      setGroundingVerified(result.groundingVerified === true);
+      setShowSuccess(true);
+      setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]);
+    } catch (e) {
+      handleErrorWithState(e, setError, "ai");
+    } finally {
+      setIsGenerating(false);
+      setLoadingType(null);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    setIsGenerating(true);
+    setLoadingType("pdf");
+    setError(null);
+    try {
+      const { getExportFilenameFromResume } = await import("../utils/safeParseFilename");
+      const fullName = (customizedResumeData as ResumeData)?.header?.name ?? "Resume";
+      const filename = getExportFilenameFromResume(fullName, companyOrRole);
+      const res = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeData: customizedResumeData,
+          config: customizedConfig,
+          jobDescription,
+          aiPrompt: savedPrompt,
+          filename,
         }),
       });
-      
-      if (!res.ok) throw new Error('PDF generation failed');
-      
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        handleErrorWithState(new Error(err.details || err.error || "Failed to generate PDF"), setError, "pdf");
+        return;
+      }
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `${label}.pdf`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch {
-      setError('Failed to generate PDF');
+    } catch (e) {
+      handleErrorWithState(e, setError, "pdf");
+    } finally {
+      setIsGenerating(false);
+      setLoadingType(null);
     }
   };
 
-  // Load from archive
-  const loadFromArchive = (item: ResumeArchiveItem) => {
-    setOptimizedResume(item.data);
-    setSelectedTemplateId(item.template.id);
-    setJobDescription(item.jobDescription);
-    setArchiveLabel(item.label);
+  const handleIndexResume = async () => {
+    setIndexingResume(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/embed-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeData: motherResumeData }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to index resume");
+      }
+      setShowSuccess(true);
+    } catch (e) {
+      handleErrorWithState(e, setError, "validation");
+    } finally {
+      setIndexingResume(false);
+    }
+  };
+
+  const resetToDefault = () => {
+    setCustomizedResumeData(motherResumeData);
+    setCustomizedConfig({
+      titleBar: {
+        main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",
+        sub: "Business Development | Digital Marketing Strategy | Performance Optimizations",
+      },
+      sections: {
+        showTechnicalProficiency: true,
+        showCoreCompetencies: true,
+        showProfessionalExperience: true,
+        showEducation: true,
+        showCertifications: true,
+      },
+    });
+    setJobDescription("");
+    setJobUrl("");
+    setError(null);
+    setMatchScore(null);
+    setGroundingVerified(false);
   };
 
   if (!isClient) {
@@ -157,208 +266,240 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Success Toast */}
       {showSuccess && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg">
-          Resume optimized successfully!
-        </div>
+        <Toast message="Resume updated with AI customization!" onClose={() => setShowSuccess(false)} />
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Left Panel - Controls */}
-          <div className="space-y-6">
-            
-            {/* Job Description */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">1. Job Description</h2>
-              <textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description here..."
-                rows={6}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 placeholder-slate-500"
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        {/* Full-width: Job Description */}
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative">
+          <h2 className="heading-section">Job Description</h2>
+          <LoadingOverlay isVisible={loadingType === "url"}>
+            <URLExtractionLoader />
+          </LoadingOverlay>
+          <div className="mb-4">
+            <label className="label-app">Job posting URL (optional)</label>
+            <div className="flex flex-wrap gap-3">
+              <input
+                type="url"
+                value={jobUrl}
+                onChange={(e) => setJobUrl(e.target.value)}
+                placeholder="https://company.com/jobs/position"
+                className="input-app flex-1 min-w-[200px]"
               />
-            </div>
-
-            {/* Template Selection */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">2. Select Template</h2>
-              <div className="space-y-3">
-                {RESUME_TEMPLATES.map((template) => (
-                  <label key={template.id} className="flex items-start space-x-3 cursor-pointer group">
-                    <input
-                      type="radio"
-                      name="template"
-                      value={template.id}
-                      checked={selectedTemplateId === template.id}
-                      onChange={(e) => setSelectedTemplateId(e.target.value)}
-                      className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-slate-900 group-hover:text-indigo-700">{template.name}</div>
-                      <div className="text-sm text-slate-600">{template.description}</div>
-                      <div className="text-xs text-slate-500 mt-1">
-                        Max {template.constraints.maxPages} pages • 
-                        Summary: {template.constraints.wordLimits.summary}w • 
-                        Experience: {template.constraints.wordLimits.experiencePerJob}w per job
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-              
-              {/* Content Analysis */}
-              {!contentAnalysis.fits && (
-                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="text-sm font-medium text-amber-800">Template Adjustments Needed:</div>
-                  <ul className="text-xs text-amber-700 mt-1 space-y-1">
-                    {contentAnalysis.violations.map((violation, i) => (
-                      <li key={i}>• {violation}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Optimize Button */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">3. AI Optimization</h2>
               <button
-                onClick={handleOptimize}
-                disabled={isOptimizing || !jobDescription.trim()}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                  isOptimizing || !jobDescription.trim()
-                    ? "bg-slate-400 cursor-not-allowed text-white"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg"
-                }`}
+                onClick={handleJobUrlExtraction}
+                disabled={isGenerating || !jobUrl.trim()}
+                className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium text-sm transition-colors"
               >
-                {isOptimizing ? (
-                  <div className="flex items-center justify-center">
-                    <LoadingSpinner size="small" />
-                    <span className="ml-2">Optimizing with AI...</span>
-                  </div>
-                ) : (
-                  "🤖 Optimize Resume"
-                )}
+                {loadingType === "url" ? "Extracting…" : "Extract"}
               </button>
-              
-              {error && (
-                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="text-sm text-red-700">{error}</div>
-                </div>
-              )}
             </div>
-
-            {/* Archive Controls */}
-            {optimizedResume && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">4. Save & Download</h2>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={archiveLabel}
-                    onChange={(e) => setArchiveLabel(e.target.value)}
-                    placeholder="Label this version (e.g., 'Google - Technical Role')"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 placeholder-slate-500"
-                  />
-                  <div className="flex gap-3">
-                    <button
-                      onClick={saveToArchive}
-                      className="flex-1 py-2 px-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
-                    >
-                      💾 Save to Archive
-                    </button>
-                    <button
-                      onClick={() => handleDownloadPDF()}
-                      className="flex-1 py-2 px-4 bg-slate-600 text-white rounded-lg hover:bg-slate-700 font-medium transition-colors"
-                    >
-                      📄 Download PDF
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Actions for Mother Resume */}
-            {!optimizedResume && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Quick Actions</h2>
+          </div>
+          <div className="mb-4">
+            <label className="label-app">Job description text</label>
+            <textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste the job description here..."
+              rows={6}
+              className="textarea-app w-full"
+            />
+          </div>
+          <div className="flex flex-wrap gap-3 items-center">
+            <button
+              onClick={handleGenerateResume}
+              disabled={isGenerating || !jobDescription.trim()}
+              className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                isGenerating || !jobDescription.trim()
+                  ? "bg-slate-400 cursor-not-allowed text-white"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              }`}
+            >
+              {loadingType === "ai" ? "Customizing…" : "Generate custom resume"}
+            </button>
+            <button
+              onClick={resetToDefault}
+              className="px-4 py-2.5 bg-slate-500 text-white rounded-lg hover:bg-slate-600 font-medium text-sm transition-colors"
+            >
+              Reset
+            </button>
+            {pineconeConfigured && (
+              <>
                 <button
-                  onClick={() => handleDownloadPDF(motherResume, 'Mother-Resume')}
-                  className="w-full py-2 px-4 bg-slate-600 text-white rounded-lg hover:bg-slate-700 font-medium transition-colors"
+                  type="button"
+                  onClick={handleIndexResume}
+                  disabled={indexingResume}
+                  className="px-4 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 text-sm font-medium"
                 >
-                  📄 Download Mother Resume
+                  {indexingResume ? "Indexing…" : "Index resume"}
+                </button>
+                <span className="text-xs text-slate-500">For match score & RAG</span>
+              </>
+            )}
+          </div>
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {error}
+            </div>
+          )}
+        </section>
+
+        {/* Full-width: Live Preview */}
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="heading-section mb-0">Live preview</h2>
+              <div className="flex rounded-lg border border-slate-300 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("single")}
+                  className={`px-3 py-1.5 text-sm font-medium ${viewMode === "single" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
+                >
+                  Single
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("side-by-side")}
+                  className={`px-3 py-1.5 text-sm font-medium ${viewMode === "side-by-side" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
+                >
+                  Mother vs draft
                 </button>
               </div>
-            )}
-
-            {/* Archive List */}
-            {archive.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Recent Versions ({archive.length})</h2>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {archive.slice(0, 5).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm text-slate-900">{item.label}</div>
-                        <div className="text-xs text-slate-500">{item.template.name} • {new Date(item.createdAt).toLocaleDateString()}</div>
-                      </div>
-                      <button
-                        onClick={() => loadFromArchive(item)}
-                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                      >
-                        Load
-                      </button>
-                    </div>
-                  ))}
+              {(matchScore != null || groundingVerified) && (
+                <div className="flex flex-wrap gap-2 text-sm">
+                  {matchScore != null && (
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800">
+                      Match: {Math.round(matchScore * 100)}%
+                    </span>
+                  )}
+                  {groundingVerified && (
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800">
+                      Grounding verified
+                    </span>
+                  )}
                 </div>
-                {archive.length > 5 && (
-                  <div className="mt-3 text-center">
-                    <a href="/archive" className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                      View all {archive.length} versions →
-                    </a>
+              )}
+            </div>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGenerating}
+              className={`px-4 py-2 rounded-lg font-medium text-sm ${isGenerating ? "bg-slate-400 cursor-not-allowed text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
+            >
+              {loadingType === "pdf" ? "Generating…" : "Download PDF"}
+            </button>
+          </div>
+          <div className="p-6 max-h-[75vh] overflow-y-auto">
+            {viewMode === "side-by-side" ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
+                  <div className="px-3 py-2 border-b border-slate-200 text-sm font-medium text-slate-600 bg-slate-100">
+                    Mother resume
                   </div>
-                )}
+                  <div className="p-3 overflow-y-auto max-h-[65vh]">
+                    <Resume
+                      resumeData={motherResumeData}
+                      config={customizedConfig}
+                      showDownloadButton={false}
+                      isGenerating={false}
+                    />
+                  </div>
+                </div>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="px-3 py-2 border-b border-slate-200 text-sm font-medium text-slate-700 bg-indigo-50">
+                    Optimized draft
+                  </div>
+                  <div className="p-3 overflow-y-auto max-h-[65vh]">
+                    <Resume
+                      resumeData={customizedResumeData}
+                      config={customizedConfig}
+                      showDownloadButton={false}
+                      isGenerating={isGenerating}
+                      highlightSections={highlightSections}
+                    />
+                  </div>
+                </div>
               </div>
+            ) : (
+              <Resume
+                resumeData={customizedResumeData}
+                config={customizedConfig}
+                showDownloadButton={false}
+                isGenerating={isGenerating}
+                highlightSections={highlightSections}
+              />
             )}
           </div>
+          <LoadingOverlay isVisible={loadingType === "ai"}>
+            <AIProcessingLoader />
+          </LoadingOverlay>
+          <LoadingOverlay isVisible={loadingType === "pdf"}>
+            <PDFGenerationLoader />
+          </LoadingOverlay>
+        </section>
 
-          {/* Right Panel - Resume Preview */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 className="text-xl font-semibold text-slate-900 mb-4">
-              {optimizedResume ? "Optimized Resume" : "Mother Resume"}
-            </h2>
-            <div className="border border-slate-200 rounded-lg overflow-hidden">
-              <Resume
-                resumeData={optimizedResume || motherResume}
-                showDownloadButton={false}
-                isGenerating={isOptimizing}
-              />
-            </div>
+        {/* Archive */}
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <h2 className="heading-section">Resume archive</h2>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <input
+              type="text"
+              value={archiveLabel}
+              onChange={(e) => setArchiveLabel(e.target.value)}
+              placeholder="Label (e.g. Google PM)"
+              className="input-app flex-1 min-w-[140px]"
+            />
+            <select
+              value={archiveVersion}
+              onChange={(e) => setArchiveVersion(e.target.value as DraftVersionLabel | "")}
+              className="input-app w-auto"
+              title="Focus"
+            >
+              <option value="">Focus</option>
+              {DRAFT_VERSION_LABELS.map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+            <button
+              onClick={saveToArchive}
+              className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm"
+            >
+              Save to archive
+            </button>
           </div>
-        </div>
+          {archive.length > 0 && (
+            <>
+              <div className="space-y-2">
+              {archive.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg flex-wrap">
+                  <span className="flex-1 min-w-0 truncate text-sm text-slate-900">
+                    {item.label} <span className="text-xs text-slate-400">({new Date(item.date).toLocaleString()})</span>
+                  </span>
+                  {item.version && (
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">{item.version}</span>
+                  )}
+                  {item.isCurrent ? (
+                    <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">Current</span>
+                  ) : (
+                    <button
+                      onClick={() => setAsCurrent(idx)}
+                      className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700"
+                    >
+                      Set current
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+              <p className="mt-3 text-sm">
+                <a href="/archive" className="text-indigo-600 hover:text-indigo-800 font-medium">
+                  View all in Archive →
+                </a>
+              </p>
+            </>
+          )}
+        </section>
       </div>
     </div>
   );
-}
-
-// Helper function to extract company name from job description
-function extractCompanyFromJobDescription(jobDescription: string): string | null {
-  const patterns = [
-    /at ([A-Z][a-zA-Z\s&.]+?)(?:\s|,|\.|$)/,
-    /join ([A-Z][a-zA-Z\s&.]+?)(?:\s|,|\.|$)/,
-    /Company: ([A-Z][a-zA-Z\s&.]+?)(?:\s|,|\.|$)/,
-    /([A-Z][a-zA-Z\s&.]+?) is (?:looking|seeking|hiring)/
-  ];
-  
-  for (const pattern of patterns) {
-    const match = jobDescription.match(pattern);
-    if (match && match[1]) {
-      return match[1].trim().split(' ').slice(0, 3).join(' '); // Max 3 words
-    }
-  }
-  
-  return null;
 }

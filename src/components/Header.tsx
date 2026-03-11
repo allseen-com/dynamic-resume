@@ -50,7 +50,7 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className="text-lg">🏠</span>
-                  Resume Optimizer
+                  Home
                 </Link>
               </li>
               <li>
@@ -65,25 +65,15 @@ export default function Header() {
               </li>
               <li>
                 <Link 
-                  href="/customize" 
+                  href="/mother-resume" 
                   className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 font-medium transition-colors" 
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span className="text-lg">⚙️</span>
-                  Advanced Customization
-                </Link>
-              </li>
-              <div className="border-t border-slate-200 my-2"></div>
-              <li>
-                <Link 
-                  href="/mother-resume" 
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-slate-600 hover:text-slate-700 font-medium transition-colors text-sm" 
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span className="text-base">📝</span>
+                  <span className="text-lg">📝</span>
                   Mother Resume
                 </Link>
               </li>
+              <div className="border-t border-slate-200 my-2"></div>
               <li>
                 <Link 
                   href="/settings" 
@@ -92,16 +82,6 @@ export default function Header() {
                 >
                   <span className="text-base">⚙️</span>
                   Settings
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/admin" 
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-slate-600 hover:text-slate-700 font-medium transition-colors text-sm" 
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span className="text-base">🔧</span>
-                  Admin
                 </Link>
               </li>
             </ul>
