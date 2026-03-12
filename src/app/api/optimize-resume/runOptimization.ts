@@ -6,7 +6,7 @@ import { getResumeSummaryForMatch } from '../../../utils/chunkResume';
 import { normalizeResumeDates } from '../../../utils/dateFormat';
 import type { OptimizeJobResult } from '../../../lib/optimizeJobStore';
 import { setJobCompleted, setJobFailed, setJobProgress } from '../../../lib/optimizeJobStore';
-import type { PreAnalysisPayload } from '../route';
+import type { PreAnalysisPayload } from './route';
 
 const RAG_TOP_K = 15;
 
