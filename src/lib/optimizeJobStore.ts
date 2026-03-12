@@ -11,12 +11,15 @@ export interface OptimizeJobResult {
   matchScore?: number;
   groundingVerified?: boolean;
   citations?: { chunkId: string; section: string; score?: number }[];
+  optimizationSummary?: string;
+  keyChanges?: string[];
 }
 
 export interface OptimizeJobState {
   status: JobStatus;
   result?: OptimizeJobResult;
   error?: string;
+  statusMessage?: string;
   createdAt: number;
 }
 
@@ -34,6 +37,13 @@ function prune() {
 export function setJobPending(jobId: string): void {
   prune();
   jobs.set(jobId, { status: 'pending', createdAt: Date.now() });
+}
+
+export function setJobProgress(jobId: string, statusMessage: string): void {
+  const state = jobs.get(jobId);
+  if (state && state.status === 'pending') {
+    jobs.set(jobId, { ...state, statusMessage });
+  }
 }
 
 export function setJobCompleted(jobId: string, result: OptimizeJobResult): void {

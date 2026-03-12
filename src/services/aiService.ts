@@ -315,8 +315,80 @@ Focus on:
     }
   }
 
+  /** Same as customizeResume but asks for a wrapper JSON with resumeData + optimizationSummary + keyChanges. */
+  async customizeResumeWithExplanation(
+    jobDescription: string,
+    baseResumeData: ResumeData,
+    customPrompt?: string
+  ): Promise<{ resumeData: ResumeData; optimizationSummary?: string; keyChanges?: string[] }> {
+    const prompt = customPrompt || this.getDefaultPrompt();
+    const wordCountConstraints = this.getWordCountConstraints(baseResumeData);
+    const returnFormat = `Return a single JSON object with exactly these keys:
+- "resumeData": the full customized resume in the same JSON structure (modify only "_dynamic": true fields).
+- "optimizationSummary": 2-4 sentences on how the resume was tailored and why it is a better match for the role.
+- "keyChanges": array of 3-6 short bullet strings describing concrete changes (e.g. "Summary refocused on X", "Title set to exact JD title: Y").`;
+    const fullPrompt = `${prompt}\n\n${wordCountConstraints}\n\nJob Description:\n${jobDescription}\n\nBase Resume Data:\n${JSON.stringify(baseResumeData, null, 2)}\n\n${returnFormat}`;
+
+    try {
+      const response = await this.provider.generateResponse(fullPrompt);
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in AI response');
+      }
+      const parsed = JSON.parse(jsonMatch[0]) as {
+        resumeData?: ResumeData;
+        optimizationSummary?: string;
+        keyChanges?: string[];
+        header?: unknown;
+        summary?: unknown;
+      };
+
+      let customizedData: ResumeData;
+      if (parsed.resumeData && parsed.resumeData.header && parsed.resumeData.summary && parsed.resumeData.coreCompetencies) {
+        customizedData = parsed.resumeData as ResumeData;
+      } else {
+        customizedData = parsed as unknown as ResumeData;
+      }
+
+      if (!customizedData.header || !customizedData.summary || !customizedData.coreCompetencies) {
+        throw new Error('Invalid resume data structure in AI response');
+      }
+
+      const summaryWordCount = calculateSummaryWordCount(baseResumeData);
+      const experienceWordCounts = calculateExperienceWordCounts(baseResumeData);
+      const summaryWordCountAI = calculateSummaryWordCount(customizedData);
+      if (summaryWordCountAI > summaryWordCount) {
+        throw new Error(`AI-generated summary exceeds word count limit (${summaryWordCountAI} > ${summaryWordCount})`);
+      }
+      const aiExperienceWordCounts = calculateExperienceWordCounts(customizedData);
+      for (const key in aiExperienceWordCounts) {
+        if (Object.prototype.hasOwnProperty.call(aiExperienceWordCounts, key)) {
+          const idx = parseInt(key.split('_')[1], 10);
+          const max = experienceWordCounts[key] || 0;
+          if (aiExperienceWordCounts[key] > max) {
+            throw new Error(`AI-generated experience section ${idx + 1} exceeds word count limit (${aiExperienceWordCounts[key]} > ${max})`);
+          }
+        }
+      }
+
+      return {
+        resumeData: customizedData,
+        optimizationSummary: typeof parsed.optimizationSummary === 'string' ? parsed.optimizationSummary : undefined,
+        keyChanges: Array.isArray(parsed.keyChanges) ? parsed.keyChanges.filter((x): x is string => typeof x === 'string') : undefined,
+      };
+    } catch (error) {
+      const appError = handleError.ai(error);
+      throw new Error(appError.userMessage);
+    }
+  }
+
   getProviderName(): string {
     return this.provider.name;
+  }
+
+  /** Generate raw text from a prompt (e.g. for match-score analysis). */
+  async generateText(prompt: string): Promise<string> {
+    return this.provider.generateResponse(prompt);
   }
 }
 

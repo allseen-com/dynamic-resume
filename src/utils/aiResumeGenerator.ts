@@ -1,12 +1,21 @@
 import { ResumeData, ResumeConfig } from '../types/resume';
 import { getWordCountStats } from './wordCountUtils';
 
+export interface PreAnalysisForOptimize {
+  matchScore?: number;
+  analysis?: string;
+  strengths?: string[];
+  gaps?: string[];
+}
+
 export interface AICustomizationRequest {
   jobDescription: string;
   customPrompt?: string;
   baseResumeData: ResumeData;
   targetRole?: string;
   industry?: string;
+  preAnalysis?: PreAnalysisForOptimize;
+  onProgress?: (message: string | null) => void;
 }
 
 export interface AICustomizationResponse {
@@ -17,6 +26,8 @@ export interface AICustomizationResponse {
   matchScore?: number;
   groundingVerified?: boolean;
   citations?: { chunkId: string; section: string; score?: number }[];
+  optimizationSummary?: string;
+  keyChanges?: string[];
 }
 
 /**
@@ -225,12 +236,18 @@ const POLL_TIMEOUT_MS = 120000;
 
 /**
  * Poll optimize-resume status until completed or failed. Returns result or throws.
+ * Calls onProgress with statusMessage when status is pending.
  */
-async function pollOptimizeStatus(jobId: string): Promise<{
+async function pollOptimizeStatus(
+  jobId: string,
+  onProgress?: (message: string | null) => void
+): Promise<{
   data: ResumeData;
   matchScore?: number;
   groundingVerified?: boolean;
   citations?: { chunkId: string; section: string; score?: number }[];
+  optimizationSummary?: string;
+  keyChanges?: string[];
 }> {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -242,10 +259,15 @@ async function pollOptimizeStatus(jobId: string): Promise<{
         matchScore: body.result.matchScore,
         groundingVerified: body.result.groundingVerified,
         citations: body.result.citations,
+        optimizationSummary: body.result.optimizationSummary,
+        keyChanges: body.result.keyChanges,
       };
     }
     if (body.status === 'failed') {
       throw new Error(body.error || 'Optimization failed');
+    }
+    if (body.status === 'pending' && onProgress) {
+      onProgress(body.statusMessage ?? null);
     }
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
   }
@@ -323,7 +345,7 @@ function extractCompanyOrRole(jobDescription: string): string | undefined {
 export async function generateAICustomizedResume(
   request: AICustomizationRequest
 ): Promise<AICustomizationResponse> {
-  const { jobDescription, customPrompt, baseResumeData } = request;
+  const { jobDescription, customPrompt, baseResumeData, preAnalysis, onProgress } = request;
   const companyOrRole = extractCompanyOrRole(jobDescription);
 
   // Get target page count from localStorage if available (default 2)
@@ -346,6 +368,14 @@ export async function generateAICustomizedResume(
         prompt: effectivePrompt,
         jobDescription,
         resumeData: baseResumeData,
+        ...(preAnalysis && {
+          preAnalysis: {
+            matchScore: preAnalysis.matchScore,
+            analysis: preAnalysis.analysis,
+            strengths: preAnalysis.strengths,
+            gaps: preAnalysis.gaps,
+          },
+        }),
       }),
     });
     if (response.status !== 202) {
@@ -375,7 +405,7 @@ export async function generateAICustomizedResume(
     }
     const { jobId } = await response.json();
     if (!jobId) throw new Error('Missing jobId');
-    const pollResult = await pollOptimizeStatus(jobId);
+    const pollResult = await pollOptimizeStatus(jobId, onProgress);
     const customizedData = pollResult.data;
     const keywords = extractKeywords(jobDescription);
     const requirements = analyzeRequirements(jobDescription);
@@ -394,6 +424,8 @@ export async function generateAICustomizedResume(
       matchScore: pollResult.matchScore,
       groundingVerified: pollResult.groundingVerified,
       citations: pollResult.citations,
+      optimizationSummary: pollResult.optimizationSummary,
+      keyChanges: pollResult.keyChanges,
     };
   } catch (error) {
     console.error('AI customization failed, falling back to mock implementation:', error);

@@ -120,12 +120,15 @@ export function ProgressIndicator({ steps, currentStep, className = '' }: Progre
 }
 
 // Specific loading states for different operations
-export function AIProcessingLoader() {
+interface AIProcessingLoaderProps {
+  submessage?: string | null;
+}
+export function AIProcessingLoader({ submessage }: AIProcessingLoaderProps = {}) {
   return (
     <LoadingSpinner 
       size="large"
       message="AI is analyzing your job description..."
-      submessage="This may take 10-30 seconds depending on the complexity"
+      submessage={submessage ?? 'This may take 1–3 minutes depending on complexity.'}
       variant="dots"
       className="py-8"
     />

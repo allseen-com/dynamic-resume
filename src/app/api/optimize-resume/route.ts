@@ -8,12 +8,25 @@ import { runOptimization } from './runOptimization';
  * POST /api/optimize-resume
  * Returns 202 Accepted with jobId. Poll GET /api/optimize-resume/status?jobId=... for result.
  */
+export interface PreAnalysisPayload {
+  matchScore?: number;
+  analysis?: string;
+  strengths?: string[];
+  gaps?: string[];
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, jobDescription, resumeData: rawResumeData }: {
+    const {
+      prompt,
+      jobDescription,
+      resumeData: rawResumeData,
+      preAnalysis,
+    }: {
       prompt: string;
       jobDescription: string;
       resumeData: ResumeData;
+      preAnalysis?: PreAnalysisPayload;
     } = await request.json();
 
     if (!prompt || !jobDescription || !rawResumeData) {
@@ -32,6 +45,7 @@ export async function POST(request: NextRequest) {
         prompt,
         jobDescription,
         rawResumeData,
+        preAnalysis,
       })
     );
 

@@ -71,6 +71,14 @@ export default function HomePage() {
   const [lastIndexedAt, setLastIndexedAt] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"single" | "side-by-side">("single");
   const [archiveVersion, setArchiveVersion] = useState<DraftVersionLabel | "">("");
+  const [matchScorePre, setMatchScorePre] = useState<number | null>(null);
+  const [analysisPre, setAnalysisPre] = useState<string | null>(null);
+  const [strengthsPre, setStrengthsPre] = useState<string[] | null>(null);
+  const [gapsPre, setGapsPre] = useState<string[] | null>(null);
+  const [isCalculatingScore, setIsCalculatingScore] = useState(false);
+  const [optimizationSummary, setOptimizationSummary] = useState<string | null>(null);
+  const [keyChanges, setKeyChanges] = useState<string[] | null>(null);
+  const [optimizeStatusMessage, setOptimizeStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -157,6 +165,46 @@ export default function HomePage() {
     }
   };
 
+  const handleCalculateScore = async () => {
+    if (!jobDescription.trim()) {
+      handleErrorWithState("Please provide a job description", setError, "validation", "job description");
+      return;
+    }
+    setIsCalculatingScore(true);
+    setError(null);
+    setMatchScorePre(null);
+    setAnalysisPre(null);
+    setStrengthsPre(null);
+    setGapsPre(null);
+    try {
+      const res = await fetch("/api/match-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobDescription: jobDescription.trim(), resumeData: motherResumeData }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        handleErrorWithState(new Error(data.message || data.error || "Match score failed"), setError, "ai");
+        return;
+      }
+      setMatchScorePre(data.matchScore ?? null);
+      setAnalysisPre(data.analysis ?? null);
+      setStrengthsPre(Array.isArray(data.strengths) ? data.strengths : null);
+      setGapsPre(Array.isArray(data.gaps) ? data.gaps : null);
+      setError(null);
+    } catch (e) {
+      handleErrorWithState(e, setError, "ai");
+    } finally {
+      setIsCalculatingScore(false);
+    }
+  };
+
+  const getScoreBandLabel = (score: number) => {
+    if (score <= 60) return "Danger Zone";
+    if (score <= 79) return "Needs Work";
+    return "Interview Ready";
+  };
+
   const handleGenerateResume = async () => {
     if (!jobDescription.trim()) {
       handleErrorWithState("Please provide a job description", setError, "validation", "job description");
@@ -167,17 +215,29 @@ export default function HomePage() {
     setIsGenerating(true);
     setLoadingType("ai");
     setError(null);
+    setOptimizeStatusMessage(null);
     try {
       const result = await generateAICustomizedResume({
         jobDescription,
         customPrompt: promptToUse,
         baseResumeData: motherResumeData,
+        onProgress: (msg) => setOptimizeStatusMessage(msg),
+        ...(matchScorePre != null && {
+          preAnalysis: {
+            matchScore: matchScorePre,
+            analysis: analysisPre ?? undefined,
+            strengths: strengthsPre ?? undefined,
+            gaps: gapsPre ?? undefined,
+          },
+        }),
       });
       setCustomizedResumeData(result.resumeData);
       setCustomizedConfig(result.config);
       setCompanyOrRole(result.companyOrRole);
       setMatchScore(result.matchScore ?? null);
       setGroundingVerified(result.groundingVerified === true);
+      setOptimizationSummary(result.optimizationSummary ?? null);
+      setKeyChanges(result.keyChanges ?? null);
       setShowSuccess(true);
       setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]);
     } catch (e) {
@@ -185,6 +245,7 @@ export default function HomePage() {
     } finally {
       setIsGenerating(false);
       setLoadingType(null);
+      setOptimizeStatusMessage(null);
     }
   };
 
@@ -249,6 +310,12 @@ export default function HomePage() {
     setError(null);
     setMatchScore(null);
     setGroundingVerified(false);
+    setMatchScorePre(null);
+    setAnalysisPre(null);
+    setStrengthsPre(null);
+    setGapsPre(null);
+    setOptimizationSummary(null);
+    setKeyChanges(null);
   };
 
   if (!isClient) {
@@ -299,6 +366,13 @@ export default function HomePage() {
           </div>
           <div className="flex flex-wrap gap-3 items-center">
             <button
+              onClick={handleCalculateScore}
+              disabled={isGenerating || isCalculatingScore || !jobDescription.trim()}
+              className="px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+            >
+              {isCalculatingScore ? "Calculating…" : "Calculate Score"}
+            </button>
+            <button
               onClick={handleGenerateResume}
               disabled={isGenerating || !jobDescription.trim()}
               className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ${
@@ -316,6 +390,48 @@ export default function HomePage() {
               Reset
             </button>
           </div>
+          {matchScorePre != null && (
+            <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-slate-800">Match: {matchScorePre}%</span>
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded ${
+                    matchScorePre <= 60
+                      ? "bg-red-100 text-red-800"
+                      : matchScorePre <= 79
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-emerald-100 text-emerald-800"
+                  }`}
+                  title="ATS band: 0-60% Danger Zone, 61-79% Needs Work, 80-100% Interview Ready"
+                >
+                  {getScoreBandLabel(matchScorePre)}
+                </span>
+              </div>
+              {analysisPre && <p className="text-sm text-slate-700">{analysisPre}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {strengthsPre && strengthsPre.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Strengths</p>
+                    <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                      {strengthsPre.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {gapsPre && gapsPre.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Areas to improve</p>
+                    <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                      {gapsPre.map((g, i) => (
+                        <li key={i}>{g}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {error && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               {error}
@@ -372,6 +488,19 @@ export default function HomePage() {
               {loadingType === "pdf" ? "Generating…" : "Download PDF"}
             </button>
           </div>
+          {(optimizationSummary || (keyChanges && keyChanges.length > 0)) && (
+            <div className="px-6 py-4 border-b border-slate-200 bg-indigo-50/50">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">What we changed</h3>
+              {optimizationSummary && <p className="text-sm text-slate-700 mb-3">{optimizationSummary}</p>}
+              {keyChanges && keyChanges.length > 0 && (
+                <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                  {keyChanges.map((change, i) => (
+                    <li key={i}>{change}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           <div className="p-6 max-h-[75vh] overflow-y-auto">
             {viewMode === "side-by-side" ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -414,7 +543,7 @@ export default function HomePage() {
             )}
           </div>
           <LoadingOverlay isVisible={loadingType === "ai"}>
-            <AIProcessingLoader />
+            <AIProcessingLoader submessage={optimizeStatusMessage} />
           </LoadingOverlay>
           <LoadingOverlay isVisible={loadingType === "pdf"}>
             <PDFGenerationLoader />

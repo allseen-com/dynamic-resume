@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
   }
 
   if (state.status === 'pending') {
-    return NextResponse.json({ status: 'pending' });
+    return NextResponse.json({
+      status: 'pending',
+      ...(state.statusMessage && { statusMessage: state.statusMessage }),
+    });
   }
 
   if (state.status === 'failed') {
