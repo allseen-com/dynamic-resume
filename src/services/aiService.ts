@@ -326,7 +326,7 @@ Focus on:
     const returnFormat = `Return a single JSON object with exactly these keys:
 - "resumeData": the full customized resume in the same JSON structure (modify only "_dynamic": true fields).
 - "optimizationSummary": 2-4 sentences on how the resume was tailored and why it is a better match for the role.
-- "keyChanges": array of 3-6 short bullet strings describing concrete changes (e.g. "Summary refocused on X", "Title set to exact JD title: Y").`;
+- "keyChanges": array of 3-6 bullet strings. Each bullet must name the SECTION (e.g. Summary, Core Competencies, Technical Proficiency, or Experience at [Company]), WHAT was changed or added, and WHY it improves match to the role (e.g. "Summary: Refocused on growth marketing and SEO to align with JD keywords and role requirements." or "Experience at Red Ventures: Added 2X affiliate revenue metric to highlight quantifiable impact.").`;
     const fullPrompt = `${prompt}\n\n${wordCountConstraints}\n\nJob Description:\n${jobDescription}\n\nBase Resume Data:\n${JSON.stringify(baseResumeData, null, 2)}\n\n${returnFormat}`;
 
     try {

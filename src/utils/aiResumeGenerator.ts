@@ -24,6 +24,7 @@ export interface AICustomizationResponse {
   reasoning?: string;
   companyOrRole?: string; // Added for filename
   matchScore?: number;
+  matchScoreAfter?: number;
   groundingVerified?: boolean;
   citations?: { chunkId: string; section: string; score?: number }[];
   optimizationSummary?: string;
@@ -244,6 +245,7 @@ async function pollOptimizeStatus(
 ): Promise<{
   data: ResumeData;
   matchScore?: number;
+  matchScoreAfter?: number;
   groundingVerified?: boolean;
   citations?: { chunkId: string; section: string; score?: number }[];
   optimizationSummary?: string;
@@ -257,6 +259,7 @@ async function pollOptimizeStatus(
       return {
         data: body.result.data,
         matchScore: body.result.matchScore,
+        matchScoreAfter: body.result.matchScoreAfter,
         groundingVerified: body.result.groundingVerified,
         citations: body.result.citations,
         optimizationSummary: body.result.optimizationSummary,
@@ -422,6 +425,7 @@ export async function generateAICustomizedResume(
       reasoning: `Resume customized based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
       companyOrRole,
       matchScore: pollResult.matchScore,
+      matchScoreAfter: pollResult.matchScoreAfter,
       groundingVerified: pollResult.groundingVerified,
       citations: pollResult.citations,
       optimizationSummary: pollResult.optimizationSummary,

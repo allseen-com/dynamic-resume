@@ -9,6 +9,7 @@ export interface OptimizeJobResult {
   success: boolean;
   data: import('../types/resume').ResumeData;
   matchScore?: number;
+  matchScoreAfter?: number;
   groundingVerified?: boolean;
   citations?: { chunkId: string; section: string; score?: number }[];
   optimizationSummary?: string;

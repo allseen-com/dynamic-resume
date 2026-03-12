@@ -78,6 +78,7 @@ export default function HomePage() {
   const [isCalculatingScore, setIsCalculatingScore] = useState(false);
   const [optimizationSummary, setOptimizationSummary] = useState<string | null>(null);
   const [keyChanges, setKeyChanges] = useState<string[] | null>(null);
+  const [matchScoreAfter, setMatchScoreAfter] = useState<number | null>(null);
   const [optimizeStatusMessage, setOptimizeStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -235,6 +236,7 @@ export default function HomePage() {
       setCustomizedConfig(result.config);
       setCompanyOrRole(result.companyOrRole);
       setMatchScore(result.matchScore ?? null);
+      setMatchScoreAfter(result.matchScoreAfter ?? null);
       setGroundingVerified(result.groundingVerified === true);
       setOptimizationSummary(result.optimizationSummary ?? null);
       setKeyChanges(result.keyChanges ?? null);
@@ -316,6 +318,7 @@ export default function HomePage() {
     setGapsPre(null);
     setOptimizationSummary(null);
     setKeyChanges(null);
+    setMatchScoreAfter(null);
   };
 
   if (!isClient) {
@@ -375,6 +378,7 @@ export default function HomePage() {
             <button
               onClick={handleGenerateResume}
               disabled={isGenerating || !jobDescription.trim()}
+              title={matchScorePre != null ? "Optimization will use the score and gaps above to tailor the resume." : undefined}
               className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ${
                 isGenerating || !jobDescription.trim()
                   ? "bg-slate-400 cursor-not-allowed text-white"
@@ -383,6 +387,11 @@ export default function HomePage() {
             >
               {loadingType === "ai" ? "Customizing…" : "Generate custom resume"}
             </button>
+            {matchScorePre != null && !isGenerating && (
+              <span className="text-xs text-slate-500 self-center" title="Customization will address the gaps and leverage the strengths above.">
+                Uses score &amp; gaps above
+              </span>
+            )}
             <button
               onClick={resetToDefault}
               className="px-4 py-2.5 bg-slate-500 text-white rounded-lg hover:bg-slate-600 font-medium text-sm transition-colors"
@@ -465,11 +474,18 @@ export default function HomePage() {
                   Mother vs draft
                 </button>
               </div>
-              {(matchScore != null || groundingVerified) && (
+              {(matchScore != null || matchScoreAfter != null || groundingVerified) && (
                 <div className="flex flex-wrap gap-2 text-sm">
                   {matchScore != null && (
                     <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800">
-                      Match: {Math.round(matchScore * 100)}%
+                      {matchScoreAfter != null
+                        ? `Match: ${Math.round(matchScore * 100)}% → ${Math.round(matchScoreAfter * 100)}%`
+                        : `Match: ${Math.round(matchScore * 100)}%`}
+                    </span>
+                  )}
+                  {matchScoreAfter != null && matchScore == null && (
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800">
+                      Match: {Math.round(matchScoreAfter * 100)}%
                     </span>
                   )}
                   {groundingVerified && (
@@ -493,11 +509,14 @@ export default function HomePage() {
               <h3 className="text-sm font-semibold text-slate-800 mb-2">What we changed</h3>
               {optimizationSummary && <p className="text-sm text-slate-700 mb-3">{optimizationSummary}</p>}
               {keyChanges && keyChanges.length > 0 && (
-                <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
-                  {keyChanges.map((change, i) => (
-                    <li key={i}>{change}</li>
-                  ))}
-                </ul>
+                <>
+                  <p className="text-xs font-medium text-slate-600 mb-1.5">Changes by section (what changed and why)</p>
+                  <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                    {keyChanges.map((change, i) => (
+                      <li key={i}>{change}</li>
+                    ))}
+                  </ul>
+                </>
               )}
             </div>
           )}
