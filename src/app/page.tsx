@@ -7,6 +7,7 @@ import { generateAICustomizedResume } from "../utils/aiResumeGenerator";
 import { useErrorHandler } from "../utils/errorHandler";
 import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../components/LoadingSpinner";
 import { getDefaultPrompt, getPromptForJobDescription } from "../utils/promptTemplates";
+import { getTotalResumeWordCount } from "../utils/wordCountUtils";
 import resumeData from "../../data/resume.json";
 
 const PROMPT_MODE_KEY = "promptMode";
@@ -325,311 +326,338 @@ export default function HomePage() {
     return <div className="min-h-screen bg-slate-50" />;
   }
 
+  const motherWordCount = getTotalResumeWordCount(motherResumeData);
+  const draftWordCount = getTotalResumeWordCount(customizedResumeData);
+  const hasDraft = matchScore != null || matchScoreAfter != null || !!optimizationSummary || (keyChanges != null && keyChanges.length > 0);
+
   return (
     <div className="min-h-screen bg-slate-50">
       {showSuccess && (
         <Toast message="Resume updated with AI customization!" onClose={() => setShowSuccess(false)} />
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* Full-width: Job Description */}
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative">
-          <h2 className="heading-section">Job Description</h2>
-          <LoadingOverlay isVisible={loadingType === "url"}>
-            <URLExtractionLoader />
-          </LoadingOverlay>
-          <div className="mb-4">
-            <label className="label-app">Job posting URL (optional)</label>
-            <div className="flex flex-wrap gap-3">
-              <input
-                type="url"
-                value={jobUrl}
-                onChange={(e) => setJobUrl(e.target.value)}
-                placeholder="https://company.com/jobs/position"
-                className="input-app flex-1 min-w-[200px]"
-              />
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Timeline */}
+        <div className="relative">
+          {/* Vertical line */}
+          <div
+            className="absolute left-6 top-6 bottom-6 w-0.5 bg-slate-200"
+            style={{ marginLeft: "-1px" }}
+            aria-hidden
+          />
+
+          {/* Step 1: Job description + Calculate Score + results */}
+          <div className="relative flex gap-6 pb-10">
+            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-base font-semibold text-indigo-600 shadow-sm">
+              1
+            </div>
+            <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm relative">
+              <LoadingOverlay isVisible={loadingType === "url"}>
+                <URLExtractionLoader />
+              </LoadingOverlay>
+              <h2 className="heading-section mb-4">Job description &amp; match analysis</h2>
+              <p className="text-sm text-slate-600 mb-4">
+                Paste or extract the job description, then see how well your mother resume matches the role.
+              </p>
+              <div className="mb-4">
+                <label className="label-app">Job posting URL (optional)</label>
+                <div className="flex flex-wrap gap-3">
+                  <input
+                    type="url"
+                    value={jobUrl}
+                    onChange={(e) => setJobUrl(e.target.value)}
+                    placeholder="https://company.com/jobs/position"
+                    className="input-app flex-1 min-w-[200px]"
+                  />
+                  <button
+                    onClick={handleJobUrlExtraction}
+                    disabled={isGenerating || !jobUrl.trim()}
+                    className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+                  >
+                    {loadingType === "url" ? "Extracting…" : "Extract"}
+                  </button>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="label-app">Job description text</label>
+                <textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  placeholder="Paste the job description here..."
+                  rows={5}
+                  className="textarea-app w-full"
+                />
+              </div>
+              <div className="flex flex-wrap gap-3 items-center">
+                <button
+                  onClick={handleCalculateScore}
+                  disabled={isGenerating || isCalculatingScore || !jobDescription.trim()}
+                  className="px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+                >
+                  {isCalculatingScore ? "Calculating…" : "Calculate Score"}
+                </button>
+                <button
+                  onClick={resetToDefault}
+                  className="px-4 py-2.5 bg-slate-500 text-white rounded-lg hover:bg-slate-600 font-medium text-sm transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+              {matchScorePre != null && (
+                <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-slate-800">Match: {matchScorePre}%</span>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded ${
+                        matchScorePre <= 60 ? "bg-red-100 text-red-800" : matchScorePre <= 79 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                      }`}
+                      title="ATS band: 0-60% Danger Zone, 61-79% Needs Work, 80-100% Interview Ready"
+                    >
+                      {getScoreBandLabel(matchScorePre)}
+                    </span>
+                  </div>
+                  {analysisPre && <p className="text-sm text-slate-700">{analysisPre}</p>}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {strengthsPre && strengthsPre.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Strengths</p>
+                        <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                          {strengthsPre.map((s, i) => (
+                            <li key={i}>{s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {gapsPre && gapsPre.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Areas to improve</p>
+                        <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                          {gapsPre.map((g, i) => (
+                            <li key={i}>{g}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {error && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Step 2: Use suggestions → Generate draft */}
+          <div className="relative flex gap-6 pb-10">
+            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-base font-semibold text-indigo-600 shadow-sm">
+              2
+            </div>
+            <div className="flex-1 min-w-0 space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="heading-section mb-2">Improve match &amp; create draft</h2>
+                <p className="text-sm text-slate-600 mb-4">
+                  Use the suggestions above to tailor your resume. We&apos;ll enrich the content and produce an optimized draft.
+                </p>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <button
+                    onClick={handleGenerateResume}
+                    disabled={isGenerating || !jobDescription.trim()}
+                    title={matchScorePre != null ? "Optimization will use the score and gaps above." : undefined}
+                    className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                      isGenerating || !jobDescription.trim()
+                        ? "bg-slate-400 cursor-not-allowed text-white"
+                        : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    }`}
+                  >
+                    {loadingType === "ai" ? "Customizing…" : "Generate custom resume"}
+                  </button>
+                  {matchScorePre != null && !isGenerating && (
+                    <span className="text-xs text-slate-500">Uses score &amp; gaps above</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Draft preview + word count + what we changed + score (when we have a draft) */}
+              {hasDraft && (
+                <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm relative">
+                  <LoadingOverlay isVisible={loadingType === "ai"}>
+                    <AIProcessingLoader submessage={optimizeStatusMessage} />
+                  </LoadingOverlay>
+                  <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-slate-800">Your draft</h3>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {pineconeConfigured && lastIndexedAt && (
+                        <span className="text-xs text-emerald-700">
+                          Vectorized {new Date(lastIndexedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                      <div className="flex rounded-lg border border-slate-300 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setViewMode("single")}
+                          className={`px-3 py-1.5 text-sm font-medium ${viewMode === "single" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
+                        >
+                          Single
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setViewMode("side-by-side")}
+                          className={`px-3 py-1.5 text-sm font-medium ${viewMode === "side-by-side" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
+                        >
+                          Mother vs draft
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Word count quick report */}
+                  <div className="px-4 py-2 border-b border-slate-100 bg-slate-50/50 flex flex-wrap gap-4 text-sm text-slate-600">
+                    <span>Mother resume: <strong className="text-slate-800">{motherWordCount}</strong> words</span>
+                    <span>Draft: <strong className="text-slate-800">{draftWordCount}</strong> words</span>
+                    {draftWordCount < motherWordCount && (
+                      <span className="text-emerald-700">Summarized for focus</span>
+                    )}
+                  </div>
+                  {/* What we changed + new score */}
+                  {(optimizationSummary || (keyChanges && keyChanges.length > 0) || matchScore != null || matchScoreAfter != null) && (
+                    <div className="px-4 py-4 border-b border-slate-200 bg-indigo-50/50 space-y-3">
+                      {(matchScore != null || matchScoreAfter != null) && (
+                        <div className="flex flex-wrap gap-2">
+                          {matchScore != null && (
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
+                              {matchScoreAfter != null
+                                ? `Match: ${Math.round(matchScore * 100)}% → ${Math.round(matchScoreAfter * 100)}%`
+                                : `Match: ${Math.round(matchScore * 100)}%`}
+                            </span>
+                          )}
+                          {matchScoreAfter != null && matchScore == null && (
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
+                              Match: {Math.round(matchScoreAfter * 100)}%
+                            </span>
+                          )}
+                          {groundingVerified && (
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">Grounding verified</span>
+                          )}
+                        </div>
+                      )}
+                      <h3 className="text-sm font-semibold text-slate-800">What we changed</h3>
+                      {optimizationSummary && <p className="text-sm text-slate-700">{optimizationSummary}</p>}
+                      {keyChanges && keyChanges.length > 0 && (
+                        <>
+                          <p className="text-xs font-medium text-slate-600">Changes by section (what changed and why)</p>
+                          <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                            {keyChanges.map((change, i) => (
+                              <li key={i}>{change}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  <div className="p-4 max-h-[60vh] overflow-y-auto">
+                    {viewMode === "side-by-side" ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
+                          <div className="px-3 py-2 border-b border-slate-200 text-sm font-medium text-slate-600 bg-slate-100">Mother resume</div>
+                          <div className="p-3 overflow-y-auto max-h-[50vh]">
+                            <Resume resumeData={motherResumeData} config={customizedConfig} showDownloadButton={false} isGenerating={false} />
+                          </div>
+                        </div>
+                        <div className="border border-slate-200 rounded-lg overflow-hidden">
+                          <div className="px-3 py-2 border-b border-slate-200 text-sm font-medium text-slate-700 bg-indigo-50">Optimized draft</div>
+                          <div className="p-3 overflow-y-auto max-h-[50vh]">
+                            <Resume resumeData={customizedResumeData} config={customizedConfig} showDownloadButton={false} isGenerating={isGenerating} highlightSections={highlightSections} />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Resume resumeData={customizedResumeData} config={customizedConfig} showDownloadButton={false} isGenerating={isGenerating} highlightSections={highlightSections} />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Step 3: Download */}
+          <div className="relative flex gap-6 pb-10">
+            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-base font-semibold text-indigo-600 shadow-sm">
+              3
+            </div>
+            <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="heading-section mb-2">Download your resume</h2>
+              <p className="text-sm text-slate-600 mb-4">
+                Export the customized draft as a PDF ready to submit.
+              </p>
               <button
-                onClick={handleJobUrlExtraction}
-                disabled={isGenerating || !jobUrl.trim()}
-                className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+                onClick={handleDownloadPDF}
+                disabled={isGenerating}
+                className={`px-5 py-2.5 rounded-lg font-medium text-sm ${isGenerating ? "bg-slate-400 cursor-not-allowed text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
               >
-                {loadingType === "url" ? "Extracting…" : "Extract"}
+                {loadingType === "pdf" ? "Generating…" : "Download PDF"}
               </button>
             </div>
           </div>
-          <div className="mb-4">
-            <label className="label-app">Job description text</label>
-            <textarea
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the job description here..."
-              rows={6}
-              className="textarea-app w-full"
-            />
-          </div>
-          <div className="flex flex-wrap gap-3 items-center">
-            <button
-              onClick={handleCalculateScore}
-              disabled={isGenerating || isCalculatingScore || !jobDescription.trim()}
-              className="px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium text-sm transition-colors"
-            >
-              {isCalculatingScore ? "Calculating…" : "Calculate Score"}
-            </button>
-            <button
-              onClick={handleGenerateResume}
-              disabled={isGenerating || !jobDescription.trim()}
-              title={matchScorePre != null ? "Optimization will use the score and gaps above to tailor the resume." : undefined}
-              className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ${
-                isGenerating || !jobDescription.trim()
-                  ? "bg-slate-400 cursor-not-allowed text-white"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
-              }`}
-            >
-              {loadingType === "ai" ? "Customizing…" : "Generate custom resume"}
-            </button>
-            {matchScorePre != null && !isGenerating && (
-              <span className="text-xs text-slate-500 self-center" title="Customization will address the gaps and leverage the strengths above.">
-                Uses score &amp; gaps above
-              </span>
-            )}
-            <button
-              onClick={resetToDefault}
-              className="px-4 py-2.5 bg-slate-500 text-white rounded-lg hover:bg-slate-600 font-medium text-sm transition-colors"
-            >
-              Reset
-            </button>
-          </div>
-          {matchScorePre != null && (
-            <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-slate-800">Match: {matchScorePre}%</span>
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded ${
-                    matchScorePre <= 60
-                      ? "bg-red-100 text-red-800"
-                      : matchScorePre <= 79
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-emerald-100 text-emerald-800"
-                  }`}
-                  title="ATS band: 0-60% Danger Zone, 61-79% Needs Work, 80-100% Interview Ready"
-                >
-                  {getScoreBandLabel(matchScorePre)}
-                </span>
-              </div>
-              {analysisPre && <p className="text-sm text-slate-700">{analysisPre}</p>}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {strengthsPre && strengthsPre.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Strengths</p>
-                    <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
-                      {strengthsPre.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {gapsPre && gapsPre.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Areas to improve</p>
-                    <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
-                      {gapsPre.map((g, i) => (
-                        <li key={i}>{g}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              {error}
-            </div>
-          )}
-        </section>
 
-        {/* Full-width: Live Preview */}
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="heading-section mb-0">Live preview</h2>
-              {pineconeConfigured && lastIndexedAt && (
-                <span className="text-xs text-emerald-700 font-medium">
-                  Mother resume is vectorized on {new Date(lastIndexedAt).toLocaleDateString()}
-                </span>
-              )}
-              <div className="flex rounded-lg border border-slate-300 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("single")}
-                  className={`px-3 py-1.5 text-sm font-medium ${viewMode === "single" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
-                >
-                  Single
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("side-by-side")}
-                  className={`px-3 py-1.5 text-sm font-medium ${viewMode === "side-by-side" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
-                >
-                  Mother vs draft
+          {/* Archive (step 4 or footer) */}
+          <div className="relative flex gap-6">
+            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-base font-semibold text-slate-500 shadow-sm">
+              4
+            </div>
+            <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="heading-section mb-4">Resume archive</h2>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <input
+                  type="text"
+                  value={archiveLabel}
+                  onChange={(e) => setArchiveLabel(e.target.value)}
+                  placeholder="Label (e.g. Google PM)"
+                  className="input-app flex-1 min-w-[140px]"
+                />
+                <select value={archiveVersion} onChange={(e) => setArchiveVersion(e.target.value as DraftVersionLabel | "")} className="input-app w-auto" title="Focus">
+                  <option value="">Focus</option>
+                  {DRAFT_VERSION_LABELS.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+                <button onClick={saveToArchive} className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm">
+                  Save to archive
                 </button>
               </div>
-              {(matchScore != null || matchScoreAfter != null || groundingVerified) && (
-                <div className="flex flex-wrap gap-2 text-sm">
-                  {matchScore != null && (
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800">
-                      {matchScoreAfter != null
-                        ? `Match: ${Math.round(matchScore * 100)}% → ${Math.round(matchScoreAfter * 100)}%`
-                        : `Match: ${Math.round(matchScore * 100)}%`}
-                    </span>
-                  )}
-                  {matchScoreAfter != null && matchScore == null && (
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800">
-                      Match: {Math.round(matchScoreAfter * 100)}%
-                    </span>
-                  )}
-                  {groundingVerified && (
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800">
-                      Grounding verified
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isGenerating}
-              className={`px-4 py-2 rounded-lg font-medium text-sm ${isGenerating ? "bg-slate-400 cursor-not-allowed text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
-            >
-              {loadingType === "pdf" ? "Generating…" : "Download PDF"}
-            </button>
-          </div>
-          {(optimizationSummary || (keyChanges && keyChanges.length > 0)) && (
-            <div className="px-6 py-4 border-b border-slate-200 bg-indigo-50/50">
-              <h3 className="text-sm font-semibold text-slate-800 mb-2">What we changed</h3>
-              {optimizationSummary && <p className="text-sm text-slate-700 mb-3">{optimizationSummary}</p>}
-              {keyChanges && keyChanges.length > 0 && (
+              {archive.length > 0 ? (
                 <>
-                  <p className="text-xs font-medium text-slate-600 mb-1.5">Changes by section (what changed and why)</p>
-                  <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
-                    {keyChanges.map((change, i) => (
-                      <li key={i}>{change}</li>
+                  <div className="space-y-2">
+                    {archive.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg flex-wrap">
+                        <span className="flex-1 min-w-0 truncate text-sm text-slate-900">
+                          {item.label} <span className="text-xs text-slate-400">({new Date(item.date).toLocaleString()})</span>
+                        </span>
+                        {item.version && <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">{item.version}</span>}
+                        {item.isCurrent ? (
+                          <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">Current</span>
+                        ) : (
+                          <button onClick={() => setAsCurrent(idx)} className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700">Set current</button>
+                        )}
+                      </div>
                     ))}
-                  </ul>
+                  </div>
+                  <p className="mt-3 text-sm">
+                    <a href="/archive" className="text-indigo-600 hover:text-indigo-800 font-medium">View all in Archive →</a>
+                  </p>
                 </>
+              ) : (
+                <p className="text-sm text-slate-500">Save customized drafts here for later.</p>
               )}
             </div>
-          )}
-          <div className="p-6 max-h-[75vh] overflow-y-auto">
-            {viewMode === "side-by-side" ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
-                  <div className="px-3 py-2 border-b border-slate-200 text-sm font-medium text-slate-600 bg-slate-100">
-                    Mother resume
-                  </div>
-                  <div className="p-3 overflow-y-auto max-h-[65vh]">
-                    <Resume
-                      resumeData={motherResumeData}
-                      config={customizedConfig}
-                      showDownloadButton={false}
-                      isGenerating={false}
-                    />
-                  </div>
-                </div>
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
-                  <div className="px-3 py-2 border-b border-slate-200 text-sm font-medium text-slate-700 bg-indigo-50">
-                    Optimized draft
-                  </div>
-                  <div className="p-3 overflow-y-auto max-h-[65vh]">
-                    <Resume
-                      resumeData={customizedResumeData}
-                      config={customizedConfig}
-                      showDownloadButton={false}
-                      isGenerating={isGenerating}
-                      highlightSections={highlightSections}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <Resume
-                resumeData={customizedResumeData}
-                config={customizedConfig}
-                showDownloadButton={false}
-                isGenerating={isGenerating}
-                highlightSections={highlightSections}
-              />
-            )}
           </div>
-          <LoadingOverlay isVisible={loadingType === "ai"}>
-            <AIProcessingLoader submessage={optimizeStatusMessage} />
-          </LoadingOverlay>
-          <LoadingOverlay isVisible={loadingType === "pdf"}>
-            <PDFGenerationLoader />
-          </LoadingOverlay>
-        </section>
+        </div>
 
-        {/* Archive */}
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 className="heading-section">Resume archive</h2>
-          <div className="flex flex-wrap gap-2 mb-3">
-            <input
-              type="text"
-              value={archiveLabel}
-              onChange={(e) => setArchiveLabel(e.target.value)}
-              placeholder="Label (e.g. Google PM)"
-              className="input-app flex-1 min-w-[140px]"
-            />
-            <select
-              value={archiveVersion}
-              onChange={(e) => setArchiveVersion(e.target.value as DraftVersionLabel | "")}
-              className="input-app w-auto"
-              title="Focus"
-            >
-              <option value="">Focus</option>
-              {DRAFT_VERSION_LABELS.map((v) => (
-                <option key={v} value={v}>{v}</option>
-              ))}
-            </select>
-            <button
-              onClick={saveToArchive}
-              className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm"
-            >
-              Save to archive
-            </button>
+        {loadingType === "pdf" && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90">
+            <PDFGenerationLoader />
           </div>
-          {archive.length > 0 && (
-            <>
-              <div className="space-y-2">
-              {archive.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg flex-wrap">
-                  <span className="flex-1 min-w-0 truncate text-sm text-slate-900">
-                    {item.label} <span className="text-xs text-slate-400">({new Date(item.date).toLocaleString()})</span>
-                  </span>
-                  {item.version && (
-                    <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">{item.version}</span>
-                  )}
-                  {item.isCurrent ? (
-                    <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">Current</span>
-                  ) : (
-                    <button
-                      onClick={() => setAsCurrent(idx)}
-                      className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700"
-                    >
-                      Set current
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-              <p className="mt-3 text-sm">
-                <a href="/archive" className="text-indigo-600 hover:text-indigo-800 font-medium">
-                  View all in Archive →
-                </a>
-              </p>
-            </>
-          )}
-        </section>
+        )}
       </div>
     </div>
   );

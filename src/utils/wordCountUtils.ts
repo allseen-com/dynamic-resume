@@ -78,6 +78,20 @@ export function calculateSummaryWordCount(resumeData: ResumeData): number {
 }
 
 /**
+ * Total word count for resume (summary + core competencies + all experience descriptions).
+ * Useful for showing "mother vs draft" length comparison.
+ */
+export function getTotalResumeWordCount(resumeData: ResumeData): number {
+  let total = calculateSummaryWordCount(resumeData);
+  if (resumeData.coreCompetencies?.value?.length) {
+    total += countWords(resumeData.coreCompetencies.value.join(' '));
+  }
+  const expCounts = calculateExperienceWordCounts(resumeData);
+  total += Object.values(expCounts).reduce((a, b) => a + b, 0);
+  return total;
+}
+
+/**
  * Apply word count limits to AI-generated content
  */
 export function applyWordCountLimits(
