@@ -319,15 +319,19 @@ Focus on:
   async customizeResumeWithExplanation(
     jobDescription: string,
     baseResumeData: ResumeData,
-    customPrompt?: string
+    customPrompt?: string,
+    currentTitleBar?: { main: string; sub: string }
   ): Promise<{ resumeData: ResumeData; optimizationSummary?: string; keyChanges?: string[] }> {
     const prompt = customPrompt || this.getDefaultPrompt();
     const wordCountConstraints = this.getWordCountConstraints(baseResumeData);
+    const titleBarBlock = currentTitleBar
+      ? `\nCurrent title bar (for reference): main: "${currentTitleBar.main}" | sub: "${currentTitleBar.sub}"\n`
+      : '';
     const returnFormat = `Return a single JSON object with exactly these keys:
 - "resumeData": the full customized resume in the same JSON structure (modify only "_dynamic": true fields).
 - "optimizationSummary": 2-4 sentences on how the resume was tailored and why it is a better match for the role.
 - "keyChanges": array of 3-6 bullet strings. Each bullet must name the SECTION (e.g. Summary, Core Competencies, Technical Proficiency, or Experience at [Company]), WHAT was changed or added, and WHY it improves match to the role (e.g. "Summary: Refocused on growth marketing and SEO to align with JD keywords and role requirements." or "Experience at Red Ventures: Added 2X affiliate revenue metric to highlight quantifiable impact.").`;
-    const fullPrompt = `${prompt}\n\n${wordCountConstraints}\n\nJob Description:\n${jobDescription}\n\nBase Resume Data:\n${JSON.stringify(baseResumeData, null, 2)}\n\n${returnFormat}`;
+    const fullPrompt = `${prompt}\n\n${wordCountConstraints}${titleBarBlock}\n\nJob Description:\n${jobDescription}\n\nBase Resume Data:\n${JSON.stringify(baseResumeData, null, 2)}\n\n${returnFormat}`;
 
     try {
       const response = await this.provider.generateResponse(fullPrompt);
@@ -390,7 +394,90 @@ Focus on:
   async generateText(prompt: string): Promise<string> {
     return this.provider.generateResponse(prompt);
   }
+
+  /**
+   * Customize a single section; returns a fragment to merge into the working draft.
+   * headline -> { titleBar }; summary -> { summary }; technical -> { coreCompetencies, technicalProficiency }; experience -> { professionalExperience }.
+   */
+  async customizeSection(
+    sectionId: 'headline' | 'summary' | 'technical' | 'experience',
+    jobDescription: string,
+    workingResume: ResumeData,
+    sectionPrompt: string,
+    ragBlock: string,
+    preAnalysisBlock?: string,
+    currentTitleBar?: { main: string; sub: string }
+  ): Promise<SectionFragment> {
+    const context = [
+      sectionPrompt,
+      preAnalysisBlock,
+      ragBlock,
+      'JOB DESCRIPTION:\n' + jobDescription.slice(0, 6000),
+      'CURRENT RESUME (for context):\n' + JSON.stringify(workingResume, null, 2),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+
+    const fullPrompt = `${context}\n\nReturn ONLY a valid JSON object with the exact structure specified for this section. No other keys, no markdown.`;
+
+    const response = await this.provider.generateResponse(fullPrompt);
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error(`No valid JSON found in AI response for section ${sectionId}`);
+    }
+    const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+
+    if (sectionId === 'headline') {
+      const titleBar = parsed.titleBar as { main?: string; sub?: string } | undefined;
+      if (!titleBar || typeof titleBar.main !== 'string') {
+        throw new Error('Headline section must return { titleBar: { main, sub } }');
+      }
+      return { titleBar: { main: titleBar.main, sub: typeof titleBar.sub === 'string' ? titleBar.sub : '' } };
+    }
+    if (sectionId === 'summary') {
+      const summary = parsed.summary as { value?: string } | undefined;
+      if (!summary || typeof summary.value !== 'string') {
+        throw new Error('Summary section must return { summary: { value } }');
+      }
+      const baseSummaryWordCount = calculateSummaryWordCount(workingResume);
+      const wordCount = summary.value.split(/\s+/).filter(Boolean).length;
+      if (wordCount > baseSummaryWordCount) {
+        throw new Error(`Summary exceeds word count limit (${wordCount} > ${baseSummaryWordCount})`);
+      }
+      return { summary: { _dynamic: true, value: summary.value } };
+    }
+    if (sectionId === 'technical') {
+      const coreCompetencies = parsed.coreCompetencies as ResumeData['coreCompetencies'] | undefined;
+      const technicalProficiency = parsed.technicalProficiency as ResumeData['technicalProficiency'] | undefined;
+      if (!coreCompetencies?.value || !technicalProficiency) {
+        throw new Error('Technical section must return { coreCompetencies, technicalProficiency }');
+      }
+      return { coreCompetencies, technicalProficiency };
+    }
+    if (sectionId === 'experience') {
+      const professionalExperience = parsed.professionalExperience as ResumeData['professionalExperience'] | undefined;
+      if (!Array.isArray(professionalExperience)) {
+        throw new Error('Experience section must return { professionalExperience: [...] }');
+      }
+      const baseExperienceWordCounts = calculateExperienceWordCounts(workingResume);
+      const aiCounts = calculateExperienceWordCounts({ ...workingResume, professionalExperience });
+      for (const key in aiCounts) {
+        const max = baseExperienceWordCounts[key] || 0;
+        if (aiCounts[key] > max) {
+          throw new Error(`Experience section exceeds word count limit for ${key}`);
+        }
+      }
+      return { professionalExperience };
+    }
+    throw new Error(`Unknown section: ${sectionId}`);
+  }
 }
+
+export type SectionFragment =
+  | { titleBar: { main: string; sub: string } }
+  | { summary: ResumeData['summary'] }
+  | { coreCompetencies: ResumeData['coreCompetencies']; technicalProficiency: ResumeData['technicalProficiency'] }
+  | { professionalExperience: ResumeData['professionalExperience'] };
 
 // Factory function to create AI service instance
 export function createAIService(): AIService {

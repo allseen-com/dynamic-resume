@@ -7,12 +7,21 @@ import { normalizeResumeDates } from '../../../utils/dateFormat';
 import type { OptimizeJobResult } from '../../../lib/optimizeJobStore';
 import { setJobCompleted, setJobFailed, setJobProgress } from '../../../lib/optimizeJobStore';
 import type { PreAnalysisPayload } from './route';
+import type { SectionPrompts } from '../../../utils/sectionPrompts';
+import { SECTION_IDS } from '../../../utils/sectionPrompts';
 
 const RAG_TOP_K = 15;
 
+const SECTION_PROGRESS_LABELS: Record<(typeof SECTION_IDS)[number], string> = {
+  headline: 'Optimizing headline / title bar…',
+  summary: 'Optimizing professional summary…',
+  technical: 'Optimizing technical skills…',
+  experience: 'Optimizing work experience…',
+};
+
 export interface RunOptimizationInput {
   jobId: string;
-  prompt: string;
+  sectionPrompts: SectionPrompts;
   jobDescription: string;
   rawResumeData: ResumeData;
   preAnalysis?: PreAnalysisPayload;
@@ -34,21 +43,27 @@ function buildPreAnalysisBlock(preAnalysis: PreAnalysisPayload): string {
   return parts.join('\n');
 }
 
+const RAG_REQUIRED_MESSAGE =
+  'Pinecone RAG is required for optimization. Configure PINECONE_API_KEY, PINECONE_INDEX (and optionally PINECONE_NAMESPACE), then index your resume from the Mother Resume page.';
+
 export async function runOptimization(input: RunOptimizationInput): Promise<void> {
-  const { jobId, prompt, jobDescription, rawResumeData, preAnalysis } = input;
+  const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis } = input;
   try {
+    if (!isPineconeConfigured()) {
+      setJobFailed(jobId, RAG_REQUIRED_MESSAGE);
+      return;
+    }
     setJobProgress(jobId, 'Analyzing job description and matching with your resume…');
     const resumeData = normalizeResumeDates(rawResumeData) as ResumeData;
 
-    let effectivePrompt = prompt;
-    // When user ran "Calculate Score", inject pre-analysis (score, strengths, gaps) so the model addresses gaps and leverages strengths.
-    if (preAnalysis && (preAnalysis.matchScore != null || preAnalysis.analysis || (preAnalysis.gaps?.length ?? 0) > 0 || (preAnalysis.strengths?.length ?? 0) > 0)) {
-      effectivePrompt = `${prompt}\n\n${buildPreAnalysisBlock(preAnalysis)}\n\n`;
-    }
+    const preAnalysisBlock =
+      preAnalysis && (preAnalysis.matchScore != null || preAnalysis.analysis || (preAnalysis.gaps?.length ?? 0) > 0 || (preAnalysis.strengths?.length ?? 0) > 0)
+        ? buildPreAnalysisBlock(preAnalysis)
+        : undefined;
+
     let matchScore: number | undefined;
     let matchScoreAfter: number | undefined;
-    let jdVector: number[] | null = null;
-    let groundingVerified = false;
+    let jdVector: number[] | undefined;
     let citations: { chunkId: string; section: string; score?: number }[] | undefined;
 
     try {
@@ -60,46 +75,85 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
       jdVector = jdVec;
       matchScore = Math.round(cosineSimilarity(jdVec, resumeSummaryVector) * 100) / 100;
     } catch (embedError) {
-      console.warn('Pre-optimization embeddings failed (before/after scores unavailable):', embedError);
+      console.warn('Pre-optimization embeddings failed:', embedError);
+      setJobFailed(jobId, 'Embedding service failed. Ensure OPENAI_API_KEY is set and valid.');
+      return;
     }
 
-    if (isPineconeConfigured() && jdVector) {
-      try {
-        setJobProgress(jobId, 'Retrieving relevant experience from your resume…');
-        const retrieved = await queryResumeChunks(jdVector, RAG_TOP_K);
-        if (retrieved.length > 0) {
-          groundingVerified = true;
-          const ragBlock = [
-            '--- Retrieved resume context (use for grounding; prioritize this content when customizing) ---',
-            ...retrieved.map((r) => `[${r.metadata.section}${r.metadata.company ? ` | ${r.metadata.company}` : ''}] ${r.text.slice(0, 2000)}`),
-            '--- End retrieved context ---',
-          ].join('\n\n');
-          effectivePrompt = `${effectivePrompt}\n\n${ragBlock}\n\n`;
-          citations = retrieved.map((r) => ({
-            chunkId: r.id,
-            section: r.metadata.section,
-            score: r.score,
-          }));
-        }
-      } catch (pineconeError) {
-        console.warn('Pinecone RAG failed, continuing without:', pineconeError);
+    setJobProgress(jobId, 'Retrieving relevant experience from your resume…');
+    let retrieved: Awaited<ReturnType<typeof queryResumeChunks>>;
+    try {
+      retrieved = await queryResumeChunks(jdVector!, RAG_TOP_K);
+    } catch (pineconeError) {
+      console.warn('Pinecone RAG query failed:', pineconeError);
+      setJobFailed(jobId, RAG_REQUIRED_MESSAGE);
+      return;
+    }
+    if (!retrieved.length) {
+      setJobFailed(jobId, 'No resume chunks found. Index your resume from the Mother Resume page first.');
+      return;
+    }
+
+    const ragBlock = [
+      '--- Retrieved resume context (use for grounding; prioritize this content when customizing) ---',
+      ...retrieved.map((r) => `[${r.metadata.section}${r.metadata.company ? ` | ${r.metadata.company}` : ''}] ${r.text.slice(0, 2000)}`),
+      '--- End retrieved context ---',
+    ].join('\n\n');
+    citations = retrieved.map((r) => ({
+      chunkId: r.id,
+      section: r.metadata.section,
+      score: r.score,
+    }));
+
+    let workingResume: ResumeData = JSON.parse(JSON.stringify(resumeData));
+    let workingTitleBar: { main: string; sub: string } | undefined;
+
+    const aiService = createAIService();
+
+    for (const sectionId of SECTION_IDS) {
+      setJobProgress(jobId, SECTION_PROGRESS_LABELS[sectionId]);
+      const sectionPrompt = sectionPrompts[sectionId];
+      const effectiveSectionPrompt = preAnalysisBlock ? `${sectionPrompt}\n\n${preAnalysisBlock}` : sectionPrompt;
+      const fragment = await aiService.customizeSection(
+        sectionId,
+        jobDescription,
+        workingResume,
+        effectiveSectionPrompt,
+        ragBlock,
+        undefined,
+        workingTitleBar
+      );
+      if ('titleBar' in fragment) {
+        workingTitleBar = fragment.titleBar;
+      }
+      if ('summary' in fragment) {
+        workingResume.summary = fragment.summary;
+      }
+      if ('coreCompetencies' in fragment && 'technicalProficiency' in fragment) {
+        workingResume.coreCompetencies = fragment.coreCompetencies;
+        workingResume.technicalProficiency = fragment.technicalProficiency;
+      }
+      if ('professionalExperience' in fragment) {
+        workingResume.professionalExperience = fragment.professionalExperience;
       }
     }
 
-    setJobProgress(jobId, 'Customizing summary, competencies, and experience…');
-    const aiService = createAIService();
+    setJobProgress(jobId, 'Finalizing and smoothing draft…');
+    const finalPrompt = preAnalysisBlock ? `${sectionPrompts.final}\n\n${preAnalysisBlock}\n\n${ragBlock}` : `${sectionPrompts.final}\n\n${ragBlock}`;
     const { resumeData: optimizedData, optimizationSummary, keyChanges } = await aiService.customizeResumeWithExplanation(
       jobDescription,
-      resumeData,
-      effectivePrompt
+      workingResume,
+      finalPrompt,
+      workingTitleBar
     );
 
     const result: OptimizeJobResult = {
       success: true,
       data: optimizedData,
     };
+    if (workingTitleBar) result.titleBar = workingTitleBar;
     if (matchScore != null) result.matchScore = matchScore;
-    if (groundingVerified) result.groundingVerified = groundingVerified;
+    result.groundingVerified = true;
     if (citations?.length) result.citations = citations;
     if (optimizationSummary) result.optimizationSummary = optimizationSummary;
     if (keyChanges?.length) result.keyChanges = keyChanges;
@@ -115,7 +169,6 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
       }
     }
 
-    setJobProgress(jobId, 'Finalizing optimized resume…');
     setJobCompleted(jobId, result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Optimization failed';

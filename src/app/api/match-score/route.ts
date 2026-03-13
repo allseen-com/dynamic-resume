@@ -43,11 +43,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!isPineconeConfigured()) {
+      return NextResponse.json(
+        {
+          error: 'Pinecone required',
+          message: 'Pinecone is required for match score. Configure PINECONE_API_KEY, PINECONE_INDEX, and index your resume from the Mother Resume page.',
+        },
+        { status: 503 }
+      );
+    }
+
     const resumeData = normalizeResumeDates(rawResumeData) as ResumeData;
     const resumeSummaryText = getResumeSummaryForMatch(resumeData);
 
     let matchScorePct = 0;
-    let jdVector: number[] | null = null;
+    let jdVector: number[] | undefined;
 
     try {
       const [jdVec, resumeSummaryVector] = await Promise.all([
@@ -73,22 +83,27 @@ export async function POST(request: NextRequest) {
     let gaps: string[] | undefined;
 
     let ragContext = '';
-    if (isPineconeConfigured() && jdVector) {
-      try {
-        const retrieved = await queryResumeChunks(jdVector, 8);
-        if (retrieved.length > 0) {
-          ragContext =
-            '\n\nRelevant resume excerpts (for context):\n' +
-            retrieved
-              .map(
-                (r) =>
-                  `[${r.metadata.section}${r.metadata.company ? ` | ${r.metadata.company}` : ''}] ${r.text.slice(0, 800)}`
-              )
-              .join('\n\n---\n\n');
-        }
-      } catch {
-        // continue without RAG
+    try {
+      const retrieved = await queryResumeChunks(jdVector!, 8);
+      if (retrieved.length > 0) {
+        ragContext =
+          '\n\nRelevant resume excerpts (for context):\n' +
+          retrieved
+            .map(
+              (r) =>
+                `[${r.metadata.section}${r.metadata.company ? ` | ${r.metadata.company}` : ''}] ${r.text.slice(0, 800)}`
+            )
+            .join('\n\n---\n\n');
       }
+    } catch (ragError) {
+      console.warn('Match-score RAG query failed:', ragError);
+      return NextResponse.json(
+        {
+          error: 'RAG unavailable',
+          message: 'Could not retrieve resume context. Ensure your resume is indexed from the Mother Resume page.',
+        },
+        { status: 503 }
+      );
     }
 
     try {

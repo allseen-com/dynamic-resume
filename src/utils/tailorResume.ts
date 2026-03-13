@@ -54,12 +54,11 @@ export interface ResumeData {
 export async function tailorResumeForJD(jobDescription: string): Promise<ResumeData> {
   try {
     const { callAIService } = await import('./aiResumeGenerator');
-    const prompt = `Analyze this job description and customize the resume to match the requirements while keeping the same JSON structure. Only modify fields marked with "_dynamic": true.`;
-    
-    return await callAIService(prompt, jobDescription, resumeData);
+    const { getSectionPrompts, DEFAULT_SECTION_PROMPTS } = await import('./sectionPrompts');
+    const sectionPrompts = typeof window !== 'undefined' ? getSectionPrompts() : DEFAULT_SECTION_PROMPTS;
+    return await callAIService(sectionPrompts, jobDescription, resumeData);
   } catch (error) {
     console.error('Failed to tailor resume:', error);
-    // Return original data if AI service fails
     return resumeData;
   }
 } 

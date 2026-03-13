@@ -3,10 +3,12 @@ import { after } from 'next/server';
 import { ResumeData } from '../../../types/resume';
 import { generateJobId, setJobPending } from '../../../lib/optimizeJobStore';
 import { runOptimization } from './runOptimization';
+import type { SectionPrompts } from '../../../utils/sectionPrompts';
 
 /**
  * POST /api/optimize-resume
  * Returns 202 Accepted with jobId. Poll GET /api/optimize-resume/status?jobId=... for result.
+ * Requires sectionPrompts (headline, summary, technical, experience, final), jobDescription, and resumeData.
  */
 export interface PreAnalysisPayload {
   matchScore?: number;
@@ -15,23 +17,47 @@ export interface PreAnalysisPayload {
   gaps?: string[];
 }
 
+const SECTION_KEYS: (keyof SectionPrompts)[] = ['headline', 'summary', 'technical', 'experience', 'final'];
+
+function validateSectionPrompts(obj: unknown): obj is SectionPrompts {
+  if (!obj || typeof obj !== 'object') return false;
+  for (const key of SECTION_KEYS) {
+    const v = (obj as Record<string, unknown>)[key];
+    if (typeof v !== 'string' || !v.trim()) return false;
+  }
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
     const {
-      prompt,
+      sectionPrompts,
       jobDescription,
       resumeData: rawResumeData,
       preAnalysis,
     }: {
-      prompt: string;
+      sectionPrompts?: unknown;
       jobDescription: string;
       resumeData: ResumeData;
       preAnalysis?: PreAnalysisPayload;
-    } = await request.json();
+    } = body;
 
-    if (!prompt || !jobDescription || !rawResumeData) {
+    if (!validateSectionPrompts(sectionPrompts)) {
       return NextResponse.json(
-        { error: 'Missing required fields: prompt, jobDescription, or resumeData' },
+        { error: 'Missing or invalid sectionPrompts. Required: headline, summary, technical, experience, final (each non-empty string).' },
+        { status: 400 }
+      );
+    }
+    if (!jobDescription || typeof jobDescription !== 'string' || !jobDescription.trim()) {
+      return NextResponse.json(
+        { error: 'Missing or invalid jobDescription' },
+        { status: 400 }
+      );
+    }
+    if (!rawResumeData || typeof rawResumeData !== 'object') {
+      return NextResponse.json(
+        { error: 'Missing or invalid resumeData' },
         { status: 400 }
       );
     }
@@ -42,7 +68,7 @@ export async function POST(request: NextRequest) {
     after(() =>
       runOptimization({
         jobId,
-        prompt,
+        sectionPrompts,
         jobDescription,
         rawResumeData,
         preAnalysis,

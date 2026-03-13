@@ -8,6 +8,8 @@ export type JobStatus = 'pending' | 'completed' | 'failed';
 export interface OptimizeJobResult {
   success: boolean;
   data: import('../types/resume').ResumeData;
+  /** Title bar from headline section (for ResumeConfig). */
+  titleBar?: { main: string; sub: string };
   matchScore?: number;
   matchScoreAfter?: number;
   groundingVerified?: boolean;

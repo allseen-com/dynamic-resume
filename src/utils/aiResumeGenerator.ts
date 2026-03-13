@@ -1,5 +1,6 @@
 import { ResumeData, ResumeConfig } from '../types/resume';
 import { getWordCountStats } from './wordCountUtils';
+import type { SectionPrompts } from './sectionPrompts';
 
 export interface PreAnalysisForOptimize {
   matchScore?: number;
@@ -10,7 +11,7 @@ export interface PreAnalysisForOptimize {
 
 export interface AICustomizationRequest {
   jobDescription: string;
-  customPrompt?: string;
+  sectionPrompts: SectionPrompts;
   baseResumeData: ResumeData;
   targetRole?: string;
   industry?: string;
@@ -22,7 +23,7 @@ export interface AICustomizationResponse {
   resumeData: ResumeData;
   config: ResumeConfig;
   reasoning?: string;
-  companyOrRole?: string; // Added for filename
+  companyOrRole?: string;
   matchScore?: number;
   matchScoreAfter?: number;
   groundingVerified?: boolean;
@@ -244,6 +245,7 @@ async function pollOptimizeStatus(
   onProgress?: (message: string | null) => void
 ): Promise<{
   data: ResumeData;
+  titleBar?: { main: string; sub: string };
   matchScore?: number;
   matchScoreAfter?: number;
   groundingVerified?: boolean;
@@ -258,6 +260,7 @@ async function pollOptimizeStatus(
     if (body.status === 'completed' && body.result?.data) {
       return {
         data: body.result.data,
+        titleBar: body.result.titleBar,
         matchScore: body.result.matchScore,
         matchScoreAfter: body.result.matchScoreAfter,
         groundingVerified: body.result.groundingVerified,
@@ -279,19 +282,22 @@ async function pollOptimizeStatus(
 
 /**
  * Call AI service to generate customized resume content (202 + polling).
+ * Uses section prompts from storage or defaults.
  */
-export async function callAIService(prompt: string, jobDescription: string, resumeData: ResumeData): Promise<ResumeData> {
+export async function callAIService(
+  sectionPrompts: SectionPrompts,
+  jobDescription: string,
+  resumeData: ResumeData
+): Promise<ResumeData> {
   try {
     const response = await fetch('/api/optimize-resume', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt,
+        sectionPrompts,
         jobDescription,
-        resumeData
-      })
+        resumeData,
+      }),
     });
 
     if (response.status === 202) {
@@ -348,27 +354,15 @@ function extractCompanyOrRole(jobDescription: string): string | undefined {
 export async function generateAICustomizedResume(
   request: AICustomizationRequest
 ): Promise<AICustomizationResponse> {
-  const { jobDescription, customPrompt, baseResumeData, preAnalysis, onProgress } = request;
+  const { jobDescription, sectionPrompts, baseResumeData, preAnalysis, onProgress } = request;
   const companyOrRole = extractCompanyOrRole(jobDescription);
 
-  // Get target page count from localStorage if available (default 2)
-  let targetPages = 2;
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('resumeTargetPages');
-    if (stored) targetPages = Number(stored);
-  }
-
-  // Add bullet and page count instructions to the prompt
-  const bulletInstruction = `\n- Each bullet point must be concise, fit on a single line, and not exceed 50 characters. Do not use ellipsis or truncation.\n- The resume must fit in ${targetPages} A4 pages. Prioritize critical information and summarize or shorten dynamic content as needed.\n`;
-  const effectivePrompt = (customPrompt || '') + bulletInstruction;
-
   try {
-    // Call server API (202 + polling) so RAG (Pinecone) and MatchScore run server-side
     const response = await fetch('/api/optimize-resume', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: effectivePrompt,
+        sectionPrompts,
         jobDescription,
         resumeData: baseResumeData,
         ...(preAnalysis && {
@@ -390,7 +384,10 @@ export async function generateAICustomizedResume(
       const customizedData = apiResult.data;
       const keywords = extractKeywords(jobDescription);
       const requirements = analyzeRequirements(jobDescription);
-      const customizedConfig = generateCustomConfig(keywords, requirements);
+      const baseConfig = generateCustomConfig(keywords, requirements);
+      const config: ResumeConfig = apiResult.titleBar
+        ? { ...baseConfig, titleBar: apiResult.titleBar }
+        : baseConfig;
       const wordCountStats = getWordCountStats(baseResumeData, customizedData);
       const summaryInfo = `Summary: ${wordCountStats.summary.original}→${wordCountStats.summary.limited} words`;
       const experienceInfo = wordCountStats.experiences.map((exp, i) =>
@@ -398,8 +395,8 @@ export async function generateAICustomizedResume(
       ).join(', ');
       return {
         resumeData: customizedData,
-        config: customizedConfig,
-        reasoning: `Resume customized based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
+        config,
+        reasoning: `Resume customized. Word counts: ${summaryInfo}; ${experienceInfo}`,
         companyOrRole,
         matchScore: apiResult.matchScore,
         groundingVerified: apiResult.groundingVerified,
@@ -412,7 +409,10 @@ export async function generateAICustomizedResume(
     const customizedData = pollResult.data;
     const keywords = extractKeywords(jobDescription);
     const requirements = analyzeRequirements(jobDescription);
-    const customizedConfig = generateCustomConfig(keywords, requirements);
+    const baseConfig = generateCustomConfig(keywords, requirements);
+    const config: ResumeConfig = pollResult.titleBar
+      ? { ...baseConfig, titleBar: pollResult.titleBar }
+      : baseConfig;
     const wordCountStats = getWordCountStats(baseResumeData, customizedData);
     const summaryInfo = `Summary: ${wordCountStats.summary.original}→${wordCountStats.summary.limited} words`;
     const experienceInfo = wordCountStats.experiences.map((exp, i) =>
@@ -421,8 +421,8 @@ export async function generateAICustomizedResume(
 
     return {
       resumeData: customizedData,
-      config: customizedConfig,
-      reasoning: `Resume customized based on job requirements. Word counts: ${summaryInfo}; ${experienceInfo}`,
+      config,
+      reasoning: `Resume customized. Word counts: ${summaryInfo}; ${experienceInfo}`,
       companyOrRole,
       matchScore: pollResult.matchScore,
       matchScoreAfter: pollResult.matchScoreAfter,

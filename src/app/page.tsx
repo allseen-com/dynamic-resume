@@ -6,11 +6,10 @@ import { ResumeData, ResumeConfig } from "../types/resume";
 import { generateAICustomizedResume } from "../utils/aiResumeGenerator";
 import { useErrorHandler } from "../utils/errorHandler";
 import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../components/LoadingSpinner";
-import { getDefaultPrompt, getPromptForJobDescription } from "../utils/promptTemplates";
+import { getSectionPrompts } from "../utils/sectionPrompts";
 import { getTotalResumeWordCount } from "../utils/wordCountUtils";
 import resumeData from "../../data/resume.json";
 
-const PROMPT_MODE_KEY = "promptMode";
 const LAST_INDEXED_KEY = "resumeLastIndexedAt";
 
 const DRAFT_VERSION_LABELS = ["Technical", "Leadership", "Growth"] as const;
@@ -40,7 +39,6 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 export default function HomePage() {
   const [jobDescription, setJobDescription] = useState("");
   const [jobUrl, setJobUrl] = useState("");
-  const [savedPrompt, setSavedPrompt] = useState(getDefaultPrompt());
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingType, setLoadingType] = useState<"url" | "ai" | "pdf" | null>(null);
   const [motherResumeData, setMotherResumeData] = useState<ResumeData>(resumeData as ResumeData);
@@ -81,12 +79,12 @@ export default function HomePage() {
   const [keyChanges, setKeyChanges] = useState<string[] | null>(null);
   const [matchScoreAfter, setMatchScoreAfter] = useState<number | null>(null);
   const [optimizeStatusMessage, setOptimizeStatusMessage] = useState<string | null>(null);
+  const [hasCompletedCustomization, setHasCompletedCustomization] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== "undefined") {
       setArchive(JSON.parse(localStorage.getItem("resumeArchive") || "[]"));
-      setSavedPrompt(localStorage.getItem("customAIPrompt") || getDefaultPrompt());
       setLastIndexedAt(localStorage.getItem(LAST_INDEXED_KEY));
     }
   }, []);
@@ -212,8 +210,7 @@ export default function HomePage() {
       handleErrorWithState("Please provide a job description", setError, "validation", "job description");
       return;
     }
-    const promptMode = typeof window !== "undefined" ? localStorage.getItem(PROMPT_MODE_KEY) || "auto" : "auto";
-    const promptToUse = promptMode === "auto" ? getPromptForJobDescription(jobDescription) : savedPrompt;
+    const sectionPrompts = typeof window !== "undefined" ? getSectionPrompts() : { headline: "", summary: "", technical: "", experience: "", final: "" };
     setIsGenerating(true);
     setLoadingType("ai");
     setError(null);
@@ -221,7 +218,7 @@ export default function HomePage() {
     try {
       const result = await generateAICustomizedResume({
         jobDescription,
-        customPrompt: promptToUse,
+        sectionPrompts,
         baseResumeData: motherResumeData,
         onProgress: (msg) => setOptimizeStatusMessage(msg),
         ...(matchScorePre != null && {
@@ -241,6 +238,7 @@ export default function HomePage() {
       setGroundingVerified(result.groundingVerified === true);
       setOptimizationSummary(result.optimizationSummary ?? null);
       setKeyChanges(result.keyChanges ?? null);
+      setHasCompletedCustomization(true);
       setShowSuccess(true);
       setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]);
     } catch (e) {
@@ -267,7 +265,6 @@ export default function HomePage() {
           resumeData: customizedResumeData,
           config: customizedConfig,
           jobDescription,
-          aiPrompt: savedPrompt,
           filename,
         }),
       });
@@ -320,6 +317,7 @@ export default function HomePage() {
     setOptimizationSummary(null);
     setKeyChanges(null);
     setMatchScoreAfter(null);
+    setHasCompletedCustomization(false);
   };
 
   if (!isClient) {
@@ -328,7 +326,7 @@ export default function HomePage() {
 
   const motherWordCount = getTotalResumeWordCount(motherResumeData);
   const draftWordCount = getTotalResumeWordCount(customizedResumeData);
-  const hasDraft = matchScore != null || matchScoreAfter != null || !!optimizationSummary || (keyChanges != null && keyChanges.length > 0);
+  const hasDraft = hasCompletedCustomization;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -511,50 +509,68 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                  {/* Word count quick report */}
-                  <div className="px-4 py-2 border-b border-slate-100 bg-slate-50/50 flex flex-wrap gap-4 text-sm text-slate-600">
-                    <span>Mother resume: <strong className="text-slate-800">{motherWordCount}</strong> words</span>
-                    <span>Draft: <strong className="text-slate-800">{draftWordCount}</strong> words</span>
-                    {draftWordCount < motherWordCount && (
-                      <span className="text-emerald-700">Summarized for focus</span>
-                    )}
+                  {/* Word count: mother vs draft (in src/utils/wordCountUtils.ts getTotalResumeWordCount) */}
+                  <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Word count</p>
+                    <div className="flex flex-wrap gap-4 text-sm text-slate-700">
+                      <span>Mother resume: <strong className="text-slate-800">{motherWordCount}</strong> words</span>
+                      <span>Draft: <strong className="text-slate-800">{draftWordCount}</strong> words</span>
+                      {draftWordCount < motherWordCount && (
+                        <span className="text-emerald-700 font-medium">Summarized for focus</span>
+                      )}
+                    </div>
                   </div>
-                  {/* What we changed + new score */}
-                  {(optimizationSummary || (keyChanges && keyChanges.length > 0) || matchScore != null || matchScoreAfter != null) && (
-                    <div className="px-4 py-4 border-b border-slate-200 bg-indigo-50/50 space-y-3">
-                      {(matchScore != null || matchScoreAfter != null) && (
+                  {/* Post-customization report: score, summary, changes by section (always visible after customization) */}
+                  <div className="px-4 py-4 border-b border-slate-200 bg-indigo-50/50 space-y-4">
+                    <h3 className="text-sm font-semibold text-slate-800">Post-customization report</h3>
+                    {/* Match score */}
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1">Match score</p>
+                      {matchScore != null || matchScoreAfter != null ? (
                         <div className="flex flex-wrap gap-2">
                           {matchScore != null && (
                             <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
                               {matchScoreAfter != null
-                                ? `Match: ${Math.round(matchScore * 100)}% → ${Math.round(matchScoreAfter * 100)}%`
-                                : `Match: ${Math.round(matchScore * 100)}%`}
+                                ? `Before: ${Math.round(matchScore * 100)}% → After: ${Math.round(matchScoreAfter * 100)}%`
+                                : `${Math.round(matchScore * 100)}%`}
                             </span>
                           )}
                           {matchScoreAfter != null && matchScore == null && (
                             <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
-                              Match: {Math.round(matchScoreAfter * 100)}%
+                              {Math.round(matchScoreAfter * 100)}%
                             </span>
                           )}
                           {groundingVerified && (
                             <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">Grounding verified</span>
                           )}
                         </div>
-                      )}
-                      <h3 className="text-sm font-semibold text-slate-800">What we changed</h3>
-                      {optimizationSummary && <p className="text-sm text-slate-700">{optimizationSummary}</p>}
-                      {keyChanges && keyChanges.length > 0 && (
-                        <>
-                          <p className="text-xs font-medium text-slate-600">Changes by section (what changed and why)</p>
-                          <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
-                            {keyChanges.map((change, i) => (
-                              <li key={i}>{change}</li>
-                            ))}
-                          </ul>
-                        </>
+                      ) : (
+                        <p className="text-sm text-slate-500">Not calculated (embeddings unavailable)</p>
                       )}
                     </div>
-                  )}
+                    {/* Summary */}
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1">Summary</p>
+                      {optimizationSummary ? (
+                        <p className="text-sm text-slate-700">{optimizationSummary}</p>
+                      ) : (
+                        <p className="text-sm text-slate-500">No summary returned</p>
+                      )}
+                    </div>
+                    {/* Changes by section */}
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1">Changes by section (what changed and why)</p>
+                      {keyChanges && keyChanges.length > 0 ? (
+                        <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                          {keyChanges.map((change, i) => (
+                            <li key={i}>{change}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-slate-500">No change details returned</p>
+                      )}
+                    </div>
+                  </div>
                   <div className="p-4 max-h-[60vh] overflow-y-auto">
                     {viewMode === "side-by-side" ? (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
