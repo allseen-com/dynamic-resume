@@ -36,11 +36,23 @@
   },
   "professionalExperience": [
     {
+      "company": "Trip Ways (Remote, USA)",
+      "_dynamic_company": false,
+      "title": "Head of Product & Growth | AI-Driven Marketing & Automation",
+      "_dynamic_title": false,
+      "dateRange": "06/2018 – 12/2021",
+      "_dynamic_dateRange": false,
+      "description": {
+        "_dynamic": true,
+        "value": "Proactively manages and oversees the day-to-day business operations of an upscale international two-sided marketplace, composed of 300 vendor companies, +1000 complex bookable products, +4000 Travelers, and a team of 20 employees, on a global level distribution.\n\nBuilt a platform for local tour companies to list tours and services for free, allowing travelers to get connected to local people, allowing local companies to obtain the most authentic and affordable travel experiences worldwide, and making it easier for clients and vendors to transact money.\n\nSuccessfully developed and launched a high-performance cloud-based WordPress platform with a focus on meeting and/or exceeding the specific needs of the multi-vendor online travel agency with a real time booking system, automated workflows, and content marketing strategies.\n\nSkillfully organizes, priorities, and manages multiple projects simultaneously with an emphasis towards making strategic decisions based on the analyzed feedback data.\n\nRecognized for optimal abilities in partnering with the travel industry influencers in implementing marketing strategies, tracking performance, and analyzing / optimizing the results across multiple paid campaigns.\n\nProactively organized and categorized a wide variety of tour products based on their attributes (Destination, Duration, Availability, Price, Style, Inclusions / Exclusions, Hotels, Flights, and other parameters), allowing users to easily filter travel packages.\n\nSkillfully utilized an open-source platform in developing a complicated system that automated and localized numerous tasks into one place, resulting in a significant savings of both time and money for the company.\n\nSuccessfully developed an innovative platform (Vendor Side Onboarding Automated Workflows) with a focus on accepting, filtering, interviewing, and helping tour companies to get onboard and provide complicated tour products on TripWays through the website capabilities.\n\nExpertly designed and developed a platform that provided real time pricing and availability for +1000 tour products, allowing users to get updated price and availability while avoiding the frustrating price inquiry, response time, and extra communications.\n\nProactively developed and implemented various tools and workflows, for a cross-functional team of 10 personnel, collaborating across different countries and customers on a global level. Consistently displays exceptional abilities in supporting the technical needs of the highly scalable tech platform on AWS.\n\nSuccessfully hired and developed staff members across different time zones to be available to customers worldwide 24/7. Significantly improved customer satisfaction by implementing an automated workflow for customer communications based on latest language processing models trained with the local data."
+      }
+    },
+    {
       "company": "Red Ventures (San Francisco, CA)",
       "_dynamic_company": false,
       "title": "Sr. Growth Marketing – Audience and SEO",
       "_dynamic_title": false,
-      "dateRange": "12/2021 – Present",
+      "dateRange": "12/2021 – 12/2023",
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,
@@ -48,15 +60,15 @@
       }
     },
     {
-      "company": "Trip Ways LLC (Portland, OR)",
+      "company": "China Ways LLC (Portland, OR)",
       "_dynamic_company": false,
-      "title": "Co-Founder and CEO",
+      "title": "Performance Optimization Manager | Paid Customer Acquisition",
       "_dynamic_title": false,
-      "dateRange": "06/2018 – 12/2021",
+      "dateRange": "02/2018 – 11/2023",
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,
-        "value": "Proactively manages and oversees the day-to-day business operations of an upscale international two-sided marketplace, composed of 300 vendor companies, +1000 complex bookable products, +4000 Travelers, and a team of 20 employees, on a global level distribution.\n\nBuilt a platform for local tour companies to list tours and services for free, allowing travelers to get connected to local people, allowing local companies to obtain the most authentic and affordable travel experiences worldwide, and making it easier for clients and vendors to transact money.\n\nSuccessfully developed and launched a high-performance cloud-based WordPress platform with a focus on meeting and/or exceeding the specific needs of the multi-vendor online travel agency with a real time booking system, automated workflows, and content marketing strategies.\n\nSkillfully organizes, priorities, and manages multiple projects simultaneously with an emphasis towards making strategic decisions based on the analyzed feedback data.\n\nRecognized for optimal abilities in partnering with the travel industry influencers in implementing marketing strategies, tracking performance, and analyzing / optimizing the results across multiple paid campaigns.\n\nProactively organized and categorized a wide variety of tour products based on their attributes (Destination, Duration, Availability, Price, Style, Inclusions / Exclusions, Hotels, Flights, and other parameters), allowing users to easily filter travel packages.\n\nSkillfully utilized an open-source platform in developing a complicated system that automated and localized numerous tasks into one place, resulting in a significant savings of both time and money for the company.\n\nSuccessfully developed an innovative platform (Vendor Side Onboarding Automated Workflows) with a focus on accepting, filtering, interviewing, and helping tour companies to get onboard and provide complicated tour products on TripWays through the website capabilities.\n\nExpertly designed and developed a platform that provided real time pricing and availability for +1000 tour products, allowing users to get updated price and availability while avoiding the frustrating price inquiry, response time, and extra communications.\n\nProactively developed and implemented various tools and workflows, for a cross-functional team of 10 personnel, collaborating across different countries and customers on a global level. Consistently displays exceptional abilities in supporting the technical needs of the highly scalable tech platform on AWS.\n\nSuccessfully hired and developed staff members across different time zones to be available to customers worldwide 24/7. Significantly improved customer satisfaction by implementing an automated workflow for customer communications based on latest language processing models trained with the local data."
+        "value": "Recognized for optimal abilities in partnering with the travel industry influencers in implementing marketing strategies, tracking performance, and analyzing / optimizing the results across multiple paid campaigns."
       }
     },
     {
