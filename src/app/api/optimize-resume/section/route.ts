@@ -1,7 +1,8 @@
 /**
  * POST /api/optimize-resume/section
  * Run optimization for a single section. Returns the fragment (titleBar, summary, coreCompetencies+technicalProficiency, or professionalExperience).
- * Body: { jobDescription, sectionId, sectionPrompts, resumeData, sectionMaxWords? }
+ * Body: { jobDescription, sectionId, sectionPrompts, resumeData, sectionMaxWords?, experiencePrompts? }
+ * sectionId may be headline | summary | technical | experience_0 | experience_1 | ...
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { ResumeData } from '../../../../types/resume';
@@ -10,7 +11,7 @@ import { isPineconeConfigured, queryResumeChunks } from '../../../../lib/pinecon
 import { embedText } from '../../../../utils/embeddings';
 import { normalizeResumeDates } from '../../../../utils/dateFormat';
 import type { SectionPrompts, SectionMaxWords } from '../../../../utils/sectionPrompts';
-import { SECTION_IDS } from '../../../../utils/sectionPrompts';
+import { SECTION_IDS_BASE, isExperienceSectionId, getExperienceIndexFromSectionId, DEFAULT_EXPERIENCE_SINGLE } from '../../../../utils/sectionPrompts';
 import type { SectionFragment } from '../../../../services/aiService';
 
 const RAG_TOP_K = 15;
@@ -25,6 +26,13 @@ function validateSectionPrompts(obj: unknown): obj is SectionPrompts {
   return true;
 }
 
+function isValidSectionId(sectionId: string, experienceCount: number): boolean {
+  if (SECTION_IDS_BASE.includes(sectionId as (typeof SECTION_IDS_BASE)[number])) return true;
+  if (!isExperienceSectionId(sectionId)) return false;
+  const idx = getExperienceIndexFromSectionId(sectionId);
+  return idx !== null && idx >= 0 && idx < experienceCount;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -34,22 +42,18 @@ export async function POST(request: NextRequest) {
       sectionPrompts,
       resumeData: rawResumeData,
       sectionMaxWords,
+      experiencePrompts,
     }: {
       jobDescription?: string;
       sectionId?: string;
       sectionPrompts?: unknown;
       resumeData?: ResumeData;
       sectionMaxWords?: SectionMaxWords;
+      experiencePrompts?: string[];
     } = body;
 
     if (!jobDescription || typeof jobDescription !== 'string' || !jobDescription.trim()) {
       return NextResponse.json({ error: 'Missing or invalid jobDescription' }, { status: 400 });
-    }
-    if (!SECTION_IDS.includes(sectionId as (typeof SECTION_IDS)[number])) {
-      return NextResponse.json(
-        { error: `Invalid sectionId. Must be one of: ${SECTION_IDS.join(', ')}` },
-        { status: 400 }
-      );
     }
     if (!validateSectionPrompts(sectionPrompts)) {
       return NextResponse.json(
@@ -61,6 +65,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing or invalid resumeData' }, { status: 400 });
     }
 
+    const resumeData = normalizeResumeDates(rawResumeData) as ResumeData;
+    const expCount = Array.isArray(resumeData.professionalExperience) ? resumeData.professionalExperience.length : 0;
+    if (!isValidSectionId(sectionId, expCount)) {
+      return NextResponse.json(
+        { error: `Invalid sectionId. Must be headline, summary, technical, or experience_0 through experience_${Math.max(0, expCount - 1)}` },
+        { status: 400 }
+      );
+    }
+
     if (!isPineconeConfigured()) {
       return NextResponse.json(
         {
@@ -70,8 +83,6 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       );
     }
-
-    const resumeData = normalizeResumeDates(rawResumeData) as ResumeData;
     const jdVector = await embedText(jobDescription.slice(0, 8192));
     const retrieved = await queryResumeChunks(jdVector, RAG_TOP_K);
     if (!retrieved.length) {
@@ -87,16 +98,28 @@ export async function POST(request: NextRequest) {
       '--- End retrieved context ---',
     ].join('\n\n');
 
-    const sid = sectionId as (typeof SECTION_IDS)[number];
-    const sectionPrompt = (sectionPrompts as SectionPrompts)[sid];
-    const maxWords = sectionMaxWords?.[sid];
-    const wordLimitLine =
-      maxWords != null && maxWords > 0 ? `\n\n**STRICT:** This section must not exceed ${maxWords} words.\n\n` : '';
-    const effectiveSectionPrompt = sectionPrompt + wordLimitLine;
+    let effectiveSectionPrompt: string;
+    const expIdx = getExperienceIndexFromSectionId(sectionId);
+    if (expIdx !== null) {
+      const promptForIndex = Array.isArray(experiencePrompts) && typeof experiencePrompts[expIdx] === 'string' && experiencePrompts[expIdx].trim()
+        ? experiencePrompts[expIdx].trim()
+        : DEFAULT_EXPERIENCE_SINGLE;
+      const maxWords = sectionMaxWords?.experience;
+      const wordLimitLine =
+        maxWords != null && maxWords > 0 ? `\n\n**STRICT:** This entry must not exceed ${maxWords} words total for the section; keep this single entry concise.\n\n` : '';
+      effectiveSectionPrompt = promptForIndex + wordLimitLine;
+    } else {
+      const sid = sectionId as 'headline' | 'summary' | 'technical';
+      const sectionPrompt = (sectionPrompts as SectionPrompts)[sid];
+      const maxWords = sectionMaxWords?.[sid];
+      const wordLimitLine =
+        maxWords != null && maxWords > 0 ? `\n\n**STRICT:** This section must not exceed ${maxWords} words.\n\n` : '';
+      effectiveSectionPrompt = sectionPrompt + wordLimitLine;
+    }
 
     const aiService = createAIService();
     const fragment: SectionFragment = await aiService.customizeSection(
-      sid,
+      sectionId,
       jobDescription,
       resumeData,
       effectiveSectionPrompt,

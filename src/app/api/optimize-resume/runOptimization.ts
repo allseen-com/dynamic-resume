@@ -8,15 +8,14 @@ import type { OptimizeJobResult } from '../../../lib/optimizeJobStore';
 import { setJobCompleted, setJobFailed, setJobProgress } from '../../../lib/optimizeJobStore';
 import type { PreAnalysisPayload } from './route';
 import type { SectionPrompts, SectionMaxWords } from '../../../utils/sectionPrompts';
-import { SECTION_IDS } from '../../../utils/sectionPrompts';
+import { SECTION_IDS_BASE, DEFAULT_EXPERIENCE_SINGLE } from '../../../utils/sectionPrompts';
 
 const RAG_TOP_K = 15;
 
-const SECTION_PROGRESS_LABELS: Record<(typeof SECTION_IDS)[number], string> = {
+const SECTION_PROGRESS_LABELS: Record<(typeof SECTION_IDS_BASE)[number], string> = {
   headline: 'Optimizing headline / title bar…',
   summary: 'Optimizing professional summary…',
   technical: 'Optimizing technical skills…',
-  experience: 'Optimizing work experience…',
 };
 
 export interface RunOptimizationInput {
@@ -29,6 +28,10 @@ export interface RunOptimizationInput {
   targetPages?: number;
   /** Per-section max word count; applied to each section prompt and final step. */
   sectionMaxWords?: SectionMaxWords;
+  /** Per-experience prompts (one per resume experience entry). Used when running experience_0, experience_1, … */
+  experiencePrompts?: string[];
+  /** Per-experience dynamic flag; false = keep original, true = run AI for that entry. */
+  experienceDynamic?: boolean[];
 }
 
 function buildPreAnalysisBlock(preAnalysis: PreAnalysisPayload): string {
@@ -54,7 +57,7 @@ const RAG_REQUIRED_MESSAGE =
 const WORDS_PER_PAGE = 400;
 
 export async function runOptimization(input: RunOptimizationInput): Promise<void> {
-  const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis, targetPages, sectionMaxWords } = input;
+  const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis, targetPages, sectionMaxWords, experiencePrompts, experienceDynamic } = input;
   try {
     if (!isPineconeConfigured()) {
       setJobFailed(jobId, RAG_REQUIRED_MESSAGE);
@@ -115,8 +118,15 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
     let workingTitleBar: { main: string; sub: string } | undefined;
 
     const aiService = createAIService();
+    const experienceCount = workingResume.professionalExperience?.length ?? 0;
+    const dynamicFlags = experienceDynamic && experienceDynamic.length >= experienceCount
+      ? experienceDynamic
+      : Array.from({ length: experienceCount }, () => true);
+    const promptsByIndex = experiencePrompts && experiencePrompts.length >= experienceCount
+      ? experiencePrompts
+      : Array.from({ length: experienceCount }, () => DEFAULT_EXPERIENCE_SINGLE);
 
-    for (const sectionId of SECTION_IDS) {
+    for (const sectionId of SECTION_IDS_BASE) {
       setJobProgress(jobId, SECTION_PROGRESS_LABELS[sectionId]);
       const sectionPrompt = sectionPrompts[sectionId];
       const maxWords = sectionMaxWords?.[sectionId];
@@ -149,11 +159,35 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
         workingResume.coreCompetencies = fragment.coreCompetencies;
         workingResume.technicalProficiency = fragment.technicalProficiency;
       }
-      if ('professionalExperience' in fragment) {
-        // Merge: AI-optimized entries first (e.g. first 2), then append older roles from current resume unchanged (semi-fixed).
-        const aiEntries = fragment.professionalExperience;
-        const restFromResume = workingResume.professionalExperience.slice(aiEntries.length);
-        workingResume.professionalExperience = aiEntries.concat(restFromResume);
+    }
+
+    for (let i = 0; i < experienceCount; i++) {
+      if (!dynamicFlags[i]) continue;
+      setJobProgress(jobId, `Optimizing work experience ${i + 1}…`);
+      const expSectionId = `experience_${i}`;
+      const sectionPrompt = promptsByIndex[i] ?? DEFAULT_EXPERIENCE_SINGLE;
+      const maxWords = sectionMaxWords?.experience;
+      const wordLimitLine =
+        maxWords != null && maxWords > 0
+          ? `\n\n**STRICT:** This entry must stay concise; section total must not exceed ${maxWords} words.\n\n`
+          : '';
+      const effectiveSectionPrompt = [
+        sectionPrompt,
+        wordLimitLine,
+        preAnalysisBlock ? preAnalysisBlock : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      const fragment = await aiService.customizeSection(
+        expSectionId,
+        jobDescription,
+        workingResume,
+        effectiveSectionPrompt,
+        ragBlock,
+        undefined
+      );
+      if ('professionalExperience' in fragment && fragment.professionalExperience.length === 1) {
+        workingResume.professionalExperience[i] = fragment.professionalExperience[0];
       }
     }
 

@@ -1,8 +1,31 @@
 import { getContextSkyscraperPrefix } from './contextSkyscraper';
 
-/** Section IDs for the section-based prompt flow. Order: headline → summary → technical → experience, then final. */
+/** Base section IDs (no per-experience). Use getSectionIdsForResume(count) for full list including experience_0, experience_1, … */
+export const SECTION_IDS_BASE = ['headline', 'summary', 'technical'] as const;
+/** @deprecated Use SECTION_IDS_BASE + experience indices. Kept for backward compat in types. */
 export const SECTION_IDS = ['headline', 'summary', 'technical', 'experience'] as const;
 export type SectionId = (typeof SECTION_IDS)[number];
+
+/** Section ID for a single experience slot (e.g. experience_0, experience_1). */
+export type ExperienceSectionId = `experience_${number}`;
+
+/** Returns section IDs for side-by-side / section API: headline, summary, technical, experience_0, experience_1, … */
+export function getSectionIdsForResume(experienceCount: number): string[] {
+  const experienceIds = Array.from({ length: experienceCount }, (_, i) => `experience_${i}` as const);
+  return [...SECTION_IDS_BASE, ...experienceIds];
+}
+
+/** Max experience index we allow (for validation). */
+const MAX_EXPERIENCE_INDEX = 15;
+export function isExperienceSectionId(sectionId: string): sectionId is ExperienceSectionId {
+  const match = sectionId.match(/^experience_(\d+)$/);
+  return !!match && parseInt(match[1], 10) < MAX_EXPERIENCE_INDEX;
+}
+
+export function getExperienceIndexFromSectionId(sectionId: string): number | null {
+  const match = sectionId.match(/^experience_(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
+}
 
 /** Per-section max word count for optimization. Used to constrain section length. */
 export type SectionMaxWordsKey = 'headline' | 'summary' | 'technical' | 'experience' | 'final';
@@ -139,7 +162,41 @@ Return ONLY a JSON object with this exact structure (no other keys). Use "catego
   }
 }`;
 
-/** Default prompt for Professional Experience. Output: { professionalExperience: [only first 2 entries] }. Older entries are appended from source in code. */
+const STORAGE_EXPERIENCE_PROMPTS = 'sectionPrompt_experienceByIndex';
+const STORAGE_EXPERIENCE_DYNAMIC = 'sectionPrompt_experienceDynamic';
+
+/** Default prompt for a single experience entry (used for experience_0, experience_1, …). Output: { professionalExperience: [one entry] }. */
+export const DEFAULT_EXPERIENCE_SINGLE = `${SKYSCRAPER}${BASE_CRITICAL}
+
+**SECTION: One Professional Experience Entry**
+
+Your task is to produce ONLY **one** professional experience entry for the resume, tailored to the job description. You will be given the **index** of this entry (0 = most recent role). Use the source resume and RAG context for that role only; do not invent facts.
+
+**Rules:**
+- Use the **exact job title** from the JD where it fits (Exact Title Rule). "Founder" / "CEO" may be reframed as "Head of Product" or equivalent if it aligns with the JD and is truthful.
+- Preserve the entry’s \`dateRange\` exactly as in the source resume; do not change dates.
+- 5–6 bullets max (use fewer if needed to stay within word count). \`description.value\` must be newline-separated bullets: "Bullet one.\\nBullet two."
+- X-Y-Z form: Action Verb + Skill/Task + Context + Measurable Result. Target 60–70% with a concrete metric.
+- Use only achievements and facts from the Mother Resume and RAG context; do not invent.
+
+**HARD LENGTH CONSTRAINT:** The total word count of \`description.value\` for this entry MUST be ≤ the source resume’s word count for this same role. If the source is short, use fewer bullets.
+
+Return ONLY a JSON object with this exact structure (no other keys). Include exactly **1** item in the array.
+{
+  "professionalExperience": [
+    {
+      "company": "Company Name",
+      "_dynamic_company": true,
+      "title": "Job Title",
+      "_dynamic_title": true,
+      "dateRange": "MM/YYYY - MM/YYYY",
+      "_dynamic_dateRange": true,
+      "description": { "_dynamic": true, "value": "Bullet one.\\nBullet two." }
+    }
+  ]
+}`;
+
+/** Default prompt for Professional Experience (all-in-one; used when no per-index prompts). Output: { professionalExperience: [only first 2 entries] }. */
 const DEFAULT_EXPERIENCE = `${SKYSCRAPER}${BASE_CRITICAL}
 
 **SECTION: Professional Experience (first two roles only)**
@@ -250,4 +307,73 @@ export function getSectionPromptStorageKey(section: keyof SectionPrompts): strin
 /** Reset one section to its default prompt. */
 export function getDefaultSectionPrompt(section: keyof SectionPrompts): string {
   return DEFAULT_SECTION_PROMPTS[section];
+}
+
+// --- Per-experience prompts and dynamic flags ---
+
+/** Get prompt for experience at index. Pads with default single-entry prompt if not stored. */
+export function getExperiencePrompts(experienceCount: number): string[] {
+  if (typeof window === 'undefined' || experienceCount <= 0) return [];
+  let arr: string[] = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_EXPERIENCE_PROMPTS);
+    if (raw) arr = JSON.parse(raw) as string[];
+  } catch {
+    arr = [];
+  }
+  const out: string[] = [];
+  for (let i = 0; i < experienceCount; i++) {
+    out.push(typeof arr[i] === 'string' && arr[i].trim() ? arr[i].trim() : DEFAULT_EXPERIENCE_SINGLE);
+  }
+  return out;
+}
+
+/** Get dynamic flag for each experience. True = run AI for this entry; false = keep original. Pads with true. */
+export function getExperienceDynamic(experienceCount: number): boolean[] {
+  if (typeof window === 'undefined' || experienceCount <= 0) return [];
+  let arr: boolean[] = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_EXPERIENCE_DYNAMIC);
+    if (raw) arr = JSON.parse(raw) as boolean[];
+  } catch {
+    arr = [];
+  }
+  const out: boolean[] = [];
+  for (let i = 0; i < experienceCount; i++) {
+    out.push(typeof arr[i] === 'boolean' ? arr[i] : true);
+  }
+  return out;
+}
+
+export function setExperiencePrompt(index: number, value: string): void {
+  if (typeof window === 'undefined') return;
+  let arr: string[] = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_EXPERIENCE_PROMPTS);
+    if (raw) arr = JSON.parse(raw) as string[];
+  } catch {
+    arr = [];
+  }
+  while (arr.length <= index) arr.push('');
+  arr[index] = value;
+  localStorage.setItem(STORAGE_EXPERIENCE_PROMPTS, JSON.stringify(arr));
+}
+
+export function setExperienceDynamic(index: number, value: boolean): void {
+  if (typeof window === 'undefined') return;
+  let arr: boolean[] = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_EXPERIENCE_DYNAMIC);
+    if (raw) arr = JSON.parse(raw) as boolean[];
+  } catch {
+    arr = [];
+  }
+  while (arr.length <= index) arr.push(true);
+  arr[index] = value;
+  localStorage.setItem(STORAGE_EXPERIENCE_DYNAMIC, JSON.stringify(arr));
+}
+
+/** Default prompt for a given experience index (for Settings "Reset to default"). */
+export function getDefaultExperiencePromptForIndex(_index: number): string {
+  return DEFAULT_EXPERIENCE_SINGLE;
 }

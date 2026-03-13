@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
       preAnalysis,
       targetPages,
       sectionMaxWords,
+      experiencePrompts,
+      experienceDynamic,
     }: {
       sectionPrompts?: unknown;
       jobDescription: string;
@@ -45,6 +47,8 @@ export async function POST(request: NextRequest) {
       preAnalysis?: PreAnalysisPayload;
       targetPages?: number;
       sectionMaxWords?: SectionMaxWords;
+      experiencePrompts?: string[];
+      experienceDynamic?: boolean[];
     } = body;
 
     if (!validateSectionPrompts(sectionPrompts)) {
@@ -78,6 +82,8 @@ export async function POST(request: NextRequest) {
         preAnalysis,
         targetPages: typeof targetPages === 'number' && targetPages >= 1 && targetPages <= 5 ? targetPages : undefined,
         sectionMaxWords: sectionMaxWords && typeof sectionMaxWords === 'object' ? sectionMaxWords : undefined,
+        experiencePrompts: Array.isArray(experiencePrompts) ? experiencePrompts : undefined,
+        experienceDynamic: Array.isArray(experienceDynamic) ? experienceDynamic : undefined,
       })
     );
 

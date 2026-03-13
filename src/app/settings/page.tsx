@@ -7,11 +7,17 @@ import {
   getDefaultSectionPrompt,
   getSectionMaxWords,
   setSectionMaxWordsValue,
+  getExperiencePrompts,
+  getExperienceDynamic,
+  setExperiencePrompt,
+  setExperienceDynamic,
+  getDefaultExperiencePromptForIndex,
   type SectionPrompts,
   type SectionMaxWords,
   type SectionMaxWordsKey,
   DEFAULT_SECTION_MAX_WORDS,
 } from "../../utils/sectionPrompts";
+import type { ResumeData } from "../../types/resume";
 
 const SECTION_LABELS: Record<keyof SectionPrompts, string> = {
   headline: "Headline / Title bar",
@@ -25,7 +31,7 @@ const SECTION_HINTS: Partial<Record<keyof SectionPrompts, string>> = {
   summary: "Limit: 80–120 words.",
   headline: "Output: main + sub title only.",
   technical: "Output: coreCompetencies + technicalProficiency.",
-  experience: "Output: professionalExperience array. Use MM/YYYY for dates.",
+  experience: "Default for work experience (each role can override below). Output: one entry. Use MM/YYYY for dates.",
   final: "Receives merged draft; smooth and return full resume + summary + keyChanges.",
 };
 
@@ -52,10 +58,26 @@ export default function SettingsPage() {
   const [pineconeTest, setPineconeTest] = useState<{ ok: boolean; error?: string } | null>(null);
   const [openaiLoading, setOpenaiLoading] = useState(false);
   const [pineconeLoading, setPineconeLoading] = useState(false);
+  const [resume, setResume] = useState<ResumeData | null>(null);
+  const [experiencePrompts, setExperiencePromptsState] = useState<string[]>([]);
+  const [experienceDynamic, setExperienceDynamicState] = useState<boolean[]>([]);
+  const [expandedExperienceIndex, setExpandedExperienceIndex] = useState<number | null>(0);
 
   useEffect(() => {
     setSectionPrompts(getSectionPrompts());
     setSectionMaxWords(getSectionMaxWords());
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/resume")
+      .then((r) => r.json())
+      .then((data) => {
+        setResume(data as ResumeData);
+        const count = Array.isArray(data?.professionalExperience) ? data.professionalExperience.length : 0;
+        setExperiencePromptsState(getExperiencePrompts(count));
+        setExperienceDynamicState(getExperienceDynamic(count));
+      })
+      .catch(() => setResume(null));
   }, []);
 
   useEffect(() => {
@@ -93,6 +115,45 @@ export default function SettingsPage() {
       const def = getDefaultSectionPrompt(section);
       setSectionPrompts((prev) => ({ ...prev, [section]: def }));
       setSectionPrompt(section, def);
+      showToast();
+    }
+  };
+
+  const handleExperiencePromptChange = (index: number, value: string) => {
+    setExperiencePromptsState((prev) => {
+      const next = [...prev];
+      while (next.length <= index) next.push("");
+      next[index] = value;
+      return next;
+    });
+  };
+
+  const saveExperiencePrompt = (index: number) => {
+    setExperiencePrompt(index, experiencePrompts[index] ?? "");
+    showToast();
+  };
+
+  const handleExperienceDynamicChange = (index: number, value: boolean) => {
+    setExperienceDynamicState((prev) => {
+      const next = [...prev];
+      while (next.length <= index) next.push(true);
+      next[index] = value;
+      return next;
+    });
+    setExperienceDynamic(index, value);
+    showToast();
+  };
+
+  const resetExperienceToDefault = (index: number) => {
+    if (confirm(`Reset prompt for work experience ${index + 1} to default?`)) {
+      const def = getDefaultExperiencePromptForIndex(index);
+      setExperiencePromptsState((prev) => {
+        const next = [...prev];
+        while (next.length <= index) next.push("");
+        next[index] = def;
+        return next;
+      });
+      setExperiencePrompt(index, def);
       showToast();
     }
   };
@@ -216,6 +277,69 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
+
+          {/* Work experience (per role) */}
+          {resume && (resume.professionalExperience?.length ?? 0) > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">Work experience (per role)</h3>
+              <p className="text-slate-600 text-xs mb-3">
+                Set a prompt for each work experience and choose which roles are dynamic (AI-optimized) or fixed (unchanged).
+              </p>
+              <div className="space-y-4">
+                {(resume.professionalExperience ?? []).map((entry, index) => (
+                  <div key={index} className="border border-slate-200 rounded-lg overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedExperienceIndex(expandedExperienceIndex === index ? null : index)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-left font-medium text-slate-800"
+                    >
+                      <span>Work experience {index + 1} ({entry.company})</span>
+                      <span className="text-slate-500 text-sm font-normal">
+                        {expandedExperienceIndex === index ? "Collapse" : "Expand"}
+                      </span>
+                    </button>
+                    {expandedExperienceIndex === index && (
+                      <div className="p-4 border-t border-slate-200 bg-white">
+                        <div className="flex items-center gap-2 mb-3">
+                          <input
+                            type="checkbox"
+                            id={`exp-dynamic-${index}`}
+                            checked={experienceDynamic[index] !== false}
+                            onChange={(e) => handleExperienceDynamicChange(index, e.target.checked)}
+                            className="rounded border-slate-300"
+                          />
+                          <label htmlFor={`exp-dynamic-${index}`} className="text-sm font-medium text-slate-700">
+                            Dynamic (run AI for this role; uncheck to keep original text)
+                          </label>
+                        </div>
+                        <p className="text-slate-500 text-xs mb-2">Output: one professionalExperience entry. Use MM/YYYY for dates.</p>
+                        <textarea
+                          value={experiencePrompts[index] ?? ""}
+                          onChange={(e) => handleExperiencePromptChange(index, e.target.value)}
+                          className="textarea-app w-full font-mono text-sm h-40"
+                          placeholder={`Prompt for ${entry.company}…`}
+                        />
+                        <div className="flex gap-2 flex-wrap mt-3">
+                          <button
+                            onClick={() => saveExperiencePrompt(index)}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => resetExperienceToDefault(index)}
+                            className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm"
+                          >
+                            Reset to default
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 2. Credentials & connection */}

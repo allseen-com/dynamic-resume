@@ -6,7 +6,7 @@ import { ResumeData, ResumeConfig } from "../types/resume";
 import { generateAICustomizedResume } from "../utils/aiResumeGenerator";
 import { useErrorHandler } from "../utils/errorHandler";
 import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../components/LoadingSpinner";
-import { getSectionPrompts } from "../utils/sectionPrompts";
+import { getSectionPrompts, getExperiencePrompts, getExperienceDynamic } from "../utils/sectionPrompts";
 import { getTotalResumeWordCount, getTotalResumeCharacterCount } from "../utils/wordCountUtils";
 import resumeData from "../../data/resume.json";
 
@@ -215,6 +215,9 @@ export default function HomePage() {
       return;
     }
     const sectionPrompts = typeof window !== "undefined" ? getSectionPrompts() : { headline: "", summary: "", technical: "", experience: "", final: "" };
+    const expCount = motherResumeData.professionalExperience?.length ?? 0;
+    const experiencePrompts = typeof window !== "undefined" ? getExperiencePrompts(expCount) : [];
+    const experienceDynamic = typeof window !== "undefined" ? getExperienceDynamic(expCount) : [];
     setIsGenerating(true);
     setLoadingType("ai");
     setError(null);
@@ -225,6 +228,8 @@ export default function HomePage() {
         sectionPrompts,
         baseResumeData: motherResumeData,
         onProgress: (msg) => setOptimizeStatusMessage(msg),
+        experiencePrompts: experiencePrompts.length === expCount ? experiencePrompts : undefined,
+        experienceDynamic: experienceDynamic.length === expCount ? experienceDynamic : undefined,
         ...(matchScorePre != null && {
           preAnalysis: {
             matchScore: matchScorePre,

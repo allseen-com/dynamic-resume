@@ -397,10 +397,11 @@ Focus on:
 
   /**
    * Customize a single section; returns a fragment to merge into the working draft.
-   * headline -> { titleBar }; summary -> { summary }; technical -> { coreCompetencies, technicalProficiency }; experience -> { professionalExperience }.
+   * headline -> { titleBar }; summary -> { summary }; technical -> { coreCompetencies, technicalProficiency };
+   * experience or experience_N -> { professionalExperience } (one or multiple entries).
    */
   async customizeSection(
-    sectionId: 'headline' | 'summary' | 'technical' | 'experience',
+    sectionId: 'headline' | 'summary' | 'technical' | 'experience' | string,
     jobDescription: string,
     workingResume: ResumeData,
     sectionPrompt: string,
@@ -459,24 +460,14 @@ Focus on:
       if (!Array.isArray(professionalExperience)) {
         throw new Error('Experience section must return { professionalExperience: [...] }');
       }
-      /**
-       * NOTE: We intentionally no longer hard-fail when the AI-generated
-       * experience entries exceed the original word counts.
-       *
-       * Rationale:
-       * - The section prompts + optional SectionMaxWords.experience already
-       *   instruct the model to stay within an overall word budget.
-       * - For side-by-side prompt tuning, it is more useful to see the
-       *   full drafted content (especially for the most recent 1–2 roles)
-       *   than to reject the entire section on small overages.
-       * - Older roles are appended unchanged elsewhere (see runOptimization),
-       *   so the focus remains on the last two experiences while keeping
-       *   earlier entries effectively non-dynamic.
-       *
-       * If you want to reintroduce hard limits, you can restore the previous
-       * compare-against-base logic here or add a soft warning mechanism
-       * instead of throwing.
-       */
+      return { professionalExperience };
+    }
+    // Per-experience section: experience_0, experience_1, … — expect exactly one entry
+    if (typeof sectionId === 'string' && /^experience_\d+$/.test(sectionId)) {
+      const professionalExperience = parsed.professionalExperience as ResumeData['professionalExperience'] | undefined;
+      if (!Array.isArray(professionalExperience) || professionalExperience.length !== 1) {
+        throw new Error(`Experience section ${sectionId} must return { professionalExperience: [exactly one entry] }`);
+      }
       return { professionalExperience };
     }
     throw new Error(`Unknown section: ${sectionId}`);

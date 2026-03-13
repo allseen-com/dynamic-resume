@@ -4,42 +4,46 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { ResumeData } from "../../types/resume";
 import { defaultResumeConfig } from "../../types/resume";
-import { SECTION_IDS } from "../../utils/sectionPrompts";
-import type { SectionId } from "../../utils/sectionPrompts";
-import { getSectionPrompts, getSectionMaxWords } from "../../utils/sectionPrompts";
+import { getSectionIdsForResume, getSectionPrompts, getSectionMaxWords, getExperiencePrompts } from "../../utils/sectionPrompts";
 import type { SectionFragment } from "../../services/aiService";
 
-const SECTION_LABELS: Record<SectionId, string> = {
-  headline: "Headline / Title bar",
-  summary: "Professional summary",
-  technical: "Technical skills",
-  experience: "Work experience",
-};
-
-function getMotherPreview(resume: ResumeData, sectionId: SectionId): string {
-  switch (sectionId) {
-    case "headline":
-      return [defaultResumeConfig.titleBar.main, defaultResumeConfig.titleBar.sub].filter(Boolean).join("\n");
-    case "summary":
-      return resume.summary?.value ?? "";
-    case "technical": {
-      const comp = resume.coreCompetencies?.value ?? [];
-      const tech = resume.technicalProficiency;
-      const catLines = tech?.categories
-        ? tech.categories.map((c) => `${c.category}: ${(c.items ?? []).join(", ")}`)
-        : [];
-      return [...comp, ...catLines].filter(Boolean).join("\n\n");
-    }
-    case "experience":
-      return (resume.professionalExperience ?? [])
-        .map(
-          (r) =>
-            `${r.company} | ${r.title} | ${r.dateRange}\n${(r.description?.value ?? "").slice(0, 400)}${(r.description?.value?.length ?? 0) > 400 ? "…" : ""}`
-        )
-        .join("\n\n");
-    default:
-      return "";
+function getSectionLabel(sectionId: string, resume: ResumeData): string {
+  if (sectionId === "headline") return "Headline / Title bar";
+  if (sectionId === "summary") return "Professional summary";
+  if (sectionId === "technical") return "Technical skills";
+  const match = sectionId.match(/^experience_(\d+)$/);
+  if (match) {
+    const idx = parseInt(match[1], 10);
+    const entry = resume.professionalExperience?.[idx];
+    const company = entry?.company ?? `Role ${idx + 1}`;
+    return `Work experience ${idx + 1} (${company})`;
   }
+  return sectionId;
+}
+
+function getMotherPreview(resume: ResumeData, sectionId: string): string {
+  if (sectionId === "headline") {
+    return [defaultResumeConfig.titleBar.main, defaultResumeConfig.titleBar.sub].filter(Boolean).join("\n");
+  }
+  if (sectionId === "summary") {
+    return resume.summary?.value ?? "";
+  }
+  if (sectionId === "technical") {
+    const comp = resume.coreCompetencies?.value ?? [];
+    const tech = resume.technicalProficiency;
+    const catLines = tech?.categories
+      ? tech.categories.map((c) => `${c.category}: ${(c.items ?? []).join(", ")}`)
+      : [];
+    return [...comp, ...catLines].filter(Boolean).join("\n\n");
+  }
+  const match = sectionId.match(/^experience_(\d+)$/);
+  if (match) {
+    const idx = parseInt(match[1], 10);
+    const r = resume.professionalExperience?.[idx];
+    if (!r) return "";
+    return `${r.company} | ${r.title} | ${r.dateRange}\n${(r.description?.value ?? "").slice(0, 500)}${(r.description?.value?.length ?? 0) > 500 ? "…" : ""}`;
+  }
+  return "";
 }
 
 function fragmentToPreview(fragment: SectionFragment): string {
@@ -71,9 +75,9 @@ export default function SideBySidePage() {
   const [jobDescription, setJobDescription] = useState("");
   const [resume, setResume] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [drafts, setDrafts] = useState<Partial<Record<SectionId, string>>>({});
-  const [running, setRunning] = useState<Partial<Record<SectionId, boolean>>>({});
-  const [errors, setErrors] = useState<Partial<Record<SectionId, string>>>({});
+  const [drafts, setDrafts] = useState<Partial<Record<string, string>>>({});
+  const [running, setRunning] = useState<Partial<Record<string, boolean>>>({});
+  const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
 
   const loadResume = useCallback(async () => {
     setLoading(true);
@@ -93,13 +97,15 @@ export default function SideBySidePage() {
     loadResume();
   }, [loadResume]);
 
-  const runSection = async (sectionId: SectionId) => {
+  const runSection = async (sectionId: string) => {
     if (!resume || !jobDescription.trim()) return;
     setRunning((prev) => ({ ...prev, [sectionId]: true }));
     setErrors((prev) => ({ ...prev, [sectionId]: undefined }));
     try {
       const sectionPrompts = getSectionPrompts();
       const sectionMaxWords = getSectionMaxWords();
+      const experienceCount = resume.professionalExperience?.length ?? 0;
+      const experiencePrompts = getExperiencePrompts(experienceCount);
       const res = await fetch("/api/optimize-resume/section", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,6 +115,7 @@ export default function SideBySidePage() {
           sectionPrompts,
           resumeData: resume,
           sectionMaxWords,
+          experiencePrompts,
         }),
       });
       const data = await res.json();
@@ -127,6 +134,8 @@ export default function SideBySidePage() {
       setRunning((prev) => ({ ...prev, [sectionId]: false }));
     }
   };
+
+  const sectionIds = resume ? getSectionIdsForResume(resume.professionalExperience?.length ?? 0) : [];
 
   if (loading) {
     return (
@@ -170,7 +179,7 @@ export default function SideBySidePage() {
         </section>
 
         <div className="space-y-6">
-          {SECTION_IDS.map((sectionId) => {
+          {sectionIds.map((sectionId) => {
             const motherText = getMotherPreview(resume, sectionId);
             const draftText = drafts[sectionId];
             const isRunning = running[sectionId];
@@ -181,7 +190,7 @@ export default function SideBySidePage() {
                 className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
               >
                 <h2 className="text-sm font-semibold text-slate-800 bg-slate-100 px-4 py-2 border-b border-slate-200">
-                  {SECTION_LABELS[sectionId]}
+                  {getSectionLabel(sectionId, resume)}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-0 min-h-[200px]">
                   <div className="p-4 border-b md:border-b-0 md:border-r border-slate-200">

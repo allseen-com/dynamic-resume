@@ -18,6 +18,10 @@ export interface AICustomizationRequest {
   industry?: string;
   preAnalysis?: PreAnalysisForOptimize;
   onProgress?: (message: string | null) => void;
+  /** Per-experience prompts (one per entry); used for experience_0, experience_1, … */
+  experiencePrompts?: string[];
+  /** Per-experience dynamic flag; false = keep original. */
+  experienceDynamic?: boolean[];
 }
 
 export interface AICustomizationResponse {
@@ -355,7 +359,7 @@ function extractCompanyOrRole(jobDescription: string): string | undefined {
 export async function generateAICustomizedResume(
   request: AICustomizationRequest
 ): Promise<AICustomizationResponse> {
-  const { jobDescription, sectionPrompts, baseResumeData, preAnalysis, onProgress } = request;
+  const { jobDescription, sectionPrompts, baseResumeData, preAnalysis, onProgress, experiencePrompts, experienceDynamic } = request;
   const companyOrRole = extractCompanyOrRole(jobDescription);
 
   let targetPages: number | undefined;
@@ -376,6 +380,8 @@ export async function generateAICustomizedResume(
         resumeData: baseResumeData,
         ...(targetPages != null && targetPages >= 1 && targetPages <= 5 && { targetPages }),
         ...(sectionMaxWords && { sectionMaxWords }),
+        ...(Array.isArray(experiencePrompts) && { experiencePrompts }),
+        ...(Array.isArray(experienceDynamic) && { experienceDynamic }),
         ...(preAnalysis && {
           preAnalysis: {
             matchScore: preAnalysis.matchScore,
