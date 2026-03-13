@@ -272,13 +272,14 @@ export async function POST(request: Request) {
 
     const doc = buildDocx(resumeData as unknown as FlexibleResumeData, config);
     const buffer = await Packer.toBuffer(doc);
+    const body = new Uint8Array(buffer);
 
     const safeName =
       filename && /^[\w\s\-\.]+\.docx$/i.test(filename)
         ? filename
         : "Mother-Resume.docx";
 
-    return new NextResponse(buffer, {
+    return new NextResponse(body, {
       status: 200,
       headers: {
         "Content-Type":
