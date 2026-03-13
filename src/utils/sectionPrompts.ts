@@ -374,6 +374,7 @@ export function setExperienceDynamic(index: number, value: boolean): void {
 }
 
 /** Default prompt for a given experience index (for Settings "Reset to default"). */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature kept for API consistency; same default for all indices
 export function getDefaultExperiencePromptForIndex(_index: number): string {
   return DEFAULT_EXPERIENCE_SINGLE;
 }

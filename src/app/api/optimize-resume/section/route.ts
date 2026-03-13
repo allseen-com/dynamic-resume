@@ -55,6 +55,10 @@ export async function POST(request: NextRequest) {
     if (!jobDescription || typeof jobDescription !== 'string' || !jobDescription.trim()) {
       return NextResponse.json({ error: 'Missing or invalid jobDescription' }, { status: 400 });
     }
+    const sectionIdStr = sectionId != null && typeof sectionId === 'string' ? sectionId : null;
+    if (!sectionIdStr) {
+      return NextResponse.json({ error: 'Missing or invalid sectionId' }, { status: 400 });
+    }
     if (!validateSectionPrompts(sectionPrompts)) {
       return NextResponse.json(
         { error: 'Missing or invalid sectionPrompts (headline, summary, technical, experience, final).' },
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     const resumeData = normalizeResumeDates(rawResumeData) as ResumeData;
     const expCount = Array.isArray(resumeData.professionalExperience) ? resumeData.professionalExperience.length : 0;
-    if (!isValidSectionId(sectionId, expCount)) {
+    if (!isValidSectionId(sectionIdStr, expCount)) {
       return NextResponse.json(
         { error: `Invalid sectionId. Must be headline, summary, technical, or experience_0 through experience_${Math.max(0, expCount - 1)}` },
         { status: 400 }
@@ -99,7 +103,7 @@ export async function POST(request: NextRequest) {
     ].join('\n\n');
 
     let effectiveSectionPrompt: string;
-    const expIdx = getExperienceIndexFromSectionId(sectionId);
+    const expIdx = getExperienceIndexFromSectionId(sectionIdStr);
     if (expIdx !== null) {
       const promptForIndex = Array.isArray(experiencePrompts) && typeof experiencePrompts[expIdx] === 'string' && experiencePrompts[expIdx].trim()
         ? experiencePrompts[expIdx].trim()
@@ -109,7 +113,7 @@ export async function POST(request: NextRequest) {
         maxWords != null && maxWords > 0 ? `\n\n**STRICT:** This entry must not exceed ${maxWords} words total for the section; keep this single entry concise.\n\n` : '';
       effectiveSectionPrompt = promptForIndex + wordLimitLine;
     } else {
-      const sid = sectionId as 'headline' | 'summary' | 'technical';
+      const sid = sectionIdStr as 'headline' | 'summary' | 'technical';
       const sectionPrompt = (sectionPrompts as SectionPrompts)[sid];
       const maxWords = sectionMaxWords?.[sid];
       const wordLimitLine =
@@ -119,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     const aiService = createAIService();
     const fragment: SectionFragment = await aiService.customizeSection(
-      sectionId,
+      sectionIdStr,
       jobDescription,
       resumeData,
       effectiveSectionPrompt,
