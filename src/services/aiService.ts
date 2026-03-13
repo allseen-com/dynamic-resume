@@ -459,14 +459,24 @@ Focus on:
       if (!Array.isArray(professionalExperience)) {
         throw new Error('Experience section must return { professionalExperience: [...] }');
       }
-      const baseExperienceWordCounts = calculateExperienceWordCounts(workingResume);
-      const aiCounts = calculateExperienceWordCounts({ ...workingResume, professionalExperience });
-      for (const key in aiCounts) {
-        const max = baseExperienceWordCounts[key] || 0;
-        if (aiCounts[key] > max) {
-          throw new Error(`Experience section exceeds word count limit for ${key}`);
-        }
-      }
+      /**
+       * NOTE: We intentionally no longer hard-fail when the AI-generated
+       * experience entries exceed the original word counts.
+       *
+       * Rationale:
+       * - The section prompts + optional SectionMaxWords.experience already
+       *   instruct the model to stay within an overall word budget.
+       * - For side-by-side prompt tuning, it is more useful to see the
+       *   full drafted content (especially for the most recent 1–2 roles)
+       *   than to reject the entire section on small overages.
+       * - Older roles are appended unchanged elsewhere (see runOptimization),
+       *   so the focus remains on the last two experiences while keeping
+       *   earlier entries effectively non-dynamic.
+       *
+       * If you want to reintroduce hard limits, you can restore the previous
+       * compare-against-base logic here or add a soft warning mechanism
+       * instead of throwing.
+       */
       return { professionalExperience };
     }
     throw new Error(`Unknown section: ${sectionId}`);
