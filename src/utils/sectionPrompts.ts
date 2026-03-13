@@ -139,25 +139,34 @@ Return ONLY a JSON object with this exact structure (no other keys). Use "catego
   }
 }`;
 
-/** Default prompt for Professional Experience. Output: { professionalExperience: [...] } */
+/** Default prompt for Professional Experience. Output: { professionalExperience: [only first 2 entries] }. Older entries are appended from source in code. */
 const DEFAULT_EXPERIENCE = `${SKYSCRAPER}${BASE_CRITICAL}
 
-**SECTION: Professional Experience**
+**SECTION: Professional Experience (first two roles only)**
 
-Your task is to produce ONLY the professional experience array: job titles, companies, date ranges, and bullet points, tailored to the job description.
+Your task is to produce ONLY the **first two (most recent)** professional experience entries, tailored to the job description. Do **not** include any older roles in your output—they will be appended automatically from the source resume and kept semi-fixed (unchanged by you). Focus roughly 90% of your effort on fully optimizing these two entries. You may reference **all** experience entries in the Mother Resume and RAG (including older roles) when writing the top two.
 
-**Rules:**
-- Use the **exact job title** from the JD for the most relevant role(s) where it fits (Exact Title Rule).
-- Focus on the 2–3 most relevant roles; you may omit or shorten older/less relevant ones.
-- Dates: MM/YYYY only (e.g. 06/2021).
-- Each role: 2–4 bullets in X-Y-Z form (Action + Skill/Task + Context + Measurable Result). Target 60–70% with a concrete metric.
-- Entrepreneurial re-labeling: "Founder" / "CEO" may be reframed as "Head of Product" or equivalent if it aligns with the JD and is truthful.
+**Rules for the two entries you output:**
+- Use the **exact job title** from the JD where it fits (Exact Title Rule). Entrepreneurial re-labeling: "Founder" / "CEO" may be reframed as "Head of Product" or equivalent if it aligns with the JD and is truthful.
+- Preserve each entry’s \`dateRange\` exactly as in the source resume; do not change dates.
+- Each role: 5–6 bullets max (use fewer if needed to stay within the HARD LENGTH CONSTRAINT below). Each bullet may be 1–3 lines. \`description.value\` must be newline-separated bullets: "Bullet one.\\nBullet two."
+- X-Y-Z form: Action Verb + Skill/Task + Context + Measurable Result. Target 60–70% with a concrete metric (%, $, time, count).
 - Use only achievements and facts from the Mother Resume and RAG context; do not invent metrics or roles.
-- Recency: prioritize last 10–12 years.
 
-Return ONLY a JSON object with this exact structure (no other keys). Each experience item must have: company, _dynamic_company, title, _dynamic_title, dateRange, _dynamic_dateRange, description: { _dynamic: true, value: "bullet1\\nbullet2\\n..." }.
+**HARD LENGTH CONSTRAINT:** For each of the two entries at index i (0 and 1), the total word count of \`description.value\` MUST be ≤ the source resume’s word count for that same entry. If the source role is short, use fewer bullets and keep them concise.
+
+Return ONLY a JSON object with this exact structure (no other keys). Include exactly **2** items in the array.
 {
   "professionalExperience": [
+    {
+      "company": "Company Name",
+      "_dynamic_company": true,
+      "title": "Job Title",
+      "_dynamic_title": true,
+      "dateRange": "MM/YYYY - MM/YYYY",
+      "_dynamic_dateRange": true,
+      "description": { "_dynamic": true, "value": "Bullet one.\\nBullet two." }
+    },
     {
       "company": "Company Name",
       "_dynamic_company": true,

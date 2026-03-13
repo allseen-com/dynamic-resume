@@ -150,7 +150,10 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
         workingResume.technicalProficiency = fragment.technicalProficiency;
       }
       if ('professionalExperience' in fragment) {
-        workingResume.professionalExperience = fragment.professionalExperience;
+        // Merge: AI-optimized entries first (e.g. first 2), then append older roles from current resume unchanged (semi-fixed).
+        const aiEntries = fragment.professionalExperience;
+        const restFromResume = workingResume.professionalExperience.slice(aiEntries.length);
+        workingResume.professionalExperience = aiEntries.concat(restFromResume);
       }
     }
 
