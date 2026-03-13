@@ -406,7 +406,7 @@ Focus on:
     sectionPrompt: string,
     ragBlock: string,
     preAnalysisBlock?: string,
-    currentTitleBar?: { main: string; sub: string }
+    _currentTitleBar?: { main: string; sub: string }
   ): Promise<SectionFragment> {
     const context = [
       sectionPrompt,

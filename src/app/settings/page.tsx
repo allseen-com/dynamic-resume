@@ -49,7 +49,23 @@ export default function SettingsPage() {
   useEffect(() => {
     const storedPages = localStorage.getItem("resumeTargetPages");
     if (storedPages) setTargetPages(Number(storedPages));
-    setSectionPromptsState(getSectionPrompts());
+    setSectionPrompts(getSectionPrompts());
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/credentials-status")
+      .then((r) => r.json())
+      .then((d) =>
+        setCredentialsStatus({
+          openai: { configured: d.openai?.configured, provider: d.openai?.provider || "openai" },
+          pinecone: {
+            configured: d.pinecone?.configured,
+            indexName: d.pinecone?.indexName,
+            namespace: d.pinecone?.namespace,
+          },
+        })
+      )
+      .catch(() => setCredentialsStatus(null));
   }, []);
 
   const showToast = () => {

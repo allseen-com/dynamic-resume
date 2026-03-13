@@ -64,7 +64,6 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
     let matchScore: number | undefined;
     let matchScoreAfter: number | undefined;
     let jdVector: number[] | undefined;
-    let citations: { chunkId: string; section: string; score?: number }[] | undefined;
 
     try {
       const resumeSummaryText = getResumeSummaryForMatch(resumeData);
@@ -99,13 +98,13 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
       ...retrieved.map((r) => `[${r.metadata.section}${r.metadata.company ? ` | ${r.metadata.company}` : ''}] ${r.text.slice(0, 2000)}`),
       '--- End retrieved context ---',
     ].join('\n\n');
-    citations = retrieved.map((r) => ({
+    const citations = retrieved.map((r) => ({
       chunkId: r.id,
       section: r.metadata.section,
       score: r.score,
     }));
 
-    let workingResume: ResumeData = JSON.parse(JSON.stringify(resumeData));
+    const workingResume: ResumeData = JSON.parse(JSON.stringify(resumeData));
     let workingTitleBar: { main: string; sub: string } | undefined;
 
     const aiService = createAIService();
