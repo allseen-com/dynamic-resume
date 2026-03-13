@@ -37,7 +37,6 @@ type CredentialsStatus = {
 const SECTIONS_WITH_MAX_WORDS: SectionMaxWordsKey[] = ["summary", "technical", "experience", "final"];
 
 export default function SettingsPage() {
-  const [targetPages, setTargetPages] = useState(2);
   const [sectionMaxWords, setSectionMaxWords] = useState<SectionMaxWords>(DEFAULT_SECTION_MAX_WORDS);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [sectionPrompts, setSectionPrompts] = useState<SectionPrompts>({
@@ -55,8 +54,6 @@ export default function SettingsPage() {
   const [pineconeLoading, setPineconeLoading] = useState(false);
 
   useEffect(() => {
-    const storedPages = localStorage.getItem("resumeTargetPages");
-    if (storedPages) setTargetPages(Number(storedPages));
     setSectionPrompts(getSectionPrompts());
     setSectionMaxWords(getSectionMaxWords());
   }, []);
@@ -80,13 +77,6 @@ export default function SettingsPage() {
   const showToast = () => {
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 2000);
-  };
-
-  const handleTargetPagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(1, Math.min(5, Number(e.target.value)));
-    setTargetPages(value);
-    localStorage.setItem("resumeTargetPages", String(value));
-    showToast();
   };
 
   const handleSectionPromptChange = (section: keyof SectionPrompts, value: string) => {
@@ -165,42 +155,7 @@ export default function SettingsPage() {
           <p className="text-slate-600 text-sm mt-1">Configure optimization, section prompts, and credentials.</p>
         </div>
 
-        {/* 1. Resume optimization: per-section max word count + optional page cap */}
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 className="heading-section">Resume optimization</h2>
-          <p className="text-slate-600 text-sm mb-3">Set max words per section below (next to each section prompt). Optionally set a target page count for a global cap.</p>
-          <div className="flex flex-wrap gap-4 items-center">
-            <label className="label-app">Target resume page count (optional)</label>
-            <input
-              type="number"
-              min={1}
-              max={5}
-              value={targetPages}
-              onChange={handleTargetPagesChange}
-              className="input-app w-24"
-            />
-            <div className="flex gap-2">
-              {[1, 2, 3].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => {
-                    setTargetPages(n);
-                    localStorage.setItem("resumeTargetPages", String(n));
-                    showToast();
-                  }}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                    targetPages === n ? "bg-indigo-100 text-indigo-700 border border-indigo-300" : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
-                  }`}
-                >
-                  {n} page{n !== 1 ? "s" : ""}
-                </button>
-              ))}
-            </div>
-          </div>
-          <p className="text-slate-500 text-sm mt-2">Per-section max words are set in each section card below.</p>
-        </section>
-
-        {/* 2. Section-based prompts */}
+        {/* 1. Section-based prompts */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="heading-section">Resume customization (section prompts)</h2>
           <p className="text-slate-600 text-sm mb-4">
@@ -263,7 +218,7 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 3. Credentials & connection */}
+        {/* 2. Credentials & connection */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="heading-section">Credentials & connection</h2>
           {credentialsStatus === null ? (
@@ -319,7 +274,7 @@ export default function SettingsPage() {
           )}
         </section>
 
-        {/* 4. Data management */}
+        {/* 3. Data management */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="heading-section">Data management</h2>
           <p className="text-slate-600 text-sm mb-3">Remove all saved resume versions from browser storage.</p>
@@ -328,7 +283,7 @@ export default function SettingsPage() {
           </button>
         </section>
 
-        {/* 5. Deployment */}
+        {/* 4. Deployment */}
         <section className="bg-slate-100 rounded-xl p-5 text-sm text-slate-700">
           <h2 className="font-semibold text-slate-800 mb-2">Vercel deployment</h2>
           <p>
@@ -339,7 +294,7 @@ export default function SettingsPage() {
           </p>
         </section>
 
-        {/* 6. About */}
+        {/* 5. About */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="heading-section">About</h2>
           <p className="text-slate-600 text-sm">

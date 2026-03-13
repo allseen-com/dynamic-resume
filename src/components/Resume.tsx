@@ -211,8 +211,8 @@ export default function Resume({
         {/* Technical Skills - by category */}
         {config.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
           <section className={`mb-5${highlightSections.includes('technicalProficiency') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header">Technical Skills</h2>
-            <div className="space-y-2 text-base font-normal leading-relaxed">
+            <h2 className="section-header text-[16px]">Technical Skills</h2>
+            <div className="space-y-2 text-[12px] font-normal leading-relaxed">
               {technicalSkillsCategories.map((group, i) => (
                 <div key={i}>
                   <span className="font-semibold text-gray-800">{group.category}: </span>
@@ -226,7 +226,7 @@ export default function Resume({
         {/* Work History */}
         {config.sections.showProfessionalExperience && (
           <section className={`mb-5${highlightSections.includes('professionalExperience') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header">Work History</h2>
+            <h2 className="section-header text-[16px]">Work History</h2>
             {resumeData.professionalExperience.map((role, i) => {
               const hasDescription = getFieldValue(role.description) && getFieldValue(role.description).trim();
               return (
@@ -250,7 +250,7 @@ export default function Resume({
         {/* Education - Fixed to handle both array and object structures */}
         {config.sections.showEducation && (
           <section className="mb-5">
-            <h2 className="section-header">Education</h2>
+            <h2 className="section-header text-[16px]">Education</h2>
             {educationArray.map((edu: { school: string; dateRange: string; degree: string }, i: number) => (
               <div key={i} className="mb-1.5">
                 <div className="flex justify-between items-start text-xs font-bold mb-0.5">
@@ -266,7 +266,7 @@ export default function Resume({
         {/* Certifications - Fixed to handle both array and object structures */}
         {config.sections.showCertifications && (
           <section>
-            <h2 className="section-header">Certifications</h2>
+            <h2 className="section-header text-[16px]">Certifications</h2>
             <ul className="text-xs ml-3">
               {certificationsArray.map((cert: string, i: number) => (
                 <li key={i} className="flex items-start mb-0.5">
