@@ -14,12 +14,13 @@ type FlexibleResumeData = {
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
   technicalProficiency: {
-    programming: FlexibleField[];
-    cloudData: FlexibleField[];
-    analytics: FlexibleField[];
-    mlAi: FlexibleField[];
-    productivity: FlexibleField[];
-    marketingAds: FlexibleField[];
+    categories?: { category: string; items: string[] }[];
+    programming?: FlexibleField[];
+    cloudData?: FlexibleField[];
+    analytics?: FlexibleField[];
+    mlAi?: FlexibleField[];
+    productivity?: FlexibleField[];
+    marketingAds?: FlexibleField[];
   };
   professionalExperience: {
     company: FlexibleField;
@@ -125,19 +126,23 @@ export default function Resume({
   const educationArray = getEducationArray(resumeData.education);
   const certificationsArray = getArrayValue(resumeData.certifications);
 
-  // Generate dynamic technical proficiency text
-  const generateTechnicalProficiencyText = () => {
+  // Technical skills by category (new shape) or flattened (legacy)
+  const getTechnicalSkillsCategories = () => {
     const tech = resumeData.technicalProficiency;
-    const allSkills = [
-      ...tech.programming.map(getFieldValue),
-      ...tech.cloudData.map(getFieldValue),
-      ...tech.analytics.map(getFieldValue),
-      ...tech.mlAi.map(getFieldValue),
-      ...tech.productivity.map(getFieldValue),
-      ...tech.marketingAds.map(getFieldValue)
-    ];
-    return allSkills.join(', ') + '.';
+    if (tech?.categories?.length) {
+      return tech.categories;
+    }
+    const legacy = [
+      { category: 'Programming', items: (tech?.programming ?? []).map(getFieldValue).filter(Boolean) },
+      { category: 'Cloud / Data', items: (tech?.cloudData ?? []).map(getFieldValue).filter(Boolean) },
+      { category: 'Analytics', items: (tech?.analytics ?? []).map(getFieldValue).filter(Boolean) },
+      { category: 'ML / AI', items: (tech?.mlAi ?? []).map(getFieldValue).filter(Boolean) },
+      { category: 'Productivity', items: (tech?.productivity ?? []).map(getFieldValue).filter(Boolean) },
+      { category: 'Marketing / Ads', items: (tech?.marketingAds ?? []).map(getFieldValue).filter(Boolean) },
+    ].filter((g) => g.items.length > 0);
+    return legacy;
   };
+  const technicalSkillsCategories = getTechnicalSkillsCategories();
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -203,12 +208,17 @@ export default function Resume({
           </section>
         )}
 
-        {/* Technical Proficiency - Now Dynamic */}
-        {config.sections.showTechnicalProficiency && (
+        {/* Technical Skills - by category */}
+        {config.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
           <section className={`mb-5${highlightSections.includes('technicalProficiency') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header">Technical Proficiency</h2>
-            <div className="text-base font-normal leading-relaxed">
-              {generateTechnicalProficiencyText()}
+            <h2 className="section-header">Technical Skills</h2>
+            <div className="space-y-2 text-base font-normal leading-relaxed">
+              {technicalSkillsCategories.map((group, i) => (
+                <div key={i}>
+                  <span className="font-semibold text-gray-800">{group.category}: </span>
+                  <span>{group.items.join(', ')}</span>
+                </div>
+              ))}
             </div>
           </section>
         )}

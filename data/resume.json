@@ -27,12 +27,13 @@
   },
   "technicalProficiency": {
     "_dynamic": true,
-    "programming": ["Python", "SQL", "PHP"],
-    "cloudData": ["AWS", "Redshift", "S3", "SES", "LightSail", "CloudFront", "Google Big Query"],
-    "analytics": ["Looker Studio", "Google Analytics", "Tag Manager", "Google Search Console"],
-    "mlAi": ["Vertex AI", "Bedrock", "NeMo", "Cursor AI", "LLMs", "Pinecone", "Qdrant", "Agents"],
-    "productivity": ["n8n", "Airtable", "Asana", "Zapier"],
-    "marketingAds": ["AdWords", "YouTube Studio", "Facebook Ads", "TikTok Ads", "Reddit Ads", "Mailchimp", "HubSpot"]
+    "categories": [
+      { "category": "Languages & Databases", "items": ["Python", "SQL", "PHP", "Google Big Query", "Redshift"] },
+      { "category": "Cloud & Infrastructure", "items": ["AWS (S3, SES, LightSail, CloudFront)"] },
+      { "category": "AI & ML", "items": ["Vertex AI", "Bedrock", "NeMo", "LLMs", "Pinecone", "Qdrant", "Agents"] },
+      { "category": "Marketing & Analytics", "items": ["Google Analytics", "Tag Manager", "Search Console", "AdWords", "Facebook Ads"] },
+      { "category": "Tools & Automation", "items": ["n8n", "Airtable", "Asana", "Zapier", "HubSpot"] }
+    ]
   },
   "professionalExperience": [
     {
@@ -40,7 +41,7 @@
       "_dynamic_company": false,
       "title": "Head of Product & Growth | AI-Driven Marketing & Automation",
       "_dynamic_title": false,
-      "dateRange": "06/2018 – 12/2021",
+      "dateRange": "01/2024 – Present",
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,

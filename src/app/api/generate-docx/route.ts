@@ -21,12 +21,13 @@ type FlexibleResumeData = {
   summary: FlexibleField;
   coreCompetencies: { value: string[] } | string[];
   technicalProficiency: {
-    programming: string[];
-    cloudData: string[];
-    analytics: string[];
-    mlAi: string[];
-    productivity: string[];
-    marketingAds: string[];
+    categories?: { category: string; items: string[] }[];
+    programming?: string[];
+    cloudData?: string[];
+    analytics?: string[];
+    mlAi?: string[];
+    productivity?: string[];
+    marketingAds?: string[];
   };
   professionalExperience: {
     company: FlexibleField;
@@ -142,20 +143,32 @@ function buildDocx(resumeData: FlexibleResumeData, config: ResumeConfig): Docume
     });
   }
 
-  // Technical Proficiency (single paragraph, ATS-friendly)
+  // Technical Skills (by category, ATS-friendly)
   if (cfg.sections.showTechnicalProficiency && data.technicalProficiency) {
     const tech = data.technicalProficiency;
-    const all = [
-      ...(tech.programming || []),
-      ...(tech.cloudData || []),
-      ...(tech.analytics || []),
-      ...(tech.mlAi || []),
-      ...(tech.productivity || []),
-      ...(tech.marketingAds || []),
-    ].filter(Boolean);
-    if (all.length > 0) {
-      children.push(sectionHeader("Technical Proficiency"));
-      children.push(bodyParagraph(all.join(", ") + "."));
+    const categories = tech.categories?.length
+      ? tech.categories
+      : [
+          { category: "Programming", items: tech.programming || [] },
+          { category: "Cloud / Data", items: tech.cloudData || [] },
+          { category: "Analytics", items: tech.analytics || [] },
+          { category: "ML / AI", items: tech.mlAi || [] },
+          { category: "Productivity", items: tech.productivity || [] },
+          { category: "Marketing / Ads", items: tech.marketingAds || [] },
+        ].filter((g) => g.items.length > 0);
+    if (categories.length > 0) {
+      children.push(sectionHeader("Technical Skills"));
+      for (const group of categories) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${group.category}: `, bold: true, size: 22 }),
+              new TextRun({ text: group.items.join(", "), size: 22 }),
+            ],
+            spacing: { after: 80 },
+          })
+        );
+      }
     }
   }
 

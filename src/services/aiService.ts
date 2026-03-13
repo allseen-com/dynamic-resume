@@ -224,7 +224,7 @@ export class AIService {
 
 2. **Professional Summary**: Adapt the summary to emphasize experience and skills that align with the job role. Use keywords from the job description naturally.
 
-3. **Technical Proficiency**: Highlight technologies and tools mentioned in the job description. Prioritize relevant technical skills.
+3. **Technical Skills**: Highlight technologies and tools mentioned in the job description. Prioritize relevant technical skills.
 
 4. **Professional Experience**: Emphasize achievements and responsibilities that are most relevant to the target role.
 
@@ -330,7 +330,7 @@ Focus on:
     const returnFormat = `Return a single JSON object with exactly these keys:
 - "resumeData": the full customized resume in the same JSON structure (modify only "_dynamic": true fields).
 - "optimizationSummary": 2-4 sentences on how the resume was tailored and why it is a better match for the role.
-- "keyChanges": array of 3-6 bullet strings. Each bullet must name the SECTION (e.g. Summary, Core Competencies, Technical Proficiency, or Experience at [Company]), WHAT was changed or added, and WHY it improves match to the role (e.g. "Summary: Refocused on growth marketing and SEO to align with JD keywords and role requirements." or "Experience at Red Ventures: Added 2X affiliate revenue metric to highlight quantifiable impact.").`;
+- "keyChanges": array of 3-6 bullet strings. Each bullet must name the SECTION (e.g. Summary, Core Competencies, Technical Skills, or Experience at [Company]), WHAT was changed or added, and WHY it improves match to the role (e.g. "Summary: Refocused on growth marketing and SEO to align with JD keywords and role requirements." or "Experience at Red Ventures: Added 2X affiliate revenue metric to highlight quantifiable impact.").`;
     const fullPrompt = `${prompt}\n\n${wordCountConstraints}${titleBarBlock}\n\nJob Description:\n${jobDescription}\n\nBase Resume Data:\n${JSON.stringify(baseResumeData, null, 2)}\n\n${returnFormat}`;
 
     try {
@@ -448,8 +448,9 @@ Focus on:
     if (sectionId === 'technical') {
       const coreCompetencies = parsed.coreCompetencies as ResumeData['coreCompetencies'] | undefined;
       const technicalProficiency = parsed.technicalProficiency as ResumeData['technicalProficiency'] | undefined;
-      if (!coreCompetencies?.value || !technicalProficiency) {
-        throw new Error('Technical section must return { coreCompetencies, technicalProficiency }');
+      const hasTech = technicalProficiency && (technicalProficiency.categories?.length || (technicalProficiency as { programming?: string[] }).programming !== undefined);
+      if (!coreCompetencies?.value || !hasTech) {
+        throw new Error('Technical section must return { coreCompetencies, technicalProficiency } with categories or legacy keys');
       }
       return { coreCompetencies, technicalProficiency };
     }

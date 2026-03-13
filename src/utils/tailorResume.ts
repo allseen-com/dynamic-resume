@@ -17,13 +17,8 @@ export interface ResumeData {
     value: string[];
   };
   technicalProficiency: {
-    _dynamic: boolean;
-    programming: string[];
-    cloudData: string[];
-    analytics: string[];
-    mlAi: string[];
-    productivity: string[];
-    marketingAds: string[];
+    _dynamic?: boolean;
+    categories: { category: string; items: string[] }[];
   };
   professionalExperience: {
     company: string;

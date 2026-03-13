@@ -220,13 +220,18 @@ export function preprocessResumeForTemplate(
   // Limit technical skills per category
   const techProf = processed.technicalProficiency;
   const maxPerCat = template.constraints.itemLimits.technicalSkillsPerCategory;
-  
-  techProf.programming = techProf.programming.slice(0, maxPerCat);
-  techProf.cloudData = techProf.cloudData.slice(0, maxPerCat);
-  techProf.analytics = techProf.analytics.slice(0, maxPerCat);
-  techProf.mlAi = techProf.mlAi.slice(0, maxPerCat);
-  techProf.productivity = techProf.productivity.slice(0, maxPerCat);
-  techProf.marketingAds = techProf.marketingAds.slice(0, maxPerCat);
-  
+  if (techProf.categories?.length) {
+    for (const cat of techProf.categories) {
+      if (cat.items?.length) cat.items = cat.items.slice(0, maxPerCat);
+    }
+  } else {
+    const legacy = techProf as { programming?: string[]; cloudData?: string[]; analytics?: string[]; mlAi?: string[]; productivity?: string[]; marketingAds?: string[] };
+    if (legacy.programming) legacy.programming = legacy.programming.slice(0, maxPerCat);
+    if (legacy.cloudData) legacy.cloudData = legacy.cloudData.slice(0, maxPerCat);
+    if (legacy.analytics) legacy.analytics = legacy.analytics.slice(0, maxPerCat);
+    if (legacy.mlAi) legacy.mlAi = legacy.mlAi.slice(0, maxPerCat);
+    if (legacy.productivity) legacy.productivity = legacy.productivity.slice(0, maxPerCat);
+    if (legacy.marketingAds) legacy.marketingAds = legacy.marketingAds.slice(0, maxPerCat);
+  }
   return processed;
 }

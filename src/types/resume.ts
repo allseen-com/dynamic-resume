@@ -14,14 +14,10 @@ export interface ResumeData {
     _dynamic: boolean;
     value: string[];
   };
+  /** Technical skills by category. Display label: "Technical Skills". */
   technicalProficiency: {
-    _dynamic: boolean;
-    programming: string[];
-    cloudData: string[];
-    analytics: string[];
-    mlAi: string[];
-    productivity: string[];
-    marketingAds: string[];
+    _dynamic?: boolean;
+    categories: { category: string; items: string[] }[];
   };
   professionalExperience: {
     company: string;

@@ -111,30 +111,31 @@ Return ONLY a JSON object with this exact structure (no other keys):
   }
 }`;
 
-/** Default prompt for Core Competencies + Technical Proficiency. Output: { coreCompetencies, technicalProficiency } */
+/** Default prompt for Core Competencies + Technical Skills. Output: { coreCompetencies, technicalProficiency } */
 const DEFAULT_TECHNICAL = `${SKYSCRAPER}${BASE_CRITICAL}
 
-**SECTION: Core Competencies and Technical Proficiency**
+**SECTION: Core Competencies and Technical Skills**
 
-Your task is to produce ONLY the core competencies list and the technical proficiency categories, tailored to the job description.
+Your task is to produce ONLY the core competencies list and the technical skills categories, tailored to the job description.
 
 **Rules:**
 - Core competencies: reorder and optionally rephrase so job-relevant skills are in the top 5. Keep 6–12 items. No fabrication.
-- Technical proficiency: for each category (programming, cloudData, analytics, mlAi, productivity, marketingAds), list only technologies/tools from the resume that are relevant to the JD. Prioritize JD-mentioned technologies. Preserve the same category keys.
+- Technical skills: use the "categories" array. For each category, list only technologies/tools from the resume that are relevant to the JD. Preserve the exact category names (e.g. "Languages & Databases", "Cloud & Infrastructure", "AI & ML", "Marketing & Analytics", "Tools & Automation"). Prioritize JD-mentioned technologies. You may omit a category if no items are relevant, or shorten item lists.
 - Use exact tool/tech names from the resume where possible; match JD terminology.
 - No new skills that don't appear in the source material.
 
-Return ONLY a JSON object with this exact structure (no other keys). Preserve the same category keys; you may shorten lists:
+Return ONLY a JSON object with this exact structure (no other keys). Use "categories" with category name and items array:
 {
   "coreCompetencies": { "_dynamic": true, "value": ["skill1", "skill2", ...] },
   "technicalProficiency": {
     "_dynamic": true,
-    "programming": [],
-    "cloudData": [],
-    "analytics": [],
-    "mlAi": [],
-    "productivity": [],
-    "marketingAds": []
+    "categories": [
+      { "category": "Languages & Databases", "items": [] },
+      { "category": "Cloud & Infrastructure", "items": [] },
+      { "category": "AI & ML", "items": [] },
+      { "category": "Marketing & Analytics", "items": [] },
+      { "category": "Tools & Automation", "items": [] }
+    ]
   }
 }`;
 

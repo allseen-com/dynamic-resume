@@ -39,20 +39,26 @@ export function chunkResume(data: ResumeData): ResumeChunk[] {
     });
   }
 
-  // Technical proficiency (flatten categories)
+  // Technical skills (by category)
   if (data.technicalProficiency) {
     const tp = data.technicalProficiency;
     const parts: string[] = [];
-    if (tp.programming?.length) parts.push(`Programming: ${tp.programming.join(', ')}`);
-    if (tp.cloudData?.length) parts.push(`Cloud/Data: ${tp.cloudData.join(', ')}`);
-    if (tp.analytics?.length) parts.push(`Analytics: ${tp.analytics.join(', ')}`);
-    if (tp.mlAi?.length) parts.push(`ML/AI: ${tp.mlAi.join(', ')}`);
-    if (tp.productivity?.length) parts.push(`Productivity: ${tp.productivity.join(', ')}`);
-    if (tp.marketingAds?.length) parts.push(`Marketing/Ads: ${tp.marketingAds.join(', ')}`);
+    if (tp.categories?.length) {
+      for (const g of tp.categories) {
+        if (g.items?.length) parts.push(`${g.category}: ${g.items.join(', ')}`);
+      }
+    } else {
+      if (tp.programming?.length) parts.push(`Programming: ${tp.programming.join(', ')}`);
+      if (tp.cloudData?.length) parts.push(`Cloud/Data: ${tp.cloudData.join(', ')}`);
+      if (tp.analytics?.length) parts.push(`Analytics: ${tp.analytics.join(', ')}`);
+      if (tp.mlAi?.length) parts.push(`ML/AI: ${tp.mlAi.join(', ')}`);
+      if (tp.productivity?.length) parts.push(`Productivity: ${tp.productivity.join(', ')}`);
+      if (tp.marketingAds?.length) parts.push(`Marketing/Ads: ${tp.marketingAds.join(', ')}`);
+    }
     if (parts.length) {
       chunks.push({
         id: `chunk-${globalIndex++}`,
-        text: `Technical Proficiency: ${parts.join('. ')}`,
+        text: `Technical Skills: ${parts.join('. ')}`,
         metadata: { section: 'technicalProficiency' },
       });
     }
