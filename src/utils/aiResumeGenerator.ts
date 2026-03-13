@@ -1,6 +1,7 @@
 import { ResumeData, ResumeConfig } from '../types/resume';
 import { getWordCountStats } from './wordCountUtils';
-import type { SectionPrompts } from './sectionPrompts';
+import type { SectionPrompts, SectionMaxWords } from './sectionPrompts';
+import { getSectionMaxWords } from './sectionPrompts';
 
 export interface PreAnalysisForOptimize {
   matchScore?: number;
@@ -358,9 +359,11 @@ export async function generateAICustomizedResume(
   const companyOrRole = extractCompanyOrRole(jobDescription);
 
   let targetPages: number | undefined;
+  let sectionMaxWords: SectionMaxWords | undefined;
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('resumeTargetPages');
     if (stored) targetPages = Number(stored);
+    sectionMaxWords = getSectionMaxWords();
   }
 
   try {
@@ -372,6 +375,7 @@ export async function generateAICustomizedResume(
         jobDescription,
         resumeData: baseResumeData,
         ...(targetPages != null && targetPages >= 1 && targetPages <= 5 && { targetPages }),
+        ...(sectionMaxWords && { sectionMaxWords }),
         ...(preAnalysis && {
           preAnalysis: {
             matchScore: preAnalysis.matchScore,

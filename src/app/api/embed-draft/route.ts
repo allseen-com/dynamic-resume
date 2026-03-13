@@ -5,6 +5,38 @@ import type { ResumeData } from '../../../types/resume';
 import { isPineconeConfigured } from '../../../lib/pinecone';
 
 /**
+ * Normalize draft resume data so chunkResume never sees invalid types (e.g. AI returning description as string).
+ */
+function normalizeDraftResumeData(raw: unknown): ResumeData {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('Invalid draft resume shape for chunking');
+  }
+  const data = raw as Record<string, unknown>;
+  const professionalExperience = data.professionalExperience;
+  const normalizedExperience = Array.isArray(professionalExperience)
+    ? professionalExperience.map((exp: unknown) => {
+        if (!exp || typeof exp !== 'object') return { company: '', title: '', dateRange: '', description: { _dynamic: true, value: '' } };
+        const e = exp as Record<string, unknown>;
+        const desc = e.description;
+        const descriptionValue =
+          desc != null && typeof desc === 'object' && 'value' in desc && typeof (desc as { value: unknown }).value === 'string'
+            ? (desc as { value: string }).value
+            : typeof desc === 'string'
+              ? desc
+              : '';
+        return {
+          ...e,
+          company: typeof e.company === 'string' ? e.company : '',
+          title: typeof e.title === 'string' ? e.title : '',
+          dateRange: typeof e.dateRange === 'string' ? e.dateRange : '',
+          description: { _dynamic: true, value: descriptionValue },
+        };
+      })
+    : [];
+  return { ...data, professionalExperience: normalizedExperience } as ResumeData;
+}
+
+/**
  * POST /api/embed-draft
  * Chunk the drafted resume, generate embeddings, and upsert into Pinecone under a custom namespace (draft-{draftId}).
  * This allows recalculating match score and later deleting the draft from the index.
@@ -18,13 +50,24 @@ export async function POST(request: NextRequest) {
       );
     }
     const body = await request.json();
-    const resumeData = body.resumeData as ResumeData | undefined;
+    const rawResumeData = body.resumeData;
     const draftId = (typeof body.draftId === 'string' && body.draftId.trim()) || crypto.randomUUID();
     const namespace = `draft-${draftId.replace(/[^a-zA-Z0-9-_]/g, '')}`;
 
-    if (!resumeData || typeof resumeData !== 'object') {
+    if (!rawResumeData || typeof rawResumeData !== 'object') {
       return NextResponse.json(
         { error: 'Missing resumeData in request body' },
+        { status: 400 }
+      );
+    }
+
+    let resumeData: ResumeData;
+    try {
+      resumeData = normalizeDraftResumeData(rawResumeData);
+    } catch (normError) {
+      const message = normError instanceof Error ? normError.message : 'Invalid draft resume shape for chunking';
+      return NextResponse.json(
+        { error: message },
         { status: 400 }
       );
     }

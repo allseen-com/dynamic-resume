@@ -5,7 +5,12 @@ import {
   getSectionPrompts,
   setSectionPrompt,
   getDefaultSectionPrompt,
+  getSectionMaxWords,
+  setSectionMaxWordsValue,
   type SectionPrompts,
+  type SectionMaxWords,
+  type SectionMaxWordsKey,
+  DEFAULT_SECTION_MAX_WORDS,
 } from "../../utils/sectionPrompts";
 
 const SECTION_LABELS: Record<keyof SectionPrompts, string> = {
@@ -29,8 +34,11 @@ type CredentialsStatus = {
   pinecone: { configured: boolean; indexName?: string; namespace?: string };
 } | null;
 
+const SECTIONS_WITH_MAX_WORDS: SectionMaxWordsKey[] = ["summary", "technical", "experience", "final"];
+
 export default function SettingsPage() {
   const [targetPages, setTargetPages] = useState(2);
+  const [sectionMaxWords, setSectionMaxWords] = useState<SectionMaxWords>(DEFAULT_SECTION_MAX_WORDS);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [sectionPrompts, setSectionPrompts] = useState<SectionPrompts>({
     headline: "",
@@ -50,6 +58,7 @@ export default function SettingsPage() {
     const storedPages = localStorage.getItem("resumeTargetPages");
     if (storedPages) setTargetPages(Number(storedPages));
     setSectionPrompts(getSectionPrompts());
+    setSectionMaxWords(getSectionMaxWords());
   }, []);
 
   useEffect(() => {
@@ -96,6 +105,13 @@ export default function SettingsPage() {
       setSectionPrompt(section, def);
       showToast();
     }
+  };
+
+  const handleSectionMaxWordsChange = (key: SectionMaxWordsKey, value: number) => {
+    const n = Math.max(0, Math.floor(value));
+    setSectionMaxWords((prev) => ({ ...prev, [key]: n }));
+    setSectionMaxWordsValue(key, n);
+    showToast();
   };
 
   const clearAllData = () => {
@@ -149,11 +165,12 @@ export default function SettingsPage() {
           <p className="text-slate-600 text-sm mt-1">Configure optimization, section prompts, and credentials.</p>
         </div>
 
-        {/* 1. Resume optimization */}
+        {/* 1. Resume optimization: per-section max word count + optional page cap */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="heading-section">Resume optimization</h2>
-          <label className="label-app">Target resume page count</label>
-          <div className="flex items-center gap-4 flex-wrap">
+          <p className="text-slate-600 text-sm mb-3">Set max words per section below (next to each section prompt). Optionally set a target page count for a global cap.</p>
+          <div className="flex flex-wrap gap-4 items-center">
+            <label className="label-app">Target resume page count (optional)</label>
             <input
               type="number"
               min={1}
@@ -180,7 +197,7 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
-          <p className="text-slate-500 text-sm mt-2">AI will fit the resume within this page limit.</p>
+          <p className="text-slate-500 text-sm mt-2">Per-section max words are set in each section card below.</p>
         </section>
 
         {/* 2. Section-based prompts */}
@@ -204,6 +221,18 @@ export default function SettingsPage() {
                 </button>
                 {expandedSection === sectionId && (
                   <div className="p-4 border-t border-slate-200 bg-white">
+                    {SECTIONS_WITH_MAX_WORDS.includes(sectionId as SectionMaxWordsKey) && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <label className="text-sm font-medium text-slate-700">Max words</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={sectionMaxWords[sectionId as SectionMaxWordsKey] ?? DEFAULT_SECTION_MAX_WORDS[sectionId as SectionMaxWordsKey]}
+                          onChange={(e) => handleSectionMaxWordsChange(sectionId as SectionMaxWordsKey, Number(e.target.value))}
+                          className="input-app w-24"
+                        />
+                      </div>
+                    )}
                     {SECTION_HINTS[sectionId] && (
                       <p className="text-slate-500 text-xs mb-2">{SECTION_HINTS[sectionId]}</p>
                     )}

@@ -3,7 +3,7 @@ import { after } from 'next/server';
 import { ResumeData } from '../../../types/resume';
 import { generateJobId, setJobPending } from '../../../lib/optimizeJobStore';
 import { runOptimization } from './runOptimization';
-import type { SectionPrompts } from '../../../utils/sectionPrompts';
+import type { SectionPrompts, SectionMaxWords } from '../../../utils/sectionPrompts';
 
 /**
  * POST /api/optimize-resume
@@ -37,12 +37,14 @@ export async function POST(request: NextRequest) {
       resumeData: rawResumeData,
       preAnalysis,
       targetPages,
+      sectionMaxWords,
     }: {
       sectionPrompts?: unknown;
       jobDescription: string;
       resumeData: ResumeData;
       preAnalysis?: PreAnalysisPayload;
       targetPages?: number;
+      sectionMaxWords?: SectionMaxWords;
     } = body;
 
     if (!validateSectionPrompts(sectionPrompts)) {
@@ -75,6 +77,7 @@ export async function POST(request: NextRequest) {
         rawResumeData,
         preAnalysis,
         targetPages: typeof targetPages === 'number' && targetPages >= 1 && targetPages <= 5 ? targetPages : undefined,
+        sectionMaxWords: sectionMaxWords && typeof sectionMaxWords === 'object' ? sectionMaxWords : undefined,
       })
     );
 

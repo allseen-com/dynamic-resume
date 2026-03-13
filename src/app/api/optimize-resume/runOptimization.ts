@@ -7,7 +7,7 @@ import { normalizeResumeDates } from '../../../utils/dateFormat';
 import type { OptimizeJobResult } from '../../../lib/optimizeJobStore';
 import { setJobCompleted, setJobFailed, setJobProgress } from '../../../lib/optimizeJobStore';
 import type { PreAnalysisPayload } from './route';
-import type { SectionPrompts } from '../../../utils/sectionPrompts';
+import type { SectionPrompts, SectionMaxWords } from '../../../utils/sectionPrompts';
 import { SECTION_IDS } from '../../../utils/sectionPrompts';
 
 const RAG_TOP_K = 15;
@@ -25,8 +25,10 @@ export interface RunOptimizationInput {
   jobDescription: string;
   rawResumeData: ResumeData;
   preAnalysis?: PreAnalysisPayload;
-  /** Target page count (1–5); used to set a word budget so the draft is shorter. */
+  /** Target page count (1–5); optional global cap. */
   targetPages?: number;
+  /** Per-section max word count; applied to each section prompt and final step. */
+  sectionMaxWords?: SectionMaxWords;
 }
 
 function buildPreAnalysisBlock(preAnalysis: PreAnalysisPayload): string {
@@ -52,7 +54,7 @@ const RAG_REQUIRED_MESSAGE =
 const WORDS_PER_PAGE = 400;
 
 export async function runOptimization(input: RunOptimizationInput): Promise<void> {
-  const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis, targetPages } = input;
+  const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis, targetPages, sectionMaxWords } = input;
   try {
     if (!isPineconeConfigured()) {
       setJobFailed(jobId, RAG_REQUIRED_MESSAGE);
@@ -117,7 +119,18 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
     for (const sectionId of SECTION_IDS) {
       setJobProgress(jobId, SECTION_PROGRESS_LABELS[sectionId]);
       const sectionPrompt = sectionPrompts[sectionId];
-      const effectiveSectionPrompt = preAnalysisBlock ? `${sectionPrompt}\n\n${preAnalysisBlock}` : sectionPrompt;
+      const maxWords = sectionMaxWords?.[sectionId];
+      const wordLimitLine =
+        maxWords != null && maxWords > 0
+          ? `\n\n**STRICT:** This section must not exceed ${maxWords} words.\n\n`
+          : '';
+      const effectiveSectionPrompt = [
+        sectionPrompt,
+        wordLimitLine,
+        preAnalysisBlock ? preAnalysisBlock : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
       const fragment = await aiService.customizeSection(
         sectionId,
         jobDescription,
@@ -142,10 +155,16 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
     }
 
     setJobProgress(jobId, 'Finalizing and smoothing draft…');
-    const targetWordBudget =
+    const finalMaxWords = sectionMaxWords?.final;
+    const targetWordBudgetFromPages =
       targetPages != null && targetPages >= 1 && targetPages <= 5
         ? `\n\n**TARGET LENGTH (STRICT):** The final resume must not exceed approximately ${targetPages * WORDS_PER_PAGE} words (${targetPages} page(s)). Summarize and condense content to meet this limit while preserving impact. Prefer shorter, high-impact bullets over long paragraphs.\n\n`
         : '';
+    const targetWordBudgetFromSection =
+      finalMaxWords != null && finalMaxWords > 0
+        ? `\n\n**TARGET LENGTH (STRICT):** The final resume must not exceed ${finalMaxWords} words. Summarize and condense content to meet this limit while preserving impact. Prefer shorter, high-impact bullets over long paragraphs.\n\n`
+        : '';
+    const targetWordBudget = targetWordBudgetFromSection || targetWordBudgetFromPages;
     const finalPrompt =
       (preAnalysisBlock ? `${sectionPrompts.final}\n\n${preAnalysisBlock}\n\n${ragBlock}` : `${sectionPrompts.final}\n\n${ragBlock}`) +
       targetWordBudget;

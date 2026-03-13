@@ -4,6 +4,52 @@ import { getContextSkyscraperPrefix } from './contextSkyscraper';
 export const SECTION_IDS = ['headline', 'summary', 'technical', 'experience'] as const;
 export type SectionId = (typeof SECTION_IDS)[number];
 
+/** Per-section max word count for optimization. Used to constrain section length. */
+export type SectionMaxWordsKey = 'headline' | 'summary' | 'technical' | 'experience' | 'final';
+export interface SectionMaxWords {
+  headline?: number;
+  summary: number;
+  technical: number;
+  experience: number;
+  final: number;
+}
+
+export const DEFAULT_SECTION_MAX_WORDS: SectionMaxWords = {
+  headline: 20,
+  summary: 120,
+  technical: 150,
+  experience: 600,
+  final: 1200,
+};
+
+const STORAGE_KEYS_MAX_WORDS: Record<SectionMaxWordsKey, string> = {
+  headline: 'sectionMaxWords_headline',
+  summary: 'sectionMaxWords_summary',
+  technical: 'sectionMaxWords_technical',
+  experience: 'sectionMaxWords_experience',
+  final: 'sectionMaxWords_final',
+};
+
+export function getSectionMaxWords(): SectionMaxWords {
+  if (typeof window === 'undefined') {
+    return { ...DEFAULT_SECTION_MAX_WORDS };
+  }
+  const out = { ...DEFAULT_SECTION_MAX_WORDS };
+  (Object.keys(STORAGE_KEYS_MAX_WORDS) as SectionMaxWordsKey[]).forEach((key) => {
+    const stored = localStorage.getItem(STORAGE_KEYS_MAX_WORDS[key]);
+    if (stored != null) {
+      const n = Number(stored);
+      if (!Number.isNaN(n) && n >= 0) out[key] = n;
+    }
+  });
+  return out;
+}
+
+export function setSectionMaxWordsValue(key: SectionMaxWordsKey, value: number): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEYS_MAX_WORDS[key], String(Math.max(0, value)));
+}
+
 export interface SectionPrompts {
   headline: string;
   summary: string;
@@ -19,7 +65,7 @@ const BASE_CRITICAL = `
 1. ONLY modify the section(s) you are asked to output.
 2. Use only information from the provided Mother Resume and RAG context—never fabricate.
 3. Return valid JSON in the exact structure specified for this section.
-4. Use natural language; avoid keyword stuffing.
+4. Use natural language; avoid keyword stuffing. Paraphrase and use your own wording; avoid repeating exact phrases from the job description so the resume sounds authentic and not copied.
 5. Maintain truthfulness—enhance and rephrase, don't invent.`;
 
 /** Default prompt for the Headline / Title Bar section. Output: { titleBar: { main, sub } } */
@@ -131,7 +177,7 @@ const DEFAULT_FINAL = `${SKYSCRAPER}${BASE_CRITICAL}
 You are given a draft resume that was built section-by-section (headline, summary, technical skills, experience). Your task is to:
 1. Review the full draft for consistency, tone, and flow.
 2. Make only minimal edits to smooth transitions, fix redundancy, or align wording—do not rewrite entire sections.
-3. Ensure the document reads as one coherent, ATS-friendly resume.
+3. Ensure the document reads as one coherent, ATS-friendly resume. Keep wording natural and role-aligned without mirroring the job description verbatim.
 4. Preserve all factual content; only refine and polish.
 5. Return the complete resume in the exact same JSON structure as the draft, plus a brief optimizationSummary and keyChanges list.
 

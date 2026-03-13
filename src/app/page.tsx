@@ -306,10 +306,13 @@ export default function HomePage() {
         body: JSON.stringify({ resumeData: customizedResumeData }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Embed draft failed");
+      if (!res.ok) {
+        setError(data?.error || "Embed draft failed");
+        return;
+      }
       setDraftId(data.draftId ?? null);
     } catch (e) {
-      handleErrorWithState(e, setError, "ai");
+      setError(e instanceof Error ? e.message : "Embed draft failed");
     } finally {
       setIsEmbeddingDraft(false);
     }
@@ -646,12 +649,18 @@ export default function HomePage() {
                     {/* Summary (with improvement when we have before/after) */}
                     <div>
                       <p className="text-xs font-medium text-slate-600 mb-1">Summary</p>
-                      {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (
-                        <p className="text-sm text-slate-700 mb-2">
-                          Match improved from <strong>{Math.round(matchScorePre)}%</strong> to <strong>{matchScoreAfter != null ? Math.round(matchScoreAfter * 100) : Math.round(draftScore ?? 0)}%</strong>.
-                          {analysisPre && " " + analysisPre}
-                        </p>
-                      )}
+                      {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (() => {
+                        const afterPct = matchScoreAfter != null ? Math.round(matchScoreAfter * 100) : (draftScore != null ? Math.round(draftScore) : null);
+                        const improved = afterPct != null && afterPct > matchScorePre;
+                        return (
+                          <p className="text-sm text-slate-700 mb-2">
+                            {improved
+                              ? <>Match improved from <strong>{Math.round(matchScorePre)}%</strong> to <strong>{afterPct}%</strong>.</>
+                              : <>Match score: Before <strong>{Math.round(matchScorePre)}%</strong> → After <strong>{afterPct ?? "—"}%</strong>.</>}
+                            {analysisPre && " " + analysisPre}
+                          </p>
+                        );
+                      })()}
                       {optimizationSummary ? (
                         <p className="text-sm text-slate-700">{optimizationSummary}</p>
                       ) : (
