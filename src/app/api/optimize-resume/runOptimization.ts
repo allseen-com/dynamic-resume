@@ -124,8 +124,7 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
         workingResume,
         effectiveSectionPrompt,
         ragBlock,
-        undefined,
-        workingTitleBar
+        undefined
       );
       if ('titleBar' in fragment) {
         workingTitleBar = fragment.titleBar;

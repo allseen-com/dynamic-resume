@@ -138,13 +138,16 @@ export async function deleteNamespace(
 ): Promise<void> {
   const raw = configOverride ?? getConfig();
   if (!raw?.apiKey || !raw?.indexName) throw new Error('Pinecone is not configured');
-  const client = getClient({ ...raw, namespace: raw.namespace ?? 'resume-chunks' });
-  const host = await resolveIndexHost(client, raw.indexName);
+  const apiKey = raw.apiKey as string;
+  const indexName = raw.indexName as string;
+  const config: PineconeConfig = { apiKey, indexName, namespace: raw.namespace ?? 'resume-chunks' };
+  const client = getClient(config);
+  const host = await resolveIndexHost(client, indexName);
   const url = `https://${host}/vectors/delete`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      'Api-Key': raw.apiKey,
+      'Api-Key': apiKey,
       'Content-Type': 'application/json',
       'X-Pinecone-Api-Version': '2024-10',
     },

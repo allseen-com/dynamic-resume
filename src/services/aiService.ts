@@ -405,8 +405,7 @@ Focus on:
     workingResume: ResumeData,
     sectionPrompt: string,
     ragBlock: string,
-    preAnalysisBlock?: string,
-    _currentTitleBar?: { main: string; sub: string }
+    preAnalysisBlock?: string
   ): Promise<SectionFragment> {
     const context = [
       sectionPrompt,
