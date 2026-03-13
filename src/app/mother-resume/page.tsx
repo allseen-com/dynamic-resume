@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { ResumeData } from "../../types/resume";
+import { defaultResumeConfig } from "../../types/resume";
 
 const LAST_INDEXED_KEY = "resumeLastIndexedAt";
 
@@ -85,6 +86,7 @@ export default function MotherResumePage() {
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [lastIndexedAt, setLastIndexedAt] = useState<string | null>(null);
   const [indexingResume, setIndexingResume] = useState(false);
+  const [downloadType, setDownloadType] = useState<"pdf" | "docx" | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -157,6 +159,90 @@ export default function MotherResumePage() {
     }
   };
 
+  const getDownloadFilename = (ext: string) => {
+    const name = (data?.header?.name || "Mother-Resume").trim().replace(/\s+/g, "-").replace(/[^a-zA-Z0-9\-]/g, "");
+    return name ? `${name}_Mother-Resume.${ext}` : `Mother-Resume.${ext}`;
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!data) return;
+    setDownloadType("pdf");
+    setMessage(null);
+    try {
+      const res = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeData: data,
+          config: defaultResumeConfig,
+          filename: getDownloadFilename("pdf"),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.details || "Failed to generate PDF");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = getDownloadFilename("pdf");
+      a.click();
+      URL.revokeObjectURL(url);
+      setMessage({ type: "ok", text: "PDF downloaded." });
+    } catch (e) {
+      setMessage({ type: "err", text: e instanceof Error ? e.message : "PDF download failed" });
+    } finally {
+      setDownloadType(null);
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    if (!data) return;
+    setDownloadType("docx");
+    setMessage(null);
+    try {
+      const res = await fetch("/api/generate-docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeData: data,
+          config: defaultResumeConfig,
+          filename: getDownloadFilename("docx"),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.details || "Failed to generate DOCX");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = getDownloadFilename("docx");
+      a.click();
+      URL.revokeObjectURL(url);
+      setMessage({ type: "ok", text: "DOCX downloaded." });
+    } catch (e) {
+      setMessage({ type: "err", text: e instanceof Error ? e.message : "DOCX download failed" });
+    } finally {
+      setDownloadType(null);
+    }
+  };
+
+  const handleDownloadJSON = () => {
+    if (!data) return;
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = getDownloadFilename("json");
+    a.click();
+    URL.revokeObjectURL(url);
+    setMessage({ type: "ok", text: "JSON downloaded." });
+  };
+
   if (loading || !data) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -210,6 +296,37 @@ export default function MotherResumePage() {
             <p className="text-xs text-slate-500 mt-1.5">
               {lastIndexedAt ? `Last index: ${new Date(lastIndexedAt).toLocaleString()}` : "Not indexed yet. Index so match score and RAG use this resume."}
             </p>
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Download mother resume</h2>
+          <p className="text-xs text-slate-500 mb-3">Export as ATS-friendly PDF or DOCX, or as JSON.</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadPDF}
+              disabled={!!downloadType || !data}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
+            >
+              {downloadType === "pdf" ? "Generating…" : "Download PDF"}
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadDocx}
+              disabled={!!downloadType || !data}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium"
+            >
+              {downloadType === "docx" ? "Generating…" : "Download Docx"}
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadJSON}
+              disabled={!data}
+              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 text-sm font-medium"
+            >
+              Download JSON
+            </button>
           </div>
         </div>
 
