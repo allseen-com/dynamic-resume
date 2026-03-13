@@ -127,6 +127,35 @@ export async function upsertResumeChunks(
   return { upsertedCount: records.length };
 }
 
+/**
+ * Delete all vectors in a namespace (e.g. draft-{draftId}).
+ * Use when removing an indexed draft from the site.
+ * Uses Pinecone data-plane REST API.
+ */
+export async function deleteNamespace(
+  namespace: string,
+  configOverride?: Partial<PineconeConfig>
+): Promise<void> {
+  const raw = configOverride ?? getConfig();
+  if (!raw?.apiKey || !raw?.indexName) throw new Error('Pinecone is not configured');
+  const client = getClient({ ...raw, namespace: raw.namespace ?? 'resume-chunks' });
+  const host = await resolveIndexHost(client, raw.indexName);
+  const url = `https://${host}/vectors/delete`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Api-Key': raw.apiKey,
+      'Content-Type': 'application/json',
+      'X-Pinecone-Api-Version': '2024-10',
+    },
+    body: JSON.stringify({ deleteAll: true, namespace }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Pinecone delete failed: ${res.status} ${err}`);
+  }
+}
+
 export interface RetrievedChunk {
   id: string;
   text: string;

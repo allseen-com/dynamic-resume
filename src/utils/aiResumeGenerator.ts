@@ -357,6 +357,12 @@ export async function generateAICustomizedResume(
   const { jobDescription, sectionPrompts, baseResumeData, preAnalysis, onProgress } = request;
   const companyOrRole = extractCompanyOrRole(jobDescription);
 
+  let targetPages: number | undefined;
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('resumeTargetPages');
+    if (stored) targetPages = Number(stored);
+  }
+
   try {
     const response = await fetch('/api/optimize-resume', {
       method: 'POST',
@@ -365,6 +371,7 @@ export async function generateAICustomizedResume(
         sectionPrompts,
         jobDescription,
         resumeData: baseResumeData,
+        ...(targetPages != null && targetPages >= 1 && targetPages <= 5 && { targetPages }),
         ...(preAnalysis && {
           preAnalysis: {
             matchScore: preAnalysis.matchScore,

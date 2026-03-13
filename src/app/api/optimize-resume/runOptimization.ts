@@ -25,6 +25,8 @@ export interface RunOptimizationInput {
   jobDescription: string;
   rawResumeData: ResumeData;
   preAnalysis?: PreAnalysisPayload;
+  /** Target page count (1–5); used to set a word budget so the draft is shorter. */
+  targetPages?: number;
 }
 
 function buildPreAnalysisBlock(preAnalysis: PreAnalysisPayload): string {
@@ -46,8 +48,11 @@ function buildPreAnalysisBlock(preAnalysis: PreAnalysisPayload): string {
 const RAG_REQUIRED_MESSAGE =
   'Pinecone RAG is required for optimization. Configure PINECONE_API_KEY, PINECONE_INDEX (and optionally PINECONE_NAMESPACE), then index your resume from the Mother Resume page.';
 
+/** Approximate words per A4 page for resume content. */
+const WORDS_PER_PAGE = 400;
+
 export async function runOptimization(input: RunOptimizationInput): Promise<void> {
-  const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis } = input;
+  const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis, targetPages } = input;
   try {
     if (!isPineconeConfigured()) {
       setJobFailed(jobId, RAG_REQUIRED_MESSAGE);
@@ -138,7 +143,13 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
     }
 
     setJobProgress(jobId, 'Finalizing and smoothing draft…');
-    const finalPrompt = preAnalysisBlock ? `${sectionPrompts.final}\n\n${preAnalysisBlock}\n\n${ragBlock}` : `${sectionPrompts.final}\n\n${ragBlock}`;
+    const targetWordBudget =
+      targetPages != null && targetPages >= 1 && targetPages <= 5
+        ? `\n\n**TARGET LENGTH (STRICT):** The final resume must not exceed approximately ${targetPages * WORDS_PER_PAGE} words (${targetPages} page(s)). Summarize and condense content to meet this limit while preserving impact. Prefer shorter, high-impact bullets over long paragraphs.\n\n`
+        : '';
+    const finalPrompt =
+      (preAnalysisBlock ? `${sectionPrompts.final}\n\n${preAnalysisBlock}\n\n${ragBlock}` : `${sectionPrompts.final}\n\n${ragBlock}`) +
+      targetWordBudget;
     const { resumeData: optimizedData, optimizationSummary, keyChanges } = await aiService.customizeResumeWithExplanation(
       jobDescription,
       workingResume,

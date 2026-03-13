@@ -92,6 +92,22 @@ export function getTotalResumeWordCount(resumeData: ResumeData): number {
 }
 
 /**
+ * Total character count for resume (same sections as word count).
+ * Useful for template or length limits.
+ */
+export function getTotalResumeCharacterCount(resumeData: ResumeData): number {
+  let s = '';
+  if (resumeData.summary?.value) s += resumeData.summary.value;
+  if (resumeData.coreCompetencies?.value?.length) s += ' ' + resumeData.coreCompetencies.value.join(' ');
+  if (resumeData.professionalExperience?.length) {
+    resumeData.professionalExperience.forEach((exp) => {
+      if (exp.description?.value) s += ' ' + exp.description.value;
+    });
+  }
+  return s.replace(/\s+/g, ' ').trim().length;
+}
+
+/**
  * Apply word count limits to AI-generated content
  */
 export function applyWordCountLimits(

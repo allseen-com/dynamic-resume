@@ -36,11 +36,13 @@ export async function POST(request: NextRequest) {
       jobDescription,
       resumeData: rawResumeData,
       preAnalysis,
+      targetPages,
     }: {
       sectionPrompts?: unknown;
       jobDescription: string;
       resumeData: ResumeData;
       preAnalysis?: PreAnalysisPayload;
+      targetPages?: number;
     } = body;
 
     if (!validateSectionPrompts(sectionPrompts)) {
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
         jobDescription,
         rawResumeData,
         preAnalysis,
+        targetPages: typeof targetPages === 'number' && targetPages >= 1 && targetPages <= 5 ? targetPages : undefined,
       })
     );
 

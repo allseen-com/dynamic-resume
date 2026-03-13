@@ -7,7 +7,7 @@ import { generateAICustomizedResume } from "../utils/aiResumeGenerator";
 import { useErrorHandler } from "../utils/errorHandler";
 import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../components/LoadingSpinner";
 import { getSectionPrompts } from "../utils/sectionPrompts";
-import { getTotalResumeWordCount } from "../utils/wordCountUtils";
+import { getTotalResumeWordCount, getTotalResumeCharacterCount } from "../utils/wordCountUtils";
 import resumeData from "../../data/resume.json";
 
 const LAST_INDEXED_KEY = "resumeLastIndexedAt";
@@ -80,6 +80,10 @@ export default function HomePage() {
   const [matchScoreAfter, setMatchScoreAfter] = useState<number | null>(null);
   const [optimizeStatusMessage, setOptimizeStatusMessage] = useState<string | null>(null);
   const [hasCompletedCustomization, setHasCompletedCustomization] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftScore, setDraftScore] = useState<number | null>(null);
+  const [isEmbeddingDraft, setIsEmbeddingDraft] = useState(false);
+  const [isCalculatingDraftScore, setIsCalculatingDraftScore] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -239,6 +243,8 @@ export default function HomePage() {
       setOptimizationSummary(result.optimizationSummary ?? null);
       setKeyChanges(result.keyChanges ?? null);
       setHasCompletedCustomization(true);
+      setDraftId(null);
+      setDraftScore(null);
       setShowSuccess(true);
       setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]);
     } catch (e) {
@@ -290,6 +296,48 @@ export default function HomePage() {
     }
   };
 
+  const handleEmbedDraft = async () => {
+    setIsEmbeddingDraft(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/embed-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeData: customizedResumeData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Embed draft failed");
+      setDraftId(data.draftId ?? null);
+    } catch (e) {
+      handleErrorWithState(e, setError, "ai");
+    } finally {
+      setIsEmbeddingDraft(false);
+    }
+  };
+
+  const handleCalculateDraftScore = async () => {
+    if (!jobDescription.trim()) {
+      handleErrorWithState(new Error("Provide a job description to calculate score"), setError, "validation");
+      return;
+    }
+    setIsCalculatingDraftScore(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/match-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobDescription: jobDescription.trim(), resumeData: customizedResumeData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || "Match score failed");
+      setDraftScore(data.matchScore ?? null);
+    } catch (e) {
+      handleErrorWithState(e, setError, "ai");
+    } finally {
+      setIsCalculatingDraftScore(false);
+    }
+  };
+
   const resetToDefault = () => {
     setCustomizedResumeData(motherResumeData);
     setCustomizedConfig({
@@ -318,6 +366,8 @@ export default function HomePage() {
     setKeyChanges(null);
     setMatchScoreAfter(null);
     setHasCompletedCustomization(false);
+    setDraftId(null);
+    setDraftScore(null);
   };
 
   if (!isClient) {
@@ -326,6 +376,8 @@ export default function HomePage() {
 
   const motherWordCount = getTotalResumeWordCount(motherResumeData);
   const draftWordCount = getTotalResumeWordCount(customizedResumeData);
+  const motherCharCount = getTotalResumeCharacterCount(motherResumeData);
+  const draftCharCount = getTotalResumeCharacterCount(customizedResumeData);
   const hasDraft = hasCompletedCustomization;
 
   return (
@@ -458,6 +510,11 @@ export default function HomePage() {
                 <p className="text-sm text-slate-600 mb-4">
                   Use the suggestions above to tailor your resume. We&apos;ll enrich the content and produce an optimized draft.
                 </p>
+                {isGenerating && loadingType === "ai" && optimizeStatusMessage && (
+                  <p className="text-sm text-slate-600 mb-3 font-medium" role="status">
+                    {optimizeStatusMessage}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-3 items-center">
                   <button
                     onClick={handleGenerateResume}
@@ -509,14 +566,39 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                  {/* Word count: mother vs draft (in src/utils/wordCountUtils.ts getTotalResumeWordCount) */}
+                  {/* Word count and character count: mother vs draft */}
                   <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/50">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Word count</p>
-                    <div className="flex flex-wrap gap-4 text-sm text-slate-700">
-                      <span>Mother resume: <strong className="text-slate-800">{motherWordCount}</strong> words</span>
-                      <span>Draft: <strong className="text-slate-800">{draftWordCount}</strong> words</span>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Word count &amp; length</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
+                      <span>Mother: <strong className="text-slate-800">{motherWordCount}</strong> words, <strong className="text-slate-800">{motherCharCount.toLocaleString()}</strong> chars</span>
+                      <span>Draft: <strong className="text-slate-800">{draftWordCount}</strong> words, <strong className="text-slate-800">{draftCharCount.toLocaleString()}</strong> chars</span>
                       {draftWordCount < motherWordCount && (
                         <span className="text-emerald-700 font-medium">Summarized for focus</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Index draft & calculate score (before report) */}
+                  <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Index draft &amp; score</p>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <button
+                        type="button"
+                        onClick={handleEmbedDraft}
+                        disabled={isEmbeddingDraft || !pineconeConfigured}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-200 text-slate-800 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isEmbeddingDraft ? "Indexing…" : "Index draft"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCalculateDraftScore}
+                        disabled={isCalculatingDraftScore || !jobDescription.trim()}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCalculatingDraftScore ? "Calculating…" : "Calculate score for draft"}
+                      </button>
+                      {draftId && (
+                        <span className="text-xs text-slate-500">Draft indexed (id: {draftId.slice(0, 8)}…)</span>
                       )}
                     </div>
                   </div>
@@ -526,16 +608,29 @@ export default function HomePage() {
                     {/* Match score */}
                     <div>
                       <p className="text-xs font-medium text-slate-600 mb-1">Match score</p>
-                      {matchScore != null || matchScoreAfter != null ? (
-                        <div className="flex flex-wrap gap-2">
-                          {matchScore != null && (
+                      {matchScore != null || matchScoreAfter != null || draftScore != null ? (
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (
                             <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
-                              {matchScoreAfter != null
-                                ? `Before: ${Math.round(matchScore * 100)}% → After: ${Math.round(matchScoreAfter * 100)}%`
-                                : `${Math.round(matchScore * 100)}%`}
+                              Before: {Math.round(matchScorePre)}% → After: {matchScoreAfter != null ? Math.round(matchScoreAfter * 100) : Math.round(draftScore ?? 0)}%
                             </span>
                           )}
-                          {matchScoreAfter != null && matchScore == null && (
+                          {matchScore != null && matchScoreAfter != null && (
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
+                              Optimize: {Math.round(matchScore * 100)}% → {Math.round(matchScoreAfter * 100)}%
+                            </span>
+                          )}
+                          {matchScore == null && matchScoreAfter == null && draftScore != null && (
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
+                              Draft score: {Math.round(draftScore)}%
+                            </span>
+                          )}
+                          {matchScore != null && matchScoreAfter == null && draftScore == null && (
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
+                              {Math.round(matchScore * 100)}%
+                            </span>
+                          )}
+                          {matchScoreAfter != null && matchScore == null && draftScore == null && (
                             <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
                               {Math.round(matchScoreAfter * 100)}%
                             </span>
@@ -545,12 +640,18 @@ export default function HomePage() {
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500">Not calculated (embeddings unavailable)</p>
+                        <p className="text-sm text-slate-500">Index draft and use “Calculate score for draft” to see match score, or run optimization with embeddings enabled.</p>
                       )}
                     </div>
-                    {/* Summary */}
+                    {/* Summary (with improvement when we have before/after) */}
                     <div>
                       <p className="text-xs font-medium text-slate-600 mb-1">Summary</p>
+                      {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (
+                        <p className="text-sm text-slate-700 mb-2">
+                          Match improved from <strong>{Math.round(matchScorePre)}%</strong> to <strong>{matchScoreAfter != null ? Math.round(matchScoreAfter * 100) : Math.round(draftScore ?? 0)}%</strong>.
+                          {analysisPre && " " + analysisPre}
+                        </p>
+                      )}
                       {optimizationSummary ? (
                         <p className="text-sm text-slate-700">{optimizationSummary}</p>
                       ) : (
