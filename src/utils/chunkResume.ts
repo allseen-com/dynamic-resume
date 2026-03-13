@@ -48,12 +48,13 @@ export function chunkResume(data: ResumeData): ResumeChunk[] {
         if (g.items?.length) parts.push(`${g.category}: ${g.items.join(', ')}`);
       }
     } else {
-      if (tp.programming?.length) parts.push(`Programming: ${tp.programming.join(', ')}`);
-      if (tp.cloudData?.length) parts.push(`Cloud/Data: ${tp.cloudData.join(', ')}`);
-      if (tp.analytics?.length) parts.push(`Analytics: ${tp.analytics.join(', ')}`);
-      if (tp.mlAi?.length) parts.push(`ML/AI: ${tp.mlAi.join(', ')}`);
-      if (tp.productivity?.length) parts.push(`Productivity: ${tp.productivity.join(', ')}`);
-      if (tp.marketingAds?.length) parts.push(`Marketing/Ads: ${tp.marketingAds.join(', ')}`);
+      const legacy = tp as { programming?: string[]; cloudData?: string[]; analytics?: string[]; mlAi?: string[]; productivity?: string[]; marketingAds?: string[] };
+      if (legacy.programming?.length) parts.push(`Programming: ${legacy.programming.join(', ')}`);
+      if (legacy.cloudData?.length) parts.push(`Cloud/Data: ${legacy.cloudData.join(', ')}`);
+      if (legacy.analytics?.length) parts.push(`Analytics: ${legacy.analytics.join(', ')}`);
+      if (legacy.mlAi?.length) parts.push(`ML/AI: ${legacy.mlAi.join(', ')}`);
+      if (legacy.productivity?.length) parts.push(`Productivity: ${legacy.productivity.join(', ')}`);
+      if (legacy.marketingAds?.length) parts.push(`Marketing/Ads: ${legacy.marketingAds.join(', ')}`);
     }
     if (parts.length) {
       chunks.push({
