@@ -56,6 +56,30 @@ const RAG_REQUIRED_MESSAGE =
 /** Approximate words per A4 page for resume content. */
 const WORDS_PER_PAGE = 400;
 
+function getTargetPageGuidance(targetPages?: number): string {
+  if (targetPages === 1) {
+    return [
+      '**LENGTH STRATEGY (1 PAGE):**',
+      '- Keep only 2 detailed recent roles with concise, high-impact bullets.',
+      '- Convert older experience into brief context lines with minimal detail.',
+      '- Prioritize 2018-present achievements and measurable outcomes.',
+    ].join('\n');
+  }
+  if (targetPages === 2) {
+    return [
+      '**LENGTH STRATEGY (2 PAGES):**',
+      '- Keep strong detail for recent roles and compress older roles.',
+      '- Target roughly 70% of experience detail on most recent relevant positions.',
+      '- Preserve older roles primarily as context (titles, employers, dates).',
+    ].join('\n');
+  }
+  return [
+    '**LENGTH STRATEGY:**',
+    '- Prioritize recent, role-relevant achievements first.',
+    '- Compress older experience to protect space for senior-level impact.',
+  ].join('\n');
+}
+
 export async function runOptimization(input: RunOptimizationInput): Promise<void> {
   const { jobId, sectionPrompts, jobDescription, rawResumeData, preAnalysis, targetPages, sectionMaxWords, experiencePrompts, experienceDynamic } = input;
   try {
@@ -195,7 +219,7 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
     const finalMaxWords = sectionMaxWords?.final;
     const targetWordBudgetFromPages =
       targetPages != null && targetPages >= 1 && targetPages <= 5
-        ? `\n\n**TARGET LENGTH (STRICT):** The final resume must not exceed approximately ${targetPages * WORDS_PER_PAGE} words (${targetPages} page(s)). Summarize and condense content to meet this limit while preserving impact. Prefer shorter, high-impact bullets over long paragraphs.\n\n`
+        ? `\n\n**TARGET LENGTH (STRICT):** The final resume must not exceed approximately ${targetPages * WORDS_PER_PAGE} words (${targetPages} page(s)). Summarize and condense content to meet this limit while preserving impact. Prefer shorter, high-impact bullets over long paragraphs.\n\n${getTargetPageGuidance(targetPages)}\n\n`
         : '';
     const targetWordBudgetFromSection =
       finalMaxWords != null && finalMaxWords > 0
