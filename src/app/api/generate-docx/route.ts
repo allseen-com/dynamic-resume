@@ -21,6 +21,7 @@ type FlexibleResumeData = {
   summary: FlexibleField;
   coreCompetencies: { value: string[] } | string[];
   technicalProficiency: {
+    footnote?: FlexibleField;
     categories?: { category: string; items: string[] }[];
     programming?: string[];
     cloudData?: string[];
@@ -165,6 +166,16 @@ function buildDocx(resumeData: FlexibleResumeData, config: ResumeConfig): Docume
               new TextRun({ text: `${group.category}: `, bold: true, size: 22 }),
               new TextRun({ text: group.items.join(", "), size: 22 }),
             ],
+            spacing: { after: 80 },
+          })
+        );
+      }
+      const footnoteRaw = tech.footnote;
+      const footnoteText = footnoteRaw ? getVal(footnoteRaw as FlexibleField).trim() : "";
+      if (footnoteText) {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text: footnoteText, italics: true, size: 20 })],
             spacing: { after: 80 },
           })
         );

@@ -18,6 +18,7 @@ export interface ResumeData {
   };
   technicalProficiency: {
     _dynamic?: boolean;
+    footnote?: { _dynamic?: boolean; value: string };
     categories: { category: string; items: string[] }[];
   };
   professionalExperience: {

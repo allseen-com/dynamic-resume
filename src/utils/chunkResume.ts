@@ -57,9 +57,11 @@ export function chunkResume(data: ResumeData): ResumeChunk[] {
       if (legacy.marketingAds?.length) parts.push(`Marketing/Ads: ${legacy.marketingAds.join(', ')}`);
     }
     if (parts.length) {
+      const foot = tp.footnote?.value?.trim();
+      const techBody = `Technical Skills: ${parts.join('. ')}${foot ? `. Note: ${foot}` : ''}`;
       chunks.push({
         id: `chunk-${globalIndex++}`,
-        text: `Technical Skills: ${parts.join('. ')}`,
+        text: techBody,
         metadata: { section: 'technicalProficiency' },
       });
     }
@@ -115,8 +117,10 @@ export function getResumeSummaryForMatch(data: ResumeData): string {
   const parts: string[] = [];
   if (data.summary?.value) parts.push(data.summary.value);
   if (data.coreCompetencies?.value?.length) {
-    parts.push(data.coreCompetencies.value.slice(0, 5).join('. '));
+    parts.push(data.coreCompetencies.value.slice(0, 8).join('. '));
   }
+  const techFn = data.technicalProficiency?.footnote?.value?.trim();
+  if (techFn) parts.push(techFn);
   if (data.professionalExperience?.length) {
     data.professionalExperience.slice(0, 5).forEach((exp) => {
       const firstLine = exp.description?.value?.split(/\n/)[0] ?? '';

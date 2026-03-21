@@ -17,6 +17,11 @@ export interface ResumeData {
   /** Technical skills by category. Display label: "Technical Skills". */
   technicalProficiency: {
     _dynamic?: boolean;
+    /** Optional one-liner under Technical Skills (e.g. AI-assisted workflow disclosure). */
+    footnote?: {
+      _dynamic?: boolean;
+      value: string;
+    };
     categories: { category: string; items: string[] }[];
   };
   professionalExperience: {

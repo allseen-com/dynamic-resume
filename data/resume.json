@@ -13,26 +13,45 @@
   "coreCompetencies": {
     "_dynamic": true,
     "value": [
-      "Growth Marketing Strategy & Digital Acquisition",
-      "Market Analysis & Financial Modeling",
-      "eCommerce & Brand Management",
-      "Performance Optimization & ROI Improvement",
-      "Product Management & Product-Led Growth",
-      "Leadership & Project Management",
-      "Cross-Functional Collaboration",
-      "AI & Automation Integration",
-      "Online Business Development",
-      "Technical Project Management & Strategies"
+      "Product & growth leadership (marketplaces, travel tech, PLG)",
+      "Data-driven strategy, measurement & financial modeling",
+      "AI-assisted delivery, automation & workflow integration",
+      "Digital acquisition, SEO/SEM & performance marketing",
+      "Cross-functional leadership & global vendor partnerships",
+      "Technical program delivery (platform scale, migrations, cloud)",
+      "eCommerce, catalog & brand growth",
+      "Stakeholder alignment, hiring & distributed operations"
     ]
   },
   "technicalProficiency": {
     "_dynamic": true,
+    "footnote": {
+      "_dynamic": true,
+      "value": "AI-assisted development & code review (Cursor / LLM workflows)."
+    },
     "categories": [
-      { "category": "Languages & Databases", "items": ["Python", "SQL", "PHP", "Google Big Query", "Redshift"] },
-      { "category": "Cloud & Infrastructure", "items": ["AWS (S3, SES, LightSail, CloudFront)"] },
-      { "category": "AI & ML", "items": ["Vertex AI", "Bedrock", "NeMo", "LLMs", "Pinecone", "Qdrant", "Agents"] },
-      { "category": "Marketing & Analytics", "items": ["Google Analytics", "Tag Manager", "Search Console", "AdWords", "Facebook Ads"] },
-      { "category": "Tools & Automation", "items": ["n8n", "Airtable", "Asana", "Zapier", "HubSpot"] }
+      {
+        "category": "Languages & data",
+        "items": ["Python", "SQL", "PHP", "MySQL (WordPress data layer)", "Google BigQuery", "Amazon Redshift"]
+      },
+      {
+        "category": "Web platform & integrations",
+        "items": ["WordPress (custom plugins, hooks/filters, admin)", "REST APIs & webhooks", "HTML / CSS / JavaScript (themes & front-end)"]
+      },
+      {
+        "category": "Cloud & web performance",
+        "items": ["AWS (S3, SES, Lightsail, CloudFront)", "Technical SEO & Core Web Vitals (caching, CDN)"]
+      },
+      { "category": "Dev & delivery", "items": ["Git (branching, PRs, deploy workflow)"] },
+      {
+        "category": "AI & ML",
+        "items": ["LLM applications (Vertex AI, AWS Bedrock, NVIDIA NeMo); vector search (Pinecone, Qdrant); agent workflows; prompt design"]
+      },
+      {
+        "category": "Marketing & analytics",
+        "items": ["Google Analytics", "Google Tag Manager", "Search Console", "Google Ads", "Facebook Ads"]
+      },
+      { "category": "Tools & automation", "items": ["n8n", "Airtable", "Asana", "Zapier", "HubSpot"] }
     ]
   },
   "professionalExperience": [

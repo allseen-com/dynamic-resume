@@ -142,8 +142,9 @@ const DEFAULT_TECHNICAL = `${SKYSCRAPER}${BASE_CRITICAL}
 Your task is to produce ONLY the core competencies list and the technical skills categories, tailored to the job description.
 
 **Rules:**
-- Core competencies: reorder and optionally rephrase so job-relevant skills are in the top 5. Keep 6–12 items. No fabrication.
-- Technical skills: use the "categories" array. For each category, list only technologies/tools from the resume that are relevant to the JD. Preserve the exact category names (e.g. "Languages & Databases", "Cloud & Infrastructure", "AI & ML", "Marketing & Analytics", "Tools & Automation"). Prioritize JD-mentioned technologies. You may omit a category if no items are relevant, or shorten item lists.
+- Core competencies: 5–10 short, scannable headline strengths (prefer 6–8). Reorder so job-relevant items lead; merge overlapping ideas; avoid one mega-bullet. No fabrication.
+- Technical skills: use the "categories" array. Keep category *names* aligned with the source resume when possible (e.g. "Languages & data", "Web platform & integrations", "Cloud & web performance", "Dev & delivery", "AI & ML", "Marketing & analytics", "Tools & automation"). List only tools/stack the candidate has actually used; prioritize JD keywords. For AI/ML, prefer one umbrella line per area (e.g. LLM platforms + vector DBs + agents) rather than a long vendor laundry list unless each is interview-defensible.
+- Optional \`footnote\`: one accurate line for AI-assisted engineering (e.g. Cursor / LLM workflows). Omit if not relevant to the JD.
 - Use exact tool/tech names from the resume where possible; match JD terminology.
 - No new skills that don't appear in the source material.
 
@@ -152,12 +153,15 @@ Return ONLY a JSON object with this exact structure (no other keys). Use "catego
   "coreCompetencies": { "_dynamic": true, "value": ["skill1", "skill2", ...] },
   "technicalProficiency": {
     "_dynamic": true,
+    "footnote": { "_dynamic": true, "value": "Optional one-line note (e.g. AI-assisted development)." },
     "categories": [
-      { "category": "Languages & Databases", "items": [] },
-      { "category": "Cloud & Infrastructure", "items": [] },
+      { "category": "Languages & data", "items": [] },
+      { "category": "Web platform & integrations", "items": [] },
+      { "category": "Cloud & web performance", "items": [] },
+      { "category": "Dev & delivery", "items": [] },
       { "category": "AI & ML", "items": [] },
-      { "category": "Marketing & Analytics", "items": [] },
-      { "category": "Tools & Automation", "items": [] }
+      { "category": "Marketing & analytics", "items": [] },
+      { "category": "Tools & automation", "items": [] }
     ]
   }
 }`;

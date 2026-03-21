@@ -27,6 +27,7 @@ type FlexibleResumeData = {
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
   technicalProficiency: {
+    footnote?: FlexibleField;
     categories?: { category: string; items: string[] }[];
     programming?: FlexibleField[];
     cloudData?: FlexibleField[];
@@ -372,6 +373,16 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
                 <Text style={{ fontSize: 11, fontWeight: 'normal', lineHeight: 1.2 }}>{group.items.join(', ')}</Text>
               </View>
             ))}
+            {(() => {
+              const fn = data.technicalProficiency?.footnote;
+              const foot = fn ? getFieldValue(fn).trim() : '';
+              if (!foot) return null;
+              return (
+                <Text style={{ fontSize: 10, fontStyle: 'italic', marginTop: 4, lineHeight: 1.25, color: '#333' }}>
+                  {foot}
+                </Text>
+              );
+            })()}
           </View>
         )}
 
