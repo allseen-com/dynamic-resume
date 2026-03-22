@@ -75,6 +75,16 @@ export default function Header() {
               </li>
               <li>
                 <Link 
+                  href="/dynamic-resume" 
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 font-medium transition-colors" 
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className="text-lg">✨</span>
+                  Dynamic Resume
+                </Link>
+              </li>
+              <li>
+                <Link 
                   href="/side-by-side" 
                   className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 font-medium transition-colors" 
                   onClick={() => setMenuOpen(false)}

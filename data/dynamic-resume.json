@@ -1,0 +1,70 @@
+{
+  "meta": {
+    "tagline": "Living portfolio: roles, milestones, and proof — tied to the canonical mother resume.",
+    "lastUpdated": "2025-03-22"
+  },
+  "caseStudies": [
+    {
+      "id": "cs-trip-ways-growth",
+      "title": "Marketplace growth & platform (placeholder)",
+      "excerpt": "Replace this card with a Notion, Google Doc, or portfolio URL that narrates scope, metrics, and your role.",
+      "href": "https://example.com/case-study/trip-ways",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80",
+      "tags": ["Product", "Growth", "Marketplace"],
+      "experienceIndex": 0
+    },
+    {
+      "id": "cs-cnet-commerce",
+      "title": "Media & commerce optimization (placeholder)",
+      "excerpt": "Link to a write-up on incrementality, dashboards, or major shopping events you led.",
+      "href": "https://example.com/case-study/cnet-commerce",
+      "tags": ["SEO", "Video", "Looker"],
+      "experienceIndex": 1
+    },
+    {
+      "id": "cs-setare-scale",
+      "title": "E-commerce scale & migration (placeholder)",
+      "excerpt": "Story of organic growth, CMS migration, and team build-out — swap href for your real doc.",
+      "href": "https://example.com/case-study/setare",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
+      "tags": ["SEO", "AWS", "Leadership"],
+      "experienceIndex": 2
+    }
+  ],
+  "curatedTimeline": [
+    {
+      "id": "milestone-ai-search",
+      "dateISO": "2024-06-01",
+      "title": "Shipped semantic discovery on the marketplace",
+      "summary": "Prototype milestone: tie this to a launch post, Loom, or internal doc. Shows how curated events sit beside job rows.",
+      "tags": ["AI", "Search", "Launch"],
+      "experienceIndex": 0,
+      "media": [
+        {
+          "kind": "image",
+          "url": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&q=80",
+          "alt": "Abstract network visualization",
+          "caption": "Placeholder image — replace with a product screenshot."
+        }
+      ],
+      "links": [
+        { "label": "Example doc", "href": "https://example.com/docs/semantic-search" }
+      ]
+    },
+    {
+      "id": "milestone-video-seo",
+      "dateISO": "2022-08-15",
+      "title": "Video SEO playbook rollout",
+      "summary": "Curated milestone linked to Red Ventures / CNET era — embed a talk or recap below.",
+      "tags": ["Video", "SEO", "Playbook"],
+      "experienceIndex": 1,
+      "media": [
+        {
+          "kind": "video",
+          "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          "caption": "Replace with your real YouTube or Vimeo URL."
+        }
+      ]
+    }
+  ]
+}
