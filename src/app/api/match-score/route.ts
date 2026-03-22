@@ -4,7 +4,7 @@ import { embedText } from '../../../utils/embeddings';
 import { cosineSimilarity } from '../../../lib/pinecone';
 import { getResumeSummaryForMatch } from '../../../utils/chunkResume';
 import { normalizeResumeDates } from '../../../utils/dateFormat';
-import { isPineconeConfigured, queryResumeChunks } from '../../../lib/pinecone';
+import { isPineconeConfigured, pineconeDraftNamespace, queryResumeChunks } from '../../../lib/pinecone';
 import { createAIService } from '../../../services/aiService';
 
 const ATS_BANDS = `
@@ -24,9 +24,11 @@ export interface MatchScoreResponse {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { jobDescription, resumeData: rawResumeData } = body as {
+    const { jobDescription, resumeData: rawResumeData, draftId } = body as {
       jobDescription: string;
       resumeData?: ResumeData;
+      /** When set, RAG excerpts come from this draft’s Pinecone namespace (after Index draft). */
+      draftId?: string;
     };
 
     if (!jobDescription || typeof jobDescription !== 'string' || !jobDescription.trim()) {
@@ -84,7 +86,13 @@ export async function POST(request: NextRequest) {
 
     let ragContext = '';
     try {
-      const retrieved = await queryResumeChunks(jdVector!, 8);
+      const draftNs =
+        typeof draftId === 'string' && draftId.trim() ? pineconeDraftNamespace(draftId) : undefined;
+      const retrieved = await queryResumeChunks(
+        jdVector!,
+        8,
+        draftNs ? { namespace: draftNs } : undefined
+      );
       if (retrieved.length > 0) {
         ragContext =
           '\n\nRelevant resume excerpts (for context):\n' +

@@ -334,7 +334,11 @@ export default function HomePage() {
       const res = await fetch("/api/match-score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobDescription: jobDescription.trim(), resumeData: customizedResumeData }),
+        body: JSON.stringify({
+          jobDescription: jobDescription.trim(),
+          resumeData: customizedResumeData,
+          ...(draftId ? { draftId } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || data.error || "Match score failed");

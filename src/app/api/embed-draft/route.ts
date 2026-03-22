@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chunkResume } from '../../../utils/chunkResume';
-import { upsertResumeChunks, deleteNamespace } from '../../../lib/pinecone';
+import {
+  upsertResumeChunks,
+  deleteNamespace,
+  isPineconeConfigured,
+  pineconeDraftNamespace,
+} from '../../../lib/pinecone';
 import type { ResumeData } from '../../../types/resume';
-import { isPineconeConfigured } from '../../../lib/pinecone';
 
 /**
  * Normalize draft resume data so chunkResume never sees invalid types (e.g. AI returning description as string).
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const rawResumeData = body.resumeData;
     const draftId = (typeof body.draftId === 'string' && body.draftId.trim()) || crypto.randomUUID();
-    const namespace = `draft-${draftId.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+    const namespace = pineconeDraftNamespace(draftId);
 
     if (!rawResumeData || typeof rawResumeData !== 'object') {
       return NextResponse.json(
@@ -111,7 +115,7 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-    const namespace = `draft-${draftId.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+    const namespace = pineconeDraftNamespace(draftId);
     await deleteNamespace(namespace);
     return NextResponse.json({ success: true, deleted: namespace });
   } catch (error) {

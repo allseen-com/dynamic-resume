@@ -31,12 +31,35 @@ export function normalizeIndexName(value: string): string {
 }
 
 function getConfig(): PineconeConfig | null {
-  const apiKey = process.env.PINECONE_API_KEY;
-  const rawIndex = process.env.PINECONE_INDEX;
-  const namespace = process.env.PINECONE_NAMESPACE ?? 'resume-chunks';
+  const apiKey = process.env.PINECONE_API_KEY?.trim();
+  const rawIndex = process.env.PINECONE_INDEX?.trim();
+  const namespace = process.env.PINECONE_NAMESPACE?.trim() || 'resume-chunks';
   if (!apiKey || !rawIndex) return null;
   const indexName = normalizeIndexName(rawIndex);
   if (!indexName) return null;
+  return { apiKey, indexName, namespace };
+}
+
+/**
+ * Merge env config with optional overrides (e.g. draft namespace only).
+ * Passing only `{ namespace: 'draft-…' }` must still use API key and index from env.
+ */
+/** Pinecone namespace for draft vectors; must stay in sync with /api/embed-draft. */
+export function pineconeDraftNamespace(draftId: string): string {
+  return `draft-${draftId.trim().replace(/[^a-zA-Z0-9-_]/g, '')}`;
+}
+
+export function mergePineconeConfig(override?: Partial<PineconeConfig>): PineconeConfig | null {
+  const base = getConfig();
+  const apiKey = (override?.apiKey ?? base?.apiKey)?.trim() || '';
+  let indexName = '';
+  if (override?.indexName != null && String(override.indexName).trim() !== '') {
+    indexName = normalizeIndexName(String(override.indexName));
+  } else if (base?.indexName) {
+    indexName = base.indexName;
+  }
+  const namespace = override?.namespace ?? base?.namespace ?? 'resume-chunks';
+  if (!apiKey || !indexName) return null;
   return { apiKey, indexName, namespace };
 }
 
@@ -95,13 +118,8 @@ export async function upsertResumeChunks(
   chunks: ResumeChunk[],
   configOverride?: Partial<PineconeConfig>
 ): Promise<{ upsertedCount: number }> {
-  const raw = configOverride ?? getConfig();
-  if (!raw?.apiKey || !raw?.indexName) throw new Error('Pinecone is not configured (PINECONE_API_KEY, PINECONE_INDEX)');
-  const config: PineconeConfig = {
-    apiKey: raw.apiKey,
-    indexName: raw.indexName,
-    namespace: raw.namespace ?? 'resume-chunks',
-  };
+  const config = mergePineconeConfig(configOverride);
+  if (!config) throw new Error('Pinecone is not configured (PINECONE_API_KEY, PINECONE_INDEX)');
 
   const texts = chunks.map((c) => c.text);
   const vectors = await embedTexts(texts);
@@ -136,11 +154,11 @@ export async function deleteNamespace(
   namespace: string,
   configOverride?: Partial<PineconeConfig>
 ): Promise<void> {
-  const raw = configOverride ?? getConfig();
-  if (!raw?.apiKey || !raw?.indexName) throw new Error('Pinecone is not configured');
-  const apiKey = raw.apiKey as string;
-  const indexName = raw.indexName as string;
-  const config: PineconeConfig = { apiKey, indexName, namespace: raw.namespace ?? 'resume-chunks' };
+  const merged = mergePineconeConfig(configOverride);
+  if (!merged) throw new Error('Pinecone is not configured');
+  const apiKey = merged.apiKey;
+  const indexName = merged.indexName;
+  const config: PineconeConfig = { apiKey, indexName, namespace: merged.namespace };
   const client = getClient(config);
   const host = await resolveIndexHost(client, indexName);
   const url = `https://${host}/vectors/delete`;
@@ -174,13 +192,8 @@ export async function queryResumeChunks(
   topK: number = 15,
   configOverride?: Partial<PineconeConfig>
 ): Promise<RetrievedChunk[]> {
-  const raw = configOverride ?? getConfig();
-  if (!raw?.apiKey || !raw?.indexName) throw new Error('Pinecone is not configured');
-  const config: PineconeConfig = {
-    apiKey: raw.apiKey,
-    indexName: raw.indexName,
-    namespace: raw.namespace ?? 'resume-chunks',
-  };
+  const config = mergePineconeConfig(configOverride);
+  if (!config) throw new Error('Pinecone is not configured');
 
   const client = getClient(config);
   const host = await resolveIndexHost(client, config.indexName);
