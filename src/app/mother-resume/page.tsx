@@ -163,9 +163,9 @@ export default function MotherResumePage() {
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <Link
-              href="/"
+              href="/optimize"
               className="text-slate-500 hover:text-slate-700"
-              aria-label="Back"
+              aria-label="Back to optimize hub"
             >
               ←
             </Link>

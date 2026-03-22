@@ -158,7 +158,7 @@ export default function SideBySidePage() {
       <div className="max-w-6xl mx-auto py-6 px-4">
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-slate-500 hover:text-slate-700" aria-label="Back">
+            <Link href="/optimize" className="text-slate-500 hover:text-slate-700" aria-label="Back to optimize hub">
               ←
             </Link>
             <h1 className="heading-page">Side by Side</h1>

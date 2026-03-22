@@ -238,7 +238,7 @@ export default function DynamicResumePage() {
       <div className="max-w-5xl mx-auto py-6 px-4">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-slate-500 hover:text-slate-700" aria-label="Back to home">
+            <Link href="/optimize" className="text-slate-500 hover:text-slate-700" aria-label="Back to optimize hub">
               ←
             </Link>
             <div>
