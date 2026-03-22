@@ -8,19 +8,21 @@
   },
   "summary": {
     "_dynamic": true,
-    "value": "Growth marketing and product management executive with 10+ years of experience driving digital transformation and revenue growth across travel tech, media, and e-commerce. Adept at comprehensive market analysis, developing data-driven strategies, and leveraging AI automation, Python coding, and financial modeling to optimize performance, scale operations, and foster cross-functional collaboration. Proven track record in managing high-performance teams and executing innovative digital campaigns—from SEO/SEM to product-led growth initiatives—that consistently deliver measurable results. Analytical, data-driven, and solutions-focused leader with hybrid skill sets, passionate about integrating emerging technologies with business development strategies to enhance customer engagement and market competitiveness in remote, global environments."
+    "value": "Growth marketing and product management executive with 10+ years of experience driving digital transformation and revenue growth across travel tech, media, and e-commerce—including B2B SaaS and enterprise software GTM contexts. Skilled at pressure-testing acquisition and retention hypotheses, shaping messaging and content architecture for technical and economic buyers, and applying AI-augmented content operations to shorten time-to-market for GTM assets. Adept at comprehensive market analysis, multi-touch attribution and incrementality testing, and leveraging automation, Python coding, and financial modeling to optimize performance, scale operations, and foster cross-functional collaboration. Proven track record managing high-performance teams and executing innovative digital campaigns—from SEO/SEM and ABM to product-led growth initiatives—that consistently deliver measurable results. Analytical, data-driven, and solutions-focused leader with hybrid skill sets, passionate about integrating emerging technologies with business development strategies to enhance customer engagement and market competitiveness in remote, global environments."
   },
   "coreCompetencies": {
     "_dynamic": true,
     "value": [
-      "Product & growth leadership (marketplaces, travel tech, PLG)",
-      "Data-driven strategy, measurement & financial modeling",
-      "AI-assisted delivery, automation & workflow integration",
-      "Digital acquisition, SEO/SEM & performance marketing",
-      "Cross-functional leadership & global vendor partnerships",
-      "Technical program delivery (platform scale, migrations, cloud)",
-      "eCommerce, catalog & brand growth",
-      "Stakeholder alignment, hiring & distributed operations"
+      "Product & growth leadership (marketplaces, travel tech, PLG, B2B SaaS GTM)",
+      "ABM, demand generation & lifecycle marketing; partnership & affiliate programs",
+      "Data-driven strategy: attribution, incrementality & A/B testing, financial modeling",
+      "Strategic messaging & content architecture for technical and economic buyers",
+      "AI-augmented GTM & content ops: prompt engineering, conversational AI, automation",
+      "Digital acquisition: SEO/SEM, paid media, GA4, Salesforce/Pardot & ad platforms",
+      "Analytics & visualization: Looker, Tableau, BigQuery, cohort & funnel analysis",
+      "Cross-functional leadership; creator ecosystems & competitive intelligence",
+      "Technical program delivery (platform scale, migrations, cloud, APIs)",
+      "Stakeholder alignment, hiring, editorial mentorship & distributed operations"
     ]
   },
   "technicalProficiency": {
@@ -45,11 +47,45 @@
       { "category": "Dev & delivery", "items": ["Git (branching, PRs, deploy workflow)"] },
       {
         "category": "AI & ML",
-        "items": ["LLM applications (Vertex AI, AWS Bedrock, NVIDIA NeMo); vector search (Pinecone, Qdrant); agent workflows; prompt design"]
+        "items": [
+          "LLM applications (Vertex AI, AWS Bedrock, NVIDIA NeMo); vector search (Pinecone, Qdrant); agent workflows",
+          "Answer Engine Optimization (AEO); conversational AI implementation; prompt engineering for content operations"
+        ]
       },
       {
-        "category": "Marketing & analytics",
-        "items": ["Google Analytics", "Google Tag Manager", "Search Console", "Google Ads", "Facebook Ads"]
+        "category": "Marketing & advertising",
+        "items": [
+          "GA4 Analytics; Google Tag Manager; Search Console; Google Ads; Facebook Ads",
+          "LinkedIn Campaign Manager & Sales Navigator",
+          "Salesforce & Pardot (B2B automation)",
+          "Local Services Ads (LSAs); display & traditional media advertising",
+          "SEMrush (advanced SEO/AEO execution)"
+        ]
+      },
+      {
+        "category": "Data visualization & experimentation",
+        "items": [
+          "Looker & Tableau (interactive dashboard development)",
+          "Incrementality testing & A/B testing",
+          "Attribution modeling (multi-touch impact measurement)",
+          "Cohort analysis & scenario modeling",
+          "Demand forecasting & budget planning",
+          "Funnel metrics analysis & funnel building"
+        ]
+      },
+      {
+        "category": "Growth & GTM",
+        "items": [
+          "Account-Based Marketing (ABM)",
+          "Direct-to-consumer (DTC) growth strategy",
+          "Product-led growth (PLG) initiatives",
+          "Demand generation & lifecycle marketing",
+          "Customer acquisition cost (CAC) management",
+          "Creator ecosystem management",
+          "Partnership & affiliate program management",
+          "Competitive intelligence & analyst relations",
+          "Messaging & positioning frameworks"
+        ]
       },
       { "category": "Tools & automation", "items": ["n8n", "Airtable", "Asana", "Zapier", "HubSpot"] }
     ]
@@ -64,7 +100,7 @@
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,
-        "value": "Founded in 2018 as ChinaWayz.com and later consolidated under the Trip Ways brand; resumed full-time leadership after Red Ventures to scale the marketplace globally.\n\nOwns product and growth execution for a global two-sided travel marketplace with 900 vendor companies, 15,000 complex bookable products, 5,000 travelers, and a distributed team of 20 employees.\n\nBuilt and scaled a platform that enables local tour companies to list and manage services at no upfront cost, improving supply quality, traveler access to authentic and affordable experiences, and marketplace transaction efficiency.\n\nDeveloped and launched a high-performance cloud-based WordPress platform tailored to multi-vendor travel commerce, integrating real-time booking, automated workflows, and growth-focused digital marketing strategies.\n\nLed a large-scale replatform and content migration while preserving marketplace continuity and strengthening search, catalog discoverability, and long-term scalability.\n\nBuilt and scaled automation workflows for inventory publishing and lifecycle operations, reducing manual overhead, improving operational reliability, and accelerating go-to-market for new tours and updates.\n\nImplemented AI-powered semantic discovery and recommendation capabilities to improve natural-language search and tour relevance across live inventory.\n\nPartnered with major travel players including Viator, TourRadar, and Travelzoo to execute growth initiatives, track performance, and optimize outcomes across organic and paid channels.\n\nDirected cross-functional execution across 20 internal team members and global vendor partners in 70 countries, while hiring and managing distributed support operations to deliver 24/7 customer coverage."
+        "value": "Founded in 2018 as ChinaWayz.com and later consolidated under the Trip Ways brand; resumed full-time leadership after Red Ventures to scale the marketplace globally, including market research and partnership strategies to expand reach and supply.\n\nOwns product and growth execution for a global two-sided travel marketplace with 900 vendor companies, 15,000 complex bookable products, 5,000 travelers, and a distributed team of 20 employees.\n\nBuilt and scaled a platform that enables local tour companies to list and manage services at no upfront cost, improving supply quality, traveler access to authentic and affordable experiences, and marketplace transaction efficiency.\n\nDeveloped and launched a high-performance cloud-based WordPress platform tailored to multi-vendor travel commerce, integrating real-time booking, automated workflows, and growth-focused digital marketing strategies.\n\nLed a large-scale replatform and content migration while preserving marketplace continuity and strengthening search, catalog discoverability, and long-term scalability.\n\nBuilt and scaled automation workflows for inventory publishing and lifecycle operations; implemented funnel modeling and optimization to drive continuous revenue growth, reducing manual overhead, improving operational reliability, and accelerating go-to-market for new tours and updates.\n\nIntegrated website personalization features to boost user activation and conversion rates.\n\nImplemented AI-powered semantic discovery and recommendation capabilities to improve natural-language search and tour relevance across live inventory.\n\nManaged global affiliate programs and strategic travel partnerships with Viator, TourRadar, Travelzoo, and similar partners to execute growth initiatives, track performance, and optimize outcomes across organic and paid channels.\n\nDirected cross-functional execution across 20 internal team members and global vendor partners in 70 countries, while hiring and managing distributed support operations to deliver 24/7 customer coverage."
       }
     },
     {
@@ -76,7 +112,7 @@
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,
-        "value": "Drove growth strategy for CNET's Media & Commerce business across Google, YouTube, Amazon, and CNET.com, partnering with leadership, product, engineering, data, editorial, commerce, and video teams to improve audience and revenue performance.\n\nCollaborated across teams to improve user experience for videos and affiliate widgets and strengthen engagement and revenue measurement; led testing initiatives that lifted on-page conversions by 1% and improved affiliate partnership ROI by 7%.\n\nPlanned and managed performance for major shopping events, including Prime Day and Black Friday, by defining best-in-class strategies, content recommendations, deals lineups, and campaign optimization that drove $1.5M in incremental revenue across brands.\n\nDeveloped and managed end-to-end data pipelines, dashboards, and reporting that improved visibility into media and commerce KPIs and informed editorial planning, content investment decisions, and growth prioritization.\n\nLed cross-functional video optimization strategy across platforms, increasing video traffic and revenue by 15%; authored the CNET video SEO playbook and led strategy sessions to operationalize best practices.\n\nDeveloped AI solutions and workflow integrations to streamline data analysis and forecasting, SEO execution, content creation, and video production optimization.\n\nManaged day-to-day operations of the Amazon publishing program, including content and SEO optimization, resulting in 600% revenue growth within 6 months."
+        "value": "Drove growth strategy for CNET's Media & Commerce business across Google, YouTube, Amazon, and CNET.com—including enterprise-level paid media and ABM-style initiatives—partnering with leadership, product, engineering, data, editorial, commerce, and video teams to improve audience and revenue performance.\n\nCollaborated across teams to improve user experience for videos and affiliate widgets and strengthen engagement and revenue measurement; led testing initiatives that lifted on-page conversions by 1% and, through incrementality testing and partnership optimization, improved affiliate partnership ROI by 7%.\n\nPlanned and managed performance for major shopping events, including Prime Day and Black Friday, by defining best-in-class strategies, content recommendations, deals lineups, and campaign optimization that drove $1.5M in incremental revenue across brands.\n\nDeveloped and managed end-to-end data pipelines, reporting, and interactive Looker dashboards that improved real-time visibility into media and commerce KPIs and informed editorial planning, content investment decisions, and growth prioritization.\n\nLed cross-functional video optimization strategy across platforms, increasing video traffic and revenue by 15%; authored the CNET video SEO playbook and led strategy sessions to operationalize best practices across global teams.\n\nLeveraged Pardot and Salesforce for targeted audience engagement and revenue measurement alongside broader marketing operations.\n\nDeveloped AI solutions and workflow integrations to streamline data analysis and forecasting, SEO execution, content creation, and video production optimization.\n\nManaged day-to-day operations of the Amazon publishing program, including content and SEO optimization, resulting in 600% revenue growth within 6 months."
       }
     },
     {
@@ -88,7 +124,7 @@
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,
-        "value": "Co-founded and scaled an e-commerce company from the ground up, building and managing a 50-person organization.\n\nDesigned and developed an online platform with approximately 55,000 resources (articles, podcasts, forums, and Farsi-language content) across 800+ categories, reaching approximately 10M monthly visitors and ranking 999 globally (20 in Iran) within 3 years.\n\nLed content strategy and SEO execution that elevated the site to the top 80 websites in Iran and top 2,000 globally, with 15M+ monthly sessions and 80% organic traffic.\n\nHired and managed a cross-functional team including SEO specialists and copywriters, improving workflow efficiency and execution quality.\n\nEstablished cross-functional operating guidelines for marketing strategy, keyword research, copywriting, content optimization, SEO/SEM, and monetization.\n\nDrove continuous system improvements in a constrained infrastructure environment, increasing operational resilience and team productivity.\n\nLed a large-scale migration from a legacy CMS to WordPress on self-managed AWS infrastructure, improving site performance and user experience while reducing server costs by 40%."
+        "value": "Co-founded and scaled an e-commerce company from the ground up, building and managing a 50-person organization.\n\nDesigned and developed an online platform with approximately 55,000 resources (articles, podcasts, forums, and Farsi-language content) across 800+ categories, reaching approximately 10M monthly visitors and ranking 999 globally (20 in Iran) within 3 years.\n\nLed content strategy and SEO execution that elevated the site to the top 80 websites in Iran and top 2,000 globally, with 15M+ monthly sessions and 80% organic traffic.\n\nManaged full-funnel digital marketing using Salesforce, ABM frameworks, and LinkedIn Advertising, integrated with SEO/SEM, lifecycle tactics, and monetization.\n\nHired and mentored a team of content managers, SEO specialists, and copywriters, improving workflow efficiency and execution quality.\n\nUtilized GA4 and Google Analytics for advanced performance reporting, funnel analysis, and campaign optimization.\n\nImplemented conversion rate optimization (CRO) tests to improve site-wide transaction efficiency.\n\nEstablished cross-functional operating guidelines for marketing strategy, keyword research, copywriting, content optimization, SEO/SEM, and monetization.\n\nDrove continuous system improvements in a constrained infrastructure environment, increasing operational resilience and team productivity.\n\nLed a large-scale migration from a legacy CMS to WordPress on self-managed AWS infrastructure, improving site performance and user experience while reducing server costs by 40%."
       }
     },
     {
@@ -151,4 +187,4 @@
       "Google Search Certification, 07/2017"
     ]
   }
-} 
+}
