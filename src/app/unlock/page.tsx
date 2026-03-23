@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function UnlockForm() {
@@ -67,9 +68,9 @@ function UnlockForm() {
           </button>
         </form>
         <p className="mt-6 text-xs text-slate-500">
-          <a href="/" className="text-indigo-600 hover:text-indigo-800">
+          <Link href="/" className="text-indigo-600 hover:text-indigo-800">
             ← Public resume
-          </a>
+          </Link>
         </p>
       </div>
     </div>

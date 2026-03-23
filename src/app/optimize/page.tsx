@@ -152,7 +152,7 @@ export default function HomePage() {
     setLoadingType("url");
     setError(null);
     try {
-      const { createURLExtractor } = await import("../services/urlExtractor");
+      const { createURLExtractor } = await import("../../services/urlExtractor");
       const extractor = createURLExtractor();
       const result = await extractor.extractJobDescription(jobUrl);
       if (result.success && result.content) {
@@ -266,7 +266,7 @@ export default function HomePage() {
     setLoadingType("pdf");
     setError(null);
     try {
-      const { getExportFilenameFromResume } = await import("../utils/safeParseFilename");
+      const { getExportFilenameFromResume } = await import("../../utils/safeParseFilename");
       const fullName = (customizedResumeData as ResumeData)?.header?.name ?? "Resume";
       const filename = getExportFilenameFromResume(fullName, companyOrRole);
       const res = await fetch("/api/generate-pdf", {

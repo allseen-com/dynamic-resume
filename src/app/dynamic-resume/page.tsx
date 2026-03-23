@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import Resume from "../../components/Resume";
 import type { ResumeData } from "../../types/resume";
@@ -88,10 +89,12 @@ function MediaBlock({ media, title }: { media: DynamicResumeMedia; title: string
   if (media.kind === "image") {
     return (
       <figure className="mt-3 space-y-1">
-        <img
+        <Image
           src={media.url}
           alt={media.alt ?? ""}
-          className="w-full max-h-64 rounded-lg border border-slate-200 object-cover"
+          width={1200}
+          height={512}
+          className="max-h-64 w-full rounded-lg border border-slate-200 object-cover"
         />
         {media.caption && (
           <figcaption className="text-xs text-slate-500">{media.caption}</figcaption>
@@ -275,11 +278,15 @@ export default function DynamicResumePage() {
                   className="group flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden hover:border-indigo-300 hover:shadow-md transition-all"
                 >
                   {cs.thumbnailUrl ? (
-                    <img
-                      src={cs.thumbnailUrl}
-                      alt=""
-                      className="h-36 w-full object-cover group-hover:opacity-95"
-                    />
+                    <div className="relative h-36 w-full">
+                      <Image
+                        src={cs.thumbnailUrl}
+                        alt=""
+                        fill
+                        className="object-cover group-hover:opacity-95"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    </div>
                   ) : (
                     <div className="h-24 bg-gradient-to-br from-indigo-100 to-slate-100" />
                   )}

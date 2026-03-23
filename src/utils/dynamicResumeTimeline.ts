@@ -46,7 +46,7 @@ function firstParagraph(text: string, maxLen = 220): string {
 
 function jobTimelineItems(resume: ResumeData): MergedTimelineItem[] {
   return resume.professionalExperience.map((job, experienceIndex) => {
-    const { startMs, endMs } = parseResumeDateRangeSortMs(job.dateRange);
+    const { endMs } = parseResumeDateRangeSortMs(job.dateRange);
     const summary = firstParagraph(job.description.value);
     return {
       id: `role-${experienceIndex}-${job.company.slice(0, 20)}`,
