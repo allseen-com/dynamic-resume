@@ -9,8 +9,7 @@ import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOv
 import { getSectionPrompts, getExperiencePrompts, getExperienceDynamic } from "../../utils/sectionPrompts";
 import { getTotalResumeWordCount, getTotalResumeCharacterCount } from "../../utils/wordCountUtils";
 import resumeData from "../../../data/resume.json";
-
-const LAST_INDEXED_KEY = "resumeLastIndexedAt";
+import { RESUME_LAST_INDEXED_AT_KEY } from "../../lib/resumeIndexStorage";
 
 const DRAFT_VERSION_LABELS = ["Technical", "Leadership", "Growth"] as const;
 type DraftVersionLabel = (typeof DRAFT_VERSION_LABELS)[number];
@@ -89,7 +88,7 @@ export default function HomePage() {
     setIsClient(true);
     if (typeof window !== "undefined") {
       setArchive(JSON.parse(localStorage.getItem("resumeArchive") || "[]"));
-      setLastIndexedAt(localStorage.getItem(LAST_INDEXED_KEY));
+      setLastIndexedAt(localStorage.getItem(RESUME_LAST_INDEXED_AT_KEY));
     }
   }, []);
 
@@ -108,7 +107,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const onStorageOrFocus = () => setLastIndexedAt(localStorage.getItem(LAST_INDEXED_KEY));
+    const onStorageOrFocus = () => setLastIndexedAt(localStorage.getItem(RESUME_LAST_INDEXED_AT_KEY));
     window.addEventListener("focus", onStorageOrFocus);
     return () => window.removeEventListener("focus", onStorageOrFocus);
   }, []);

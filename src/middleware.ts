@@ -10,6 +10,7 @@ function isPublicPath(pathname: string, method: string): boolean {
   if (pathname === "/api/tooling-unlock") return true;
   if (pathname === "/api/resume" && method === "GET") return true;
   if (pathname === "/api/generate-pdf" && method === "POST") return true;
+  if (pathname === "/api/generate-docx" && method === "POST") return true;
   return false;
 }
 

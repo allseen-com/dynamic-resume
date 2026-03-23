@@ -5,8 +5,7 @@ import Link from "next/link";
 import type { ResumeData } from "../../types/resume";
 import { defaultResumeConfig } from "../../types/resume";
 import Resume from "../../components/Resume";
-
-const LAST_INDEXED_KEY = "resumeLastIndexedAt";
+import { RESUME_LAST_INDEXED_AT_KEY } from "../../lib/resumeIndexStorage";
 
 export default function MotherResumePage() {
   const [data, setData] = useState<ResumeData | null>(null);
@@ -36,7 +35,7 @@ export default function MotherResumePage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setLastIndexedAt(localStorage.getItem(LAST_INDEXED_KEY));
+      setLastIndexedAt(localStorage.getItem(RESUME_LAST_INDEXED_AT_KEY));
     }
   }, []);
 
@@ -55,7 +54,7 @@ export default function MotherResumePage() {
         throw new Error(err.error || "Failed to index resume");
       }
       const at = new Date().toISOString();
-      localStorage.setItem(LAST_INDEXED_KEY, at);
+      localStorage.setItem(RESUME_LAST_INDEXED_AT_KEY, at);
       setLastIndexedAt(at);
       setMessage({ type: "ok", text: "Resume indexed. Match score and RAG will use this version." });
     } catch (e) {
