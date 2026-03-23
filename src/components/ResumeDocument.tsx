@@ -12,7 +12,7 @@ import {
   Font,
 } from '@react-pdf/renderer';
 import path from 'path';
-import { ResumeConfig, defaultResumeConfig } from '../types/resume';
+import { ResumeConfig, ResumeData, defaultResumeConfig, resumeConfigWithDataTitleBar } from '../types/resume';
 import defaultResumeData from '../../data/resume.json';
 
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -288,8 +288,11 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
   // If no resume data is provided, use default data
   const data: FlexibleResumeData = resumeData || defaultResumeData;
 
-  // Use provided config or default config
-  const resumeConfig = config || defaultResumeConfig;
+  // Use provided config or default; mother JSON titleBar overrides when present
+  const resumeConfig = resumeConfigWithDataTitleBar(
+    data as unknown as ResumeData,
+    config || defaultResumeConfig
+  );
 
   // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
   const coreCompetenciesArray = getArrayValue(data.coreCompetencies);

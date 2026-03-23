@@ -1,4 +1,12 @@
 export interface ResumeData {
+  /**
+   * Optional identity cluster (main title + specialization bar).
+   * When set, UI/PDF merge this over defaultResumeConfig.titleBar.
+   */
+  titleBar?: {
+    main: string;
+    sub: string;
+  };
   header: {
     _dynamic: boolean;
     name: string;
@@ -73,8 +81,8 @@ export interface AICustomizationResponseMeta {
 
 export const defaultResumeConfig: ResumeConfig = {
   titleBar: {
-    main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",
-    sub: "Business Development | Digital Marketing Strategy | Performance Optimizations"
+    main: "Senior Growth Architect & AI Product Lead",
+    sub: "Expertise: Web Engineering • Agentic AI Automation • Full-Stack SEO • Data-Driven GTM"
   },
   sections: {
     showTechnicalProficiency: true,
@@ -83,4 +91,22 @@ export const defaultResumeConfig: ResumeConfig = {
     showEducation: true,
     showCertifications: true,
   }
-}; 
+};
+
+/** Prefer titleBar from mother resume JSON when present. */
+export function resumeConfigWithDataTitleBar(
+  data: ResumeData,
+  base: ResumeConfig = defaultResumeConfig
+): ResumeConfig {
+  const tb = data.titleBar;
+  if (tb?.main) {
+    return {
+      ...base,
+      titleBar: {
+        main: tb.main,
+        sub: tb.sub ?? base.titleBar.sub,
+      },
+    };
+  }
+  return base;
+}

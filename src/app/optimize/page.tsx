@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Resume from "../../components/Resume";
-import { ResumeData, ResumeConfig } from "../../types/resume";
+import { ResumeData, ResumeConfig, defaultResumeConfig, resumeConfigWithDataTitleBar } from "../../types/resume";
 import { generateAICustomizedResume } from "../../utils/aiResumeGenerator";
 import { useErrorHandler } from "../../utils/errorHandler";
 import { AIProcessingLoader, URLExtractionLoader, PDFGenerationLoader, LoadingOverlay } from "../../components/LoadingSpinner";
@@ -40,21 +40,12 @@ export default function HomePage() {
   const [jobUrl, setJobUrl] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingType, setLoadingType] = useState<"url" | "ai" | "pdf" | null>(null);
-  const [motherResumeData, setMotherResumeData] = useState<ResumeData>(resumeData as ResumeData);
-  const [customizedResumeData, setCustomizedResumeData] = useState<ResumeData>(resumeData as ResumeData);
-  const [customizedConfig, setCustomizedConfig] = useState<ResumeConfig>({
-    titleBar: {
-      main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",
-      sub: "Business Development | Digital Marketing Strategy | Performance Optimizations",
-    },
-    sections: {
-      showTechnicalProficiency: true,
-      showCoreCompetencies: true,
-      showProfessionalExperience: true,
-      showEducation: true,
-      showCertifications: true,
-    },
-  });
+  const initialMother = resumeData as ResumeData;
+  const [motherResumeData, setMotherResumeData] = useState<ResumeData>(initialMother);
+  const [customizedResumeData, setCustomizedResumeData] = useState<ResumeData>(initialMother);
+  const [customizedConfig, setCustomizedConfig] = useState<ResumeConfig>(() =>
+    resumeConfigWithDataTitleBar(initialMother, defaultResumeConfig)
+  );
   const [error, setError] = useState<string | null>(null);
   const { handleErrorWithState } = useErrorHandler();
   const [companyOrRole, setCompanyOrRole] = useState<string | undefined>(undefined);
@@ -351,19 +342,7 @@ export default function HomePage() {
 
   const resetToDefault = () => {
     setCustomizedResumeData(motherResumeData);
-    setCustomizedConfig({
-      titleBar: {
-        main: "Performance Marketing / Marketing Data Analysis / Technical Project Manager",
-        sub: "Business Development | Digital Marketing Strategy | Performance Optimizations",
-      },
-      sections: {
-        showTechnicalProficiency: true,
-        showCoreCompetencies: true,
-        showProfessionalExperience: true,
-        showEducation: true,
-        showCertifications: true,
-      },
-    });
+    setCustomizedConfig(resumeConfigWithDataTitleBar(motherResumeData, defaultResumeConfig));
     setJobDescription("");
     setJobUrl("");
     setError(null);

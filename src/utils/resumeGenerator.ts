@@ -56,12 +56,12 @@ export function generateCustomizedResume(
         titleBarMain = "Data Analyst / Business Intelligence / Marketing Data Analysis";
         break;
       default:
-        titleBarMain = "Performance Marketing / Marketing Data Analysis / Technical Project Manager";
+        titleBarMain = "Senior Growth Architect & AI Product Lead";
     }
   }
   
   if (!titleBarSub) {
-    titleBarSub = "Business Development | Digital Marketing Strategy | Performance Optimizations";
+    titleBarSub = "Expertise: Web Engineering • Agentic AI Automation • Full-Stack SEO • Data-Driven GTM";
   }
   
   // Enhanced competency prioritization with scoring

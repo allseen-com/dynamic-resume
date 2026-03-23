@@ -209,7 +209,7 @@ function generateCustomConfig(keywords: string[], requirements: { role: string; 
     technical: "Technical Project Manager / Full-Stack Developer / Data Engineer",
     'data-analysis': "Data Analyst / Business Intelligence Specialist / Marketing Data Analyst",
     management: "Product Manager / Technical Project Manager / Business Development Manager",
-    general: "Performance Marketing / Marketing Data Analysis / Technical Project Manager"
+    general: "Senior Growth Architect & AI Product Lead"
   };
   
   const roleSubtitles = {
@@ -217,7 +217,7 @@ function generateCustomConfig(keywords: string[], requirements: { role: string; 
     technical: "Software Development | Cloud Architecture | Technical Leadership",
     'data-analysis': "Data Analysis | Business Intelligence | Performance Analytics",
     management: "Strategic Leadership | Project Management | Business Development",
-    general: "Business Development | Digital Marketing Strategy | Performance Optimizations"
+    general: "Expertise: Web Engineering • Agentic AI Automation • Full-Stack SEO • Data-Driven GTM"
   };
   
   const mainTitle = roleTitles[requirements.role as keyof typeof roleTitles] || roleTitles.general;

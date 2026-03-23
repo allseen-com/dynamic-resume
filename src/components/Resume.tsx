@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResumeData, ResumeConfig, defaultResumeConfig } from '../types/resume';
+import { ResumeData, ResumeConfig, defaultResumeConfig, resumeConfigWithDataTitleBar } from '../types/resume';
 
 // Add this type override at the top of the file (after imports):
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -116,6 +116,7 @@ export default function Resume({
 }: ResumeProps) {
   // Convert the input data to FlexibleResumeData format
   const resumeData = convertToFlexibleResumeData(inputResumeData);
+  const resumeConfig = resumeConfigWithDataTitleBar(inputResumeData as ResumeData, config);
 
   // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
   const coreCompetenciesArr = getArrayValue(resumeData.coreCompetencies);
@@ -180,10 +181,10 @@ export default function Resume({
         {/* Title Bar */}
         <div className="text-center mb-3.5 px-1">
           <div className="text-[14px] font-bold text-blue-900 leading-tight mb-0.5">
-            {getFieldValue(config.titleBar.main)}
+            {getFieldValue(resumeConfig.titleBar.main)}
           </div>
           <div className="text-[12px] font-normal text-gray-700 leading-tight">
-            {getFieldValue(config.titleBar.sub)}
+            {getFieldValue(resumeConfig.titleBar.sub)}
           </div>
         </div>
 
@@ -194,7 +195,7 @@ export default function Resume({
         </section>
 
         {/* Skills */}
-        {config.sections.showCoreCompetencies && (
+        {resumeConfig.sections.showCoreCompetencies && (
           <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header text-[16px]">Skills</h2>
             <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
@@ -209,7 +210,7 @@ export default function Resume({
         )}
 
         {/* Technical Skills - by category */}
-        {config.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
+        {resumeConfig.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
           <section className={`mb-5${highlightSections.includes('technicalProficiency') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header text-[16px]">Technical Skills</h2>
             <div className="space-y-2 text-[12px] font-normal leading-relaxed">
@@ -224,7 +225,7 @@ export default function Resume({
         )}
 
         {/* Work History */}
-        {config.sections.showProfessionalExperience && (
+        {resumeConfig.sections.showProfessionalExperience && (
           <section className={`mb-5${highlightSections.includes('professionalExperience') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
             <h2 className="section-header text-[16px]">Work History</h2>
             {resumeData.professionalExperience.map((role, i) => {
@@ -248,7 +249,7 @@ export default function Resume({
         )}
 
         {/* Education - Fixed to handle both array and object structures */}
-        {config.sections.showEducation && (
+        {resumeConfig.sections.showEducation && (
           <section className="mb-5">
             <h2 className="section-header text-[16px]">Education</h2>
             {educationArray.map((edu: { school: string; dateRange: string; degree: string }, i: number) => (
@@ -264,7 +265,7 @@ export default function Resume({
         )}
 
         {/* Certifications - Fixed to handle both array and object structures */}
-        {config.sections.showCertifications && (
+        {resumeConfig.sections.showCertifications && (
           <section>
             <h2 className="section-header text-[16px]">Certifications</h2>
             <ul className="text-xs ml-3">
