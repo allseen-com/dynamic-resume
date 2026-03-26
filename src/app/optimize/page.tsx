@@ -74,14 +74,86 @@ export default function HomePage() {
   const [draftScore, setDraftScore] = useState<number | null>(null);
   const [isEmbeddingDraft, setIsEmbeddingDraft] = useState(false);
   const [isCalculatingDraftScore, setIsCalculatingDraftScore] = useState(false);
+  const [globalPrompt, setGlobalPrompt] = useState<string>("");
+  const [templateMode, setTemplateMode] = useState<"full" | "shortened">("full");
+  const [progressPct, setProgressPct] = useState<number>(0);
+  const [rotatingStatus, setRotatingStatus] = useState<string>("Preparing optimization…");
+
+  const DEFAULT_GLOBAL_PROMPT = `Use the score, gaps, and strengths above to tailor the resume.\n\nRules:\n- Do not fabricate any facts, titles, employers, dates, tools, or metrics.\n- Prefer the job description’s terminology, but avoid copying full phrases verbatim.\n- Add missing keywords ONLY if they are already supported by the mother resume/RAG.\n- Keep bullets action-oriented (X-Y-Z when possible) and remove fluff.\n- If shortening, prioritize recent and role-relevant experience; compress older roles.`;
+  const GLOBAL_PROMPT_STORAGE_KEY = "customizeGlobalPrompt_v1";
+
+  const handleResetGlobalPrompt = () => {
+    setGlobalPrompt(DEFAULT_GLOBAL_PROMPT);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GLOBAL_PROMPT_STORAGE_KEY, DEFAULT_GLOBAL_PROMPT);
+    }
+  };
+
+  const handleClearGlobalPrompt = () => {
+    setGlobalPrompt("");
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GLOBAL_PROMPT_STORAGE_KEY, "");
+    }
+  };
+
+  const handleGlobalPromptChange = (value: string) => {
+    setGlobalPrompt(value);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GLOBAL_PROMPT_STORAGE_KEY, value);
+    }
+  };
 
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== "undefined") {
       setArchive(JSON.parse(localStorage.getItem("resumeArchive") || "[]"));
       setLastIndexedAt(localStorage.getItem(RESUME_LAST_INDEXED_AT_KEY));
+      const storedPrompt = localStorage.getItem(GLOBAL_PROMPT_STORAGE_KEY);
+      setGlobalPrompt((storedPrompt && storedPrompt.trim()) ? storedPrompt : DEFAULT_GLOBAL_PROMPT);
     }
   }, []);
+
+  useEffect(() => {
+    if (!(isGenerating && loadingType === "ai")) return;
+    const items = [
+      "Aligning keywords & priorities…",
+      "Rewriting summary for relevance…",
+      "Tightening bullets & metrics…",
+      "Compressing older roles (when needed)…",
+      "Final smoothing & ATS consistency…",
+    ];
+    let i = 0;
+    setRotatingStatus(items[0]);
+    const t = window.setInterval(() => {
+      i = (i + 1) % items.length;
+      setRotatingStatus(items[i]);
+    }, 1800);
+    return () => window.clearInterval(t);
+  }, [isGenerating, loadingType]);
+
+  useEffect(() => {
+    if (!(isGenerating && loadingType === "ai")) {
+      setProgressPct(0);
+      return;
+    }
+    const msg = optimizeStatusMessage ?? "";
+    const expCount = motherResumeData.professionalExperience?.length ?? 0;
+    const clamp = (n: number) => Math.max(0, Math.min(100, n));
+    let pct = 5;
+    if (/Analyzing job description/i.test(msg)) pct = 10;
+    else if (/Retrieving relevant experience/i.test(msg)) pct = 18;
+    else if (/Optimizing headline/i.test(msg)) pct = 28;
+    else if (/Optimizing professional summary/i.test(msg)) pct = 40;
+    else if (/Optimizing technical skills/i.test(msg)) pct = 52;
+    else if (/Optimizing work experience/i.test(msg)) {
+      const match = msg.match(/Optimizing work experience\s+(\d+)/i);
+      const idx1 = match ? Number(match[1]) : 1;
+      const denom = expCount > 0 ? expCount : 6;
+      const frac = Math.min(1, Math.max(0, (idx1 - 1) / denom));
+      pct = 55 + frac * 35;
+    } else if (/Finalizing and smoothing/i.test(msg)) pct = 94;
+    setProgressPct(clamp(Math.round(pct)));
+  }, [isGenerating, loadingType, optimizeStatusMessage, motherResumeData.professionalExperience]);
 
   useEffect(() => {
     fetch("/api/admin/pinecone-status")
@@ -208,6 +280,22 @@ export default function HomePage() {
     const expCount = motherResumeData.professionalExperience?.length ?? 0;
     const experiencePrompts = typeof window !== "undefined" ? getExperiencePrompts(expCount) : [];
     const experienceDynamic = typeof window !== "undefined" ? getExperienceDynamic(expCount) : [];
+    const trimmedGlobalPrompt = globalPrompt.trim();
+
+    const makeOlderRolePrompt = (base: string) => {
+      const olderRoleExtra = `\n\nSHORTENED FORMAT RULES FOR OLDER ROLES:\n- Default to exactly 1 bullet.\n- Use at most 2 bullets ONLY if clearly relevant to the job description.\n- Keep bullets highly specific and measurable where possible.\n- Remove unrelated responsibilities.\n- Keep dates exactly as the source resume.\n- Return the exact JSON structure required for this section.\n`;
+      return base + olderRoleExtra;
+    };
+    const effectiveExperiencePrompts = [...experiencePrompts];
+    if (templateMode === "shortened" && effectiveExperiencePrompts.length > 0) {
+      // Older roles in current resume.json: index 2=Setare, 3=Lam, 4=Nilgasht, 5=Hamrah.
+      const olderIdx = [2, 3, 4, 5];
+      for (const idx of olderIdx) {
+        if (idx >= 0 && idx < effectiveExperiencePrompts.length) {
+          effectiveExperiencePrompts[idx] = makeOlderRolePrompt(effectiveExperiencePrompts[idx]);
+        }
+      }
+    }
     setIsGenerating(true);
     setLoadingType("ai");
     setError(null);
@@ -218,8 +306,10 @@ export default function HomePage() {
         sectionPrompts,
         baseResumeData: motherResumeData,
         onProgress: (msg) => setOptimizeStatusMessage(msg),
-        experiencePrompts: experiencePrompts.length === expCount ? experiencePrompts : undefined,
+        experiencePrompts: effectiveExperiencePrompts.length === expCount ? effectiveExperiencePrompts : undefined,
         experienceDynamic: experienceDynamic.length === expCount ? experienceDynamic : undefined,
+        globalPrompt: trimmedGlobalPrompt ? trimmedGlobalPrompt : undefined,
+        targetPagesOverride: templateMode === "shortened" ? 2 : undefined,
         ...(matchScorePre != null && {
           preAnalysis: {
             matchScore: matchScorePre,
@@ -288,6 +378,69 @@ export default function HomePage() {
     } finally {
       setIsGenerating(false);
       setLoadingType(null);
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    setIsGenerating(true);
+    setLoadingType("pdf");
+    setError(null);
+    try {
+      const { getExportFilenameFromResume } = await import("../../utils/safeParseFilename");
+      const fullName = (customizedResumeData as ResumeData)?.header?.name ?? "Resume";
+      const base = getExportFilenameFromResume(fullName, companyOrRole).replace(/\.pdf$/i, "");
+      const filename = `${base}.docx`;
+      const res = await fetch("/api/generate-docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeData: customizedResumeData,
+          config: customizedConfig,
+          jobDescription,
+          filename,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        handleErrorWithState(new Error(err.details || err.error || "Failed to generate DOCX"), setError, "pdf");
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      handleErrorWithState(e, setError, "pdf");
+    } finally {
+      setIsGenerating(false);
+      setLoadingType(null);
+    }
+  };
+
+  const handleDownloadJSON = async () => {
+    setError(null);
+    try {
+      const { getExportFilenameFromResume } = await import("../../utils/safeParseFilename");
+      const fullName = (customizedResumeData as ResumeData)?.header?.name ?? "Resume";
+      const base = getExportFilenameFromResume(fullName, companyOrRole).replace(/\.pdf$/i, "");
+      const filename = `${base}.json`;
+      const json = JSON.stringify(customizedResumeData, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      handleErrorWithState(e, setError, "pdf");
     }
   };
 
@@ -489,22 +642,106 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Step 2: Use suggestions → Generate draft */}
+          {/* Step 2: Prompt & guidance */}
           <div className="relative flex gap-6 pb-10">
             <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-base font-semibold text-indigo-600 shadow-sm">
               2
             </div>
             <div className="flex-1 min-w-0 space-y-4">
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="heading-section mb-2">Improve match &amp; create draft</h2>
+                <h2 className="heading-section mb-2">Prompt &amp; guidance</h2>
                 <p className="text-sm text-slate-600 mb-4">
-                  Use the suggestions above to tailor your resume. We&apos;ll enrich the content and produce an optimized draft.
+                  Edit the optimization prompt right here to apply the score, gaps, and suggestions above. This prompt is appended to every section during customization.
                 </p>
-                {isGenerating && loadingType === "ai" && optimizeStatusMessage && (
-                  <p className="text-sm text-slate-600 mb-3 font-medium" role="status">
-                    {optimizeStatusMessage}
-                  </p>
+                <label className="label-app">Customization prompt (optional)</label>
+                <textarea
+                  value={globalPrompt}
+                  onChange={(e) => handleGlobalPromptChange(e.target.value)}
+                  placeholder={DEFAULT_GLOBAL_PROMPT}
+                  rows={8}
+                  className="textarea-app w-full"
+                />
+                <div className="mt-3 flex flex-wrap gap-2 items-center">
+                  <button
+                    type="button"
+                    onClick={handleResetGlobalPrompt}
+                    disabled={isGenerating}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-200 text-slate-800 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Reset to default
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearGlobalPrompt}
+                    disabled={isGenerating}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Clear
+                  </button>
+                  <span className="text-xs text-slate-500">
+                    Tip: include “keep only recent relevant roles” or “emphasize X skill”.
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Step 3: Choose template & generate */}
+          <div className="relative flex gap-6 pb-10">
+            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-base font-semibold text-indigo-600 shadow-sm">
+              3
+            </div>
+            <div className="flex-1 min-w-0 space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="heading-section mb-2">Choose template &amp; generate</h2>
+                <p className="text-sm text-slate-600 mb-4">
+                  Pick the output style, then generate your customized resume using the same ATS-friendly template.
+                </p>
+
+                <div className="flex flex-wrap gap-3 items-center mb-4">
+                  <div className="flex rounded-lg border border-slate-300 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setTemplateMode("full")}
+                      className={`px-3 py-1.5 text-sm font-medium ${templateMode === "full" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
+                    >
+                      Full format
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTemplateMode("shortened")}
+                      className={`px-3 py-1.5 text-sm font-medium ${templateMode === "shortened" ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
+                      title="Shortened format targets ~2 pages and compresses older roles."
+                    >
+                      Shortened (2 pages)
+                    </button>
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    {templateMode === "shortened"
+                      ? "Older roles are compressed to 1 bullet (max 2 if relevant)."
+                      : "Keeps the current full-detail draft format."}
+                  </span>
+                </div>
+
+                {isGenerating && loadingType === "ai" && (
+                  <div className="mb-4" aria-label="Optimization progress">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Progress</span>
+                      <span className="text-xs text-slate-500">{progressPct}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+                      <div
+                        className="h-2 bg-emerald-600 transition-all duration-300"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-sm text-slate-600" role="status">
+                      {optimizeStatusMessage || rotatingStatus}
+                    </p>
+                  </div>
                 )}
+
                 <div className="flex flex-wrap gap-3 items-center">
                   <button
                     onClick={handleGenerateResume}
@@ -524,7 +761,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Draft preview + word count + what we changed + score (when we have a draft) */}
+              {/* Draft preview (when we have a draft) */}
               {hasDraft && (
                 <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm relative">
                   <LoadingOverlay isVisible={loadingType === "ai"}>
@@ -556,7 +793,6 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                  {/* Word count and character count: mother vs draft */}
                   <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/50">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Word count &amp; length</p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
@@ -564,107 +800,6 @@ export default function HomePage() {
                       <span>Draft: <strong className="text-slate-800">{draftWordCount}</strong> words, <strong className="text-slate-800">{draftCharCount.toLocaleString()}</strong> chars</span>
                       {draftWordCount < motherWordCount && (
                         <span className="text-emerald-700 font-medium">Summarized for focus</span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Index draft & calculate score (before report) */}
-                  <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/50">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Index draft &amp; score</p>
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <button
-                        type="button"
-                        onClick={handleEmbedDraft}
-                        disabled={isEmbeddingDraft || !pineconeConfigured}
-                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-200 text-slate-800 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isEmbeddingDraft ? "Indexing…" : "Index draft"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCalculateDraftScore}
-                        disabled={isCalculatingDraftScore || !jobDescription.trim()}
-                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isCalculatingDraftScore ? "Calculating…" : "Calculate score for draft"}
-                      </button>
-                      {draftId && (
-                        <span className="text-xs text-slate-500">Draft indexed (id: {draftId.slice(0, 8)}…)</span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Post-customization report: score, summary, changes by section (always visible after customization) */}
-                  <div className="px-4 py-4 border-b border-slate-200 bg-indigo-50/50 space-y-4">
-                    <h3 className="text-sm font-semibold text-slate-800">Post-customization report</h3>
-                    {/* Match score */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1">Match score</p>
-                      {matchScore != null || matchScoreAfter != null || draftScore != null ? (
-                        <div className="flex flex-wrap gap-2 items-center">
-                          {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (
-                            <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
-                              Before: {Math.round(matchScorePre)}% → After: {matchScoreAfter != null ? Math.round(matchScoreAfter * 100) : Math.round(draftScore ?? 0)}%
-                            </span>
-                          )}
-                          {matchScore != null && matchScoreAfter != null && (
-                            <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
-                              Optimize: {Math.round(matchScore * 100)}% → {Math.round(matchScoreAfter * 100)}%
-                            </span>
-                          )}
-                          {matchScore == null && matchScoreAfter == null && draftScore != null && (
-                            <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
-                              Draft score: {Math.round(draftScore)}%
-                            </span>
-                          )}
-                          {matchScore != null && matchScoreAfter == null && draftScore == null && (
-                            <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
-                              {Math.round(matchScore * 100)}%
-                            </span>
-                          )}
-                          {matchScoreAfter != null && matchScore == null && draftScore == null && (
-                            <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
-                              {Math.round(matchScoreAfter * 100)}%
-                            </span>
-                          )}
-                          {groundingVerified && (
-                            <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">Grounding verified</span>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-slate-500">Index draft and use “Calculate score for draft” to see match score, or run optimization with embeddings enabled.</p>
-                      )}
-                    </div>
-                    {/* Summary (with improvement when we have before/after) */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1">Summary</p>
-                      {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (() => {
-                        const afterPct = matchScoreAfter != null ? Math.round(matchScoreAfter * 100) : (draftScore != null ? Math.round(draftScore) : null);
-                        const improved = afterPct != null && afterPct > matchScorePre;
-                        return (
-                          <p className="text-sm text-slate-700 mb-2">
-                            {improved
-                              ? <>Match improved from <strong>{Math.round(matchScorePre)}%</strong> to <strong>{afterPct}%</strong>.</>
-                              : <>Match score: Before <strong>{Math.round(matchScorePre)}%</strong> → After <strong>{afterPct ?? "—"}%</strong>.</>}
-                            {analysisPre && " " + analysisPre}
-                          </p>
-                        );
-                      })()}
-                      {optimizationSummary ? (
-                        <p className="text-sm text-slate-700">{optimizationSummary}</p>
-                      ) : (
-                        <p className="text-sm text-slate-500">No summary returned</p>
-                      )}
-                    </div>
-                    {/* Changes by section */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1">Changes by section (what changed and why)</p>
-                      {keyChanges && keyChanges.length > 0 ? (
-                        <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
-                          {keyChanges.map((change, i) => (
-                            <li key={i}>{change}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-sm text-slate-500">No change details returned</p>
                       )}
                     </div>
                   </div>
@@ -693,33 +828,44 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Step 3: Download */}
+          {/* Step 4: Downloads + archive */}
           <div className="relative flex gap-6 pb-10">
             <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-base font-semibold text-indigo-600 shadow-sm">
-              3
-            </div>
-            <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="heading-section mb-2">Download your resume</h2>
-              <p className="text-sm text-slate-600 mb-4">
-                Export the customized draft as a PDF ready to submit.
-              </p>
-              <button
-                onClick={handleDownloadPDF}
-                disabled={isGenerating}
-                className={`px-5 py-2.5 rounded-lg font-medium text-sm ${isGenerating ? "bg-slate-400 cursor-not-allowed text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
-              >
-                {loadingType === "pdf" ? "Generating…" : "Download PDF"}
-              </button>
-            </div>
-          </div>
-
-          {/* Archive (step 4 or footer) */}
-          <div className="relative flex gap-6">
-            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-base font-semibold text-slate-500 shadow-sm">
               4
             </div>
-            <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="heading-section mb-4">Resume archive</h2>
+            <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+              <div>
+                <h2 className="heading-section mb-2">Download your customized resume</h2>
+                <p className="text-sm text-slate-600 mb-4">
+                  Export the customized draft as a PDF, DOCX, or JSON.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleDownloadPDF}
+                    disabled={isGenerating || !hasDraft}
+                    className={`px-5 py-2.5 rounded-lg font-medium text-sm ${isGenerating || !hasDraft ? "bg-slate-400 cursor-not-allowed text-white" : "bg-red-600 hover:bg-red-700 text-white"}`}
+                  >
+                    {loadingType === "pdf" ? "Generating…" : "Download PDF"}
+                  </button>
+                  <button
+                    onClick={handleDownloadDocx}
+                    disabled={isGenerating || !hasDraft}
+                    className={`px-5 py-2.5 rounded-lg font-medium text-sm ${isGenerating || !hasDraft ? "bg-slate-400 cursor-not-allowed text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}`}
+                  >
+                    Download DOCX
+                  </button>
+                  <button
+                    onClick={handleDownloadJSON}
+                    disabled={!hasDraft}
+                    className={`px-5 py-2.5 rounded-lg font-medium text-sm ${!hasDraft ? "bg-slate-400 cursor-not-allowed text-white" : "bg-slate-600 hover:bg-slate-700 text-white"}`}
+                  >
+                    Download JSON
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200">
+                <h3 className="heading-section mb-4">Resume archive</h3>
               <div className="flex flex-wrap gap-2 mb-3">
                 <input
                   type="text"
@@ -762,6 +908,128 @@ export default function HomePage() {
               ) : (
                 <p className="text-sm text-slate-500">Save customized drafts here for later.</p>
               )}
+              </div>
+            </div>
+          </div>
+
+          {/* Step 5: Index draft & score + post-customization report */}
+          <div className="relative flex gap-6">
+            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-base font-semibold text-indigo-600 shadow-sm">
+              5
+            </div>
+            <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+              <div>
+                <h2 className="heading-section mb-2">Index draft &amp; score</h2>
+                <p className="text-sm text-slate-600 mb-3">
+                  Index this customized draft, then score it against the job description for a post-customization report.
+                </p>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <button
+                    type="button"
+                    onClick={handleEmbedDraft}
+                    disabled={isEmbeddingDraft || !pineconeConfigured || !hasDraft}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-200 text-slate-800 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isEmbeddingDraft ? "Indexing…" : "Index draft"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCalculateDraftScore}
+                    disabled={isCalculatingDraftScore || !jobDescription.trim() || !hasDraft}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCalculatingDraftScore ? "Calculating…" : "Calculate score for draft"}
+                  </button>
+                  {draftId && (
+                    <span className="text-xs text-slate-500">Draft indexed (id: {draftId.slice(0, 8)}…)</span>
+                  )}
+                  {!pineconeConfigured && (
+                    <span className="text-xs text-amber-700">Pinecone not configured; scoring may be limited.</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 space-y-4">
+                <h3 className="text-sm font-semibold text-slate-800">Post-customization report</h3>
+                <div>
+                  <p className="text-xs font-medium text-slate-600 mb-1">Match score</p>
+                  {matchScorePre != null || matchScoreAfter != null || draftScore != null ? (
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (
+                        <span className="inline-flex items-center px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-sm">
+                          Before: {Math.round(matchScorePre)}% → After: {Math.round((draftScore ?? matchScoreAfter ?? 0))}%
+                        </span>
+                      )}
+                      {matchScoreAfter != null && (
+                        <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
+                          Optimizer after-score: {Math.round(matchScoreAfter)}%
+                        </span>
+                      )}
+                      {draftScore != null && (
+                        <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
+                          Draft score: {Math.round(draftScore)}%
+                        </span>
+                      )}
+                      {groundingVerified && (
+                        <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-sm">
+                          Grounding verified
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      Generate a draft, then index and calculate the score to see the report.
+                    </p>
+                  )}
+                </div>
+
+                {matchScorePre != null && (matchScoreAfter != null || draftScore != null) && (() => {
+                  const afterPct = Math.round((draftScore ?? matchScoreAfter ?? 0));
+                  const delta = afterPct - Math.round(matchScorePre);
+                  const improved = delta > 0;
+                  return (
+                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                      <p className="text-sm text-slate-700">
+                        {improved ? (
+                          <>Match improved by <strong>{delta}%</strong> (from <strong>{Math.round(matchScorePre)}%</strong> to <strong>{afterPct}%</strong>).</>
+                        ) : (
+                          <>Match score change: <strong>{Math.round(matchScorePre)}%</strong> → <strong>{afterPct}%</strong> ({delta}%).
+                          </>
+                        )}
+                      </p>
+                      {!improved && (
+                        <ul className="mt-2 text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                          <li>Compression removed some JD keywords or relevant details.</li>
+                          <li>Summary/title drifted away from the JD terminology.</li>
+                          <li>Shortened format dropped older-but-relevant skills/experience context.</li>
+                        </ul>
+                      )}
+                      {analysisPre && <p className="mt-2 text-sm text-slate-600">{analysisPre}</p>}
+                    </div>
+                  );
+                })()}
+
+                <div>
+                  <p className="text-xs font-medium text-slate-600 mb-1">Summary</p>
+                  {optimizationSummary ? (
+                    <p className="text-sm text-slate-700">{optimizationSummary}</p>
+                  ) : (
+                    <p className="text-sm text-slate-500">No summary returned</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-600 mb-1">Changes by section (what changed and why)</p>
+                  {keyChanges && keyChanges.length > 0 ? (
+                    <ul className="text-sm text-slate-700 list-disc list-inside space-y-0.5">
+                      {keyChanges.map((change, i) => (
+                        <li key={i}>{change}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-slate-500">No change details returned</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

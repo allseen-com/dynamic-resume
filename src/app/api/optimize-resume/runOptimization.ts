@@ -95,6 +95,7 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
         ? buildPreAnalysisBlock(preAnalysis)
         : undefined;
 
+    // Use 0–100 integers for consistency with /api/match-score.
     let matchScore: number | undefined;
     let matchScoreAfter: number | undefined;
     let jdVector: number[] | undefined;
@@ -106,7 +107,7 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
         embedText(resumeSummaryText.slice(0, 8192)),
       ]);
       jdVector = jdVec;
-      matchScore = Math.round(cosineSimilarity(jdVec, resumeSummaryVector) * 100) / 100;
+      matchScore = Math.round(cosineSimilarity(jdVec, resumeSummaryVector) * 100);
     } catch (embedError) {
       console.warn('Pre-optimization embeddings failed:', embedError);
       setJobFailed(jobId, 'Embedding service failed. Ensure OPENAI_API_KEY is set and valid.');
@@ -251,7 +252,7 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
       try {
         const optimizedSummaryText = getResumeSummaryForMatch(optimizedData);
         const optimizedVector = await embedText(optimizedSummaryText.slice(0, 8192));
-        matchScoreAfter = Math.round(cosineSimilarity(jdVector, optimizedVector) * 100) / 100;
+        matchScoreAfter = Math.round(cosineSimilarity(jdVector, optimizedVector) * 100);
         result.matchScoreAfter = matchScoreAfter;
       } catch (e) {
         console.warn('Post-optimization score failed:', e);

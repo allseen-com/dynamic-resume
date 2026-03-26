@@ -16,6 +16,10 @@ export interface AICustomizationRequest {
   baseResumeData: ResumeData;
   targetRole?: string;
   industry?: string;
+  /** Overrides stored resumeTargetPages when provided. */
+  targetPagesOverride?: number;
+  /** Global user instructions appended to every prompt (sections + experiences). */
+  globalPrompt?: string;
   preAnalysis?: PreAnalysisForOptimize;
   onProgress?: (message: string | null) => void;
   /** Per-experience prompts (one per entry); used for experience_0, experience_1, … */
@@ -359,7 +363,7 @@ function extractCompanyOrRole(jobDescription: string): string | undefined {
 export async function generateAICustomizedResume(
   request: AICustomizationRequest
 ): Promise<AICustomizationResponse> {
-  const { jobDescription, sectionPrompts, baseResumeData, preAnalysis, onProgress, experiencePrompts, experienceDynamic } = request;
+  const { jobDescription, sectionPrompts, baseResumeData, preAnalysis, onProgress, experiencePrompts, experienceDynamic, targetPagesOverride, globalPrompt } = request;
   const companyOrRole = extractCompanyOrRole(jobDescription);
 
   let targetPages: number | undefined;
@@ -369,18 +373,37 @@ export async function generateAICustomizedResume(
     if (stored) targetPages = Number(stored);
     sectionMaxWords = getSectionMaxWords();
   }
+  if (typeof targetPagesOverride === 'number' && targetPagesOverride >= 1 && targetPagesOverride <= 5) {
+    targetPages = targetPagesOverride;
+  }
+
+  const appendGlobalPrompt = (p: string): string => {
+    const gp = typeof globalPrompt === 'string' ? globalPrompt.trim() : '';
+    if (!gp) return p;
+    return `${p}\n\n--- User instructions ---\n${gp}\n--- End user instructions ---\n`;
+  };
+  const effectiveSectionPrompts: SectionPrompts = {
+    headline: appendGlobalPrompt(sectionPrompts.headline),
+    summary: appendGlobalPrompt(sectionPrompts.summary),
+    technical: appendGlobalPrompt(sectionPrompts.technical),
+    experience: appendGlobalPrompt(sectionPrompts.experience),
+    final: appendGlobalPrompt(sectionPrompts.final),
+  };
+  const effectiveExperiencePrompts = Array.isArray(experiencePrompts)
+    ? experiencePrompts.map((p) => appendGlobalPrompt(p))
+    : undefined;
 
   try {
     const response = await fetch('/api/optimize-resume', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        sectionPrompts,
+        sectionPrompts: effectiveSectionPrompts,
         jobDescription,
         resumeData: baseResumeData,
         ...(targetPages != null && targetPages >= 1 && targetPages <= 5 && { targetPages }),
         ...(sectionMaxWords && { sectionMaxWords }),
-        ...(Array.isArray(experiencePrompts) && { experiencePrompts }),
+        ...(Array.isArray(effectiveExperiencePrompts) && { experiencePrompts: effectiveExperiencePrompts }),
         ...(Array.isArray(experienceDynamic) && { experienceDynamic }),
         ...(preAnalysis && {
           preAnalysis: {
