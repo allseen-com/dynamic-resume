@@ -16,12 +16,17 @@ export async function GET() {
 function isResumeData(obj: unknown): obj is ResumeData {
   if (!obj || typeof obj !== 'object') return false;
   const o = obj as Record<string, unknown>;
+  const hasSkills =
+    typeof o.skills === 'object' &&
+    Array.isArray((o.skills as { categories?: unknown }).categories);
+  const hasLegacySkills =
+    typeof o.coreCompetencies === 'object' && typeof o.technicalProficiency === 'object';
   return (
     typeof o.header === 'object' &&
     typeof o.summary === 'object' &&
     Array.isArray(o.professionalExperience) &&
     typeof o.education === 'object' &&
-    typeof o.certifications === 'object'
+    (hasSkills || hasLegacySkills)
   );
 }
 
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     if (!isResumeData(body)) {
       return NextResponse.json(
-        { error: 'Invalid resume data: missing required fields (header, summary, professionalExperience, education, certifications)' },
+        { error: 'Invalid resume data: missing required fields (header, summary, professionalExperience, education, skills)' },
         { status: 400 }
       );
     }

@@ -197,11 +197,16 @@ export function analyzeContentFit(
     });
   }
   
-  // Check competencies count
+  // Check skills item count (legacy competencies or unified skills)
   const competenciesCount = resumeData.coreCompetencies?.value?.length || 0;
+  const skillsItemCount = resumeData.skills?.categories?.reduce((n, c) => n + (c.items?.length ?? 0), 0) ?? 0;
   if (competenciesCount > template.constraints.itemLimits.coreCompetencies) {
     violations.push(`Too many core competencies (${competenciesCount}/${template.constraints.itemLimits.coreCompetencies})`);
     recommendations.push('Select most relevant competencies for the target role');
+  }
+  if (skillsItemCount > template.constraints.itemLimits.coreCompetencies * 4) {
+    violations.push(`Skills section may be too long (${skillsItemCount} items)`);
+    recommendations.push('Trim skills to the most job-relevant items per category');
   }
   
   return {

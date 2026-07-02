@@ -12,7 +12,8 @@ import {
   Font,
 } from '@react-pdf/renderer';
 import path from 'path';
-import { ResumeConfig, ResumeData, defaultResumeConfig, resumeConfigWithDataTitleBar } from '../types/resume';
+import { ResumeConfig, ResumeData, defaultResumeConfig, resumeConfigWithDataTitleBar, shouldShowSkills } from '../types/resume';
+import { getSkillsCategories, getSkillsFootnote, hasUnifiedSkills } from '../utils/skillsUtils';
 import defaultResumeData from '../../data/resume.json';
 
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -23,6 +24,15 @@ type FlexibleResumeData = {
     address: FlexibleField;
     email: FlexibleField;
     phone: FlexibleField;
+    links?: {
+      linkedin?: string;
+      website?: string;
+      portfolio?: string;
+    };
+  };
+  skills?: {
+    footnote?: FlexibleField;
+    categories?: { category: string; items: string[] }[];
   };
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
@@ -294,32 +304,29 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
     config || defaultResumeConfig
   );
 
-  // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
-  const coreCompetenciesArray = getArrayValue(data.coreCompetencies);
-  const coreItems = coreCompetenciesArray.slice(0, 10);
-  while (coreItems.length < 10) coreItems.push('');
+  const resumeAsData = data as unknown as ResumeData;
+  const unifiedSkills = hasUnifiedSkills(resumeAsData);
+  const skillsCategories = getSkillsCategories(resumeAsData);
+  const skillsFootnote = getSkillsFootnote(resumeAsData);
+  const coreCompetenciesArray = unifiedSkills ? [] : getArrayValue(data.coreCompetencies);
+  const technicalSkillsCategories = unifiedSkills
+    ? skillsCategories
+    : (() => {
+        const tech = data.technicalProficiency;
+        if (tech?.categories?.length) return tech.categories;
+        return [
+          { category: 'Programming', items: (tech?.programming ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Cloud / Data', items: (tech?.cloudData ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Analytics', items: (tech?.analytics ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'ML / AI', items: (tech?.mlAi ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Productivity', items: (tech?.productivity ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Marketing / Ads', items: (tech?.marketingAds ?? []).map(getFieldValue).filter(Boolean) },
+        ].filter((g) => g.items.length > 0);
+      })();
 
-  // Get education and certifications arrays properly
   const educationArray = getEducationArray(data.education);
   const certificationsArray = getArrayValue(data.certifications);
-
-  // Technical skills by category (new shape) or legacy
-  const getTechnicalSkillsCategories = () => {
-    const tech = data.technicalProficiency;
-    if (tech?.categories?.length) {
-      return tech.categories;
-    }
-    const legacy = [
-      { category: 'Programming', items: (tech?.programming ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Cloud / Data', items: (tech?.cloudData ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Analytics', items: (tech?.analytics ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'ML / AI', items: (tech?.mlAi ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Productivity', items: (tech?.productivity ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Marketing / Ads', items: (tech?.marketingAds ?? []).map(getFieldValue).filter(Boolean) },
-    ].filter((g) => g.items.length > 0);
-    return legacy;
-  };
-  const technicalSkillsCategories = getTechnicalSkillsCategories();
+  const headerLinks = data.header.links;
 
   return (
     <Document>
@@ -330,6 +337,15 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
           <Text style={styles.contactInfo}>
             {getFieldValue(data.header.address)} | {getFieldValue(data.header.email)} | {getFieldValue(data.header.phone)}
           </Text>
+          {headerLinks && (headerLinks.linkedin || headerLinks.website || headerLinks.portfolio) && (
+            <Text style={[styles.contactInfo, { marginTop: 2, color: '#1e3a8a' }]}>
+              {[
+                headerLinks.linkedin ? 'LinkedIn' : '',
+                headerLinks.website ? 'Tripways.com' : '',
+                headerLinks.portfolio ? 'cv.allseen.com' : '',
+              ].filter(Boolean).join(' | ')}
+            </Text>
+          )}
         </View>
 
         {/* Title Bar */}
@@ -349,45 +365,6 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
             {getFieldValue(data.summary)}
           </Text>
         </View>
-
-        {/* Skills */}
-        {resumeConfig.sections.showCoreCompetencies && coreCompetenciesArray.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Skills</Text>
-            <View style={styles.competenciesGrid}>
-              {coreCompetenciesArray.map((item: string, i: number) => (
-                <View key={i} style={styles.competencyItem}>
-                  <View style={styles.bullet} />
-                  {/* Force single-line bullet for PDF, no truncation */}
-                  <Text style={styles.competencyText}>{getFieldValue(item)}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Technical Skills - by category */}
-        {resumeConfig.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Technical Skills</Text>
-            {technicalSkillsCategories.map((group, i) => (
-              <View key={i} style={{ marginBottom: 4 }}>
-                <Text style={{ fontSize: 11, fontWeight: 'bold', marginBottom: 1 }}>{group.category}: </Text>
-                <Text style={{ fontSize: 11, fontWeight: 'normal', lineHeight: 1.2 }}>{group.items.join(', ')}</Text>
-              </View>
-            ))}
-            {(() => {
-              const fn = data.technicalProficiency?.footnote;
-              const foot = fn ? getFieldValue(fn).trim() : '';
-              if (!foot) return null;
-              return (
-                <Text style={{ fontSize: 10, fontStyle: 'italic', marginTop: 4, lineHeight: 1.25, color: '#333' }}>
-                  {foot}
-                </Text>
-              );
-            })()}
-          </View>
-        )}
 
         {/* Work History */}
         {resumeConfig.sections.showProfessionalExperience && data.professionalExperience.length > 0 && (
@@ -414,6 +391,60 @@ export default function ResumeDocument({ resumeData, config }: ResumeDocumentPro
                 </View>
               );
             })}
+          </View>
+        )}
+
+        {/* Skills — unified or legacy */}
+        {shouldShowSkills(resumeConfig, resumeAsData) && unifiedSkills && skillsCategories.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Skills</Text>
+            {skillsCategories.map((group, i) => (
+              <View key={i} style={{ marginBottom: 4 }}>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', marginBottom: 1 }}>{group.category}: </Text>
+                <Text style={{ fontSize: 11, fontWeight: 'normal', lineHeight: 1.2 }}>{group.items.join(', ')}</Text>
+              </View>
+            ))}
+            {skillsFootnote ? (
+              <Text style={{ fontSize: 10, fontStyle: 'italic', marginTop: 4, lineHeight: 1.25, color: '#333' }}>
+                {skillsFootnote}
+              </Text>
+            ) : null}
+          </View>
+        )}
+
+        {!unifiedSkills && resumeConfig.sections.showCoreCompetencies && coreCompetenciesArray.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Skills</Text>
+            <View style={styles.competenciesGrid}>
+              {coreCompetenciesArray.map((item: string, i: number) => (
+                <View key={i} style={styles.competencyItem}>
+                  <View style={styles.bullet} />
+                  <Text style={styles.competencyText}>{getFieldValue(item)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {!unifiedSkills && resumeConfig.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Technical Skills</Text>
+            {technicalSkillsCategories.map((group, i) => (
+              <View key={i} style={{ marginBottom: 4 }}>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', marginBottom: 1 }}>{group.category}: </Text>
+                <Text style={{ fontSize: 11, fontWeight: 'normal', lineHeight: 1.2 }}>{group.items.join(', ')}</Text>
+              </View>
+            ))}
+            {(() => {
+              const fn = data.technicalProficiency?.footnote;
+              const foot = fn ? getFieldValue(fn).trim() : '';
+              if (!foot) return null;
+              return (
+                <Text style={{ fontSize: 10, fontStyle: 'italic', marginTop: 4, lineHeight: 1.25, color: '#333' }}>
+                  {foot}
+                </Text>
+              );
+            })()}
           </View>
         )}
 

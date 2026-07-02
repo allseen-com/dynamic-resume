@@ -30,7 +30,7 @@ const SECTION_LABELS: Record<keyof SectionPrompts, string> = {
 const SECTION_HINTS: Partial<Record<keyof SectionPrompts, string>> = {
   summary: "Limit: 80–120 words.",
   headline: "Output: main + sub title only.",
-  technical: "Output: coreCompetencies + technicalProficiency.",
+  technical: "Output: skills (unified categories).",
   experience: "Default for work experience (each role can override below). Output: one entry. Use MM/YYYY for dates.",
   final: "Receives merged draft; smooth and return full resume + summary + keyChanges.",
 };

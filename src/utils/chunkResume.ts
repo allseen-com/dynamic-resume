@@ -1,4 +1,5 @@
 import { ResumeData } from '../types/resume';
+import { getSkillsCategories, getSkillsFootnote, getSkillsTextForMatch } from './skillsUtils';
 
 export interface ResumeChunk {
   id: string;
@@ -29,42 +30,17 @@ export function chunkResume(data: ResumeData): ResumeChunk[] {
     });
   }
 
-  // Core competencies
-  if (data.coreCompetencies?.value?.length) {
-    const text = data.coreCompetencies.value.join('. ');
+  // Skills (unified or legacy)
+  const skillCategories = getSkillsCategories(data);
+  if (skillCategories.length) {
+    const parts = skillCategories.map((g) => `${g.category}: ${g.items.join(', ')}`);
+    const foot = getSkillsFootnote(data);
+    const skillsBody = `Skills: ${parts.join('. ')}${foot ? `. Note: ${foot}` : ''}`;
     chunks.push({
       id: `chunk-${globalIndex++}`,
-      text: `Core Competencies: ${text}`,
-      metadata: { section: 'coreCompetencies' },
+      text: skillsBody,
+      metadata: { section: 'skills' },
     });
-  }
-
-  // Technical skills (by category)
-  if (data.technicalProficiency) {
-    const tp = data.technicalProficiency;
-    const parts: string[] = [];
-    if (tp.categories?.length) {
-      for (const g of tp.categories) {
-        if (g.items?.length) parts.push(`${g.category}: ${g.items.join(', ')}`);
-      }
-    } else {
-      const legacy = tp as { programming?: string[]; cloudData?: string[]; analytics?: string[]; mlAi?: string[]; productivity?: string[]; marketingAds?: string[] };
-      if (legacy.programming?.length) parts.push(`Programming: ${legacy.programming.join(', ')}`);
-      if (legacy.cloudData?.length) parts.push(`Cloud/Data: ${legacy.cloudData.join(', ')}`);
-      if (legacy.analytics?.length) parts.push(`Analytics: ${legacy.analytics.join(', ')}`);
-      if (legacy.mlAi?.length) parts.push(`ML/AI: ${legacy.mlAi.join(', ')}`);
-      if (legacy.productivity?.length) parts.push(`Productivity: ${legacy.productivity.join(', ')}`);
-      if (legacy.marketingAds?.length) parts.push(`Marketing/Ads: ${legacy.marketingAds.join(', ')}`);
-    }
-    if (parts.length) {
-      const foot = tp.footnote?.value?.trim();
-      const techBody = `Technical Skills: ${parts.join('. ')}${foot ? `. Note: ${foot}` : ''}`;
-      chunks.push({
-        id: `chunk-${globalIndex++}`,
-        text: techBody,
-        metadata: { section: 'technicalProficiency' },
-      });
-    }
   }
 
   // Professional experience - one chunk per role for fine-grained retrieval
@@ -116,11 +92,8 @@ export function chunkResume(data: ResumeData): ResumeChunk[] {
 export function getResumeSummaryForMatch(data: ResumeData): string {
   const parts: string[] = [];
   if (data.summary?.value) parts.push(data.summary.value);
-  if (data.coreCompetencies?.value?.length) {
-    parts.push(data.coreCompetencies.value.slice(0, 8).join('. '));
-  }
-  const techFn = data.technicalProficiency?.footnote?.value?.trim();
-  if (techFn) parts.push(techFn);
+  const skillsText = getSkillsTextForMatch(data);
+  if (skillsText) parts.push(skillsText);
   if (data.professionalExperience?.length) {
     data.professionalExperience.slice(0, 5).forEach((exp) => {
       const firstLine = exp.description?.value?.split(/\n/)[0] ?? '';

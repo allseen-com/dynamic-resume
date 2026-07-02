@@ -280,7 +280,7 @@ Focus on:
       const customizedData = JSON.parse(jsonMatch[0]);
       
       // Validate that the response has the expected structure
-      if (!customizedData.header || !customizedData.summary || !customizedData.coreCompetencies) {
+      if (!customizedData.header || !customizedData.summary || !(customizedData.skills?.categories?.length || customizedData.coreCompetencies)) {
         throw new Error('Invalid resume data structure in AI response');
       }
       
@@ -348,13 +348,13 @@ Focus on:
       };
 
       let customizedData: ResumeData;
-      if (parsed.resumeData && parsed.resumeData.header && parsed.resumeData.summary && parsed.resumeData.coreCompetencies) {
+      if (parsed.resumeData && parsed.resumeData.header && parsed.resumeData.summary && (parsed.resumeData.skills?.categories?.length || parsed.resumeData.coreCompetencies)) {
         customizedData = parsed.resumeData as ResumeData;
       } else {
         customizedData = parsed as unknown as ResumeData;
       }
 
-      if (!customizedData.header || !customizedData.summary || !customizedData.coreCompetencies) {
+      if (!customizedData.header || !customizedData.summary || !(customizedData.skills?.categories?.length || customizedData.coreCompetencies)) {
         throw new Error('Invalid resume data structure in AI response');
       }
 
@@ -447,11 +447,15 @@ Focus on:
       return { summary: { _dynamic: true, value: summary.value } };
     }
     if (sectionId === 'technical') {
+      const skills = parsed.skills as ResumeData['skills'] | undefined;
+      if (skills?.categories?.length) {
+        return { skills };
+      }
       const coreCompetencies = parsed.coreCompetencies as ResumeData['coreCompetencies'] | undefined;
       const technicalProficiency = parsed.technicalProficiency as ResumeData['technicalProficiency'] | undefined;
       const hasTech = technicalProficiency && (technicalProficiency.categories?.length || (technicalProficiency as { programming?: string[] }).programming !== undefined);
       if (!coreCompetencies?.value || !hasTech) {
-        throw new Error('Technical section must return { coreCompetencies, technicalProficiency } with categories or legacy keys');
+        throw new Error('Technical section must return { skills } with categories, or legacy { coreCompetencies, technicalProficiency }');
       }
       return { coreCompetencies, technicalProficiency };
     }
@@ -477,7 +481,8 @@ Focus on:
 export type SectionFragment =
   | { titleBar: { main: string; sub: string } }
   | { summary: ResumeData['summary'] }
-  | { coreCompetencies: ResumeData['coreCompetencies']; technicalProficiency: ResumeData['technicalProficiency'] }
+  | { skills: NonNullable<ResumeData['skills']> }
+  | { coreCompetencies: NonNullable<ResumeData['coreCompetencies']>; technicalProficiency: NonNullable<ResumeData['technicalProficiency']> }
   | { professionalExperience: ResumeData['professionalExperience'] };
 
 // Factory function to create AI service instance

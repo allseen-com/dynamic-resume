@@ -1,5 +1,6 @@
 import React from 'react';
-import { ResumeData, ResumeConfig, defaultResumeConfig, resumeConfigWithDataTitleBar } from '../types/resume';
+import { ResumeData, ResumeConfig, defaultResumeConfig, resumeConfigWithDataTitleBar, shouldShowSkills } from '../types/resume';
+import { getSkillsCategories, getSkillsFootnote, hasUnifiedSkills } from '../utils/skillsUtils';
 
 // Add this type override at the top of the file (after imports):
 type FlexibleField = string | { value: string; fixed?: boolean; editable?: boolean };
@@ -10,6 +11,15 @@ type FlexibleResumeData = {
     address: FlexibleField;
     email: FlexibleField;
     phone: FlexibleField;
+    links?: {
+      linkedin?: string;
+      website?: string;
+      portfolio?: string;
+    };
+  };
+  skills?: {
+    footnote?: FlexibleField;
+    categories?: { category: string; items: string[] }[];
   };
   summary: FlexibleField;
   coreCompetencies: FlexibleField[] | { value: FlexibleField[] };
@@ -98,6 +108,7 @@ function convertToFlexibleResumeData(data: ResumeData | FlexibleResumeData): Fle
       phone: resumeData.header.phone,
     },
     summary: resumeData.summary,
+    skills: resumeData.skills,
     coreCompetencies: resumeData.coreCompetencies,
     technicalProficiency: resumeData.technicalProficiency,
     professionalExperience: resumeData.professionalExperience,
@@ -118,32 +129,30 @@ export default function Resume({
   const resumeData = convertToFlexibleResumeData(inputResumeData);
   const resumeConfig = resumeConfigWithDataTitleBar(inputResumeData as ResumeData, config);
 
-  // --- Core Competencies: Always 2 columns x 5 rows, no wrapping ---
-  const coreCompetenciesArr = getArrayValue(resumeData.coreCompetencies);
-  const coreItems = coreCompetenciesArr.slice(0, 10);
-  while (coreItems.length < 10) coreItems.push('');
+  const resumeAsData = inputResumeData as ResumeData;
+  const skillsCategories = getSkillsCategories(resumeAsData);
+  const skillsFootnote = getSkillsFootnote(resumeAsData);
+  const unifiedSkills = hasUnifiedSkills(resumeAsData);
 
-  // Get education and certifications arrays properly
+  const coreCompetenciesArr = unifiedSkills ? [] : getArrayValue(resumeData.coreCompetencies);
+  const technicalSkillsCategories = unifiedSkills
+    ? skillsCategories
+    : (() => {
+        const tech = resumeData.technicalProficiency;
+        if (tech?.categories?.length) return tech.categories;
+        return [
+          { category: 'Programming', items: (tech?.programming ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Cloud / Data', items: (tech?.cloudData ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Analytics', items: (tech?.analytics ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'ML / AI', items: (tech?.mlAi ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Productivity', items: (tech?.productivity ?? []).map(getFieldValue).filter(Boolean) },
+          { category: 'Marketing / Ads', items: (tech?.marketingAds ?? []).map(getFieldValue).filter(Boolean) },
+        ].filter((g) => g.items.length > 0);
+      })();
+
   const educationArray = getEducationArray(resumeData.education);
   const certificationsArray = getArrayValue(resumeData.certifications);
-
-  // Technical skills by category (new shape) or flattened (legacy)
-  const getTechnicalSkillsCategories = () => {
-    const tech = resumeData.technicalProficiency;
-    if (tech?.categories?.length) {
-      return tech.categories;
-    }
-    const legacy = [
-      { category: 'Programming', items: (tech?.programming ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Cloud / Data', items: (tech?.cloudData ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Analytics', items: (tech?.analytics ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'ML / AI', items: (tech?.mlAi ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Productivity', items: (tech?.productivity ?? []).map(getFieldValue).filter(Boolean) },
-      { category: 'Marketing / Ads', items: (tech?.marketingAds ?? []).map(getFieldValue).filter(Boolean) },
-    ].filter((g) => g.items.length > 0);
-    return legacy;
-  };
-  const technicalSkillsCategories = getTechnicalSkillsCategories();
+  const headerLinks = resumeData.header.links;
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -176,6 +185,31 @@ export default function Resume({
             <span className="mx-1">{getFieldValue(resumeData.header.email)}</span> |
             <span>{getFieldValue(resumeData.header.phone)}</span>
           </div>
+          {headerLinks && (headerLinks.linkedin || headerLinks.website || headerLinks.portfolio) && (
+            <div className="text-center text-[12px] font-normal text-blue-800 mt-1">
+              {headerLinks.linkedin && (
+                <a href={headerLinks.linkedin} className="hover:underline mx-1" target="_blank" rel="noopener noreferrer">
+                  LinkedIn
+                </a>
+              )}
+              {headerLinks.website && (
+                <>
+                  {headerLinks.linkedin && <span className="text-gray-500">|</span>}
+                  <a href={headerLinks.website} className="hover:underline mx-1" target="_blank" rel="noopener noreferrer">
+                    Tripways.com
+                  </a>
+                </>
+              )}
+              {headerLinks.portfolio && (
+                <>
+                  {(headerLinks.linkedin || headerLinks.website) && <span className="text-gray-500">|</span>}
+                  <a href={headerLinks.portfolio} className="hover:underline mx-1" target="_blank" rel="noopener noreferrer">
+                    cv.allseen.com
+                  </a>
+                </>
+              )}
+            </div>
+          )}
         </header>
 
         {/* Title Bar */}
@@ -193,36 +227,6 @@ export default function Resume({
           <h2 className="section-header text-[16px]">Professional Summary</h2>
           <p className="text-[12px] leading-relaxed text-justify">{getFieldValue(resumeData.summary)}</p>
         </section>
-
-        {/* Skills */}
-        {resumeConfig.sections.showCoreCompetencies && (
-          <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header text-[16px]">Skills</h2>
-            <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
-              {coreCompetenciesArr.map((item: string, i: number) => (
-                <li key={i} className="flex items-start mb-0.5">
-                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                  <span className="leading-snug block break-words" style={{maxWidth: '100%'}}>{getFieldValue(item)}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Technical Skills - by category */}
-        {resumeConfig.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
-          <section className={`mb-5${highlightSections.includes('technicalProficiency') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
-            <h2 className="section-header text-[16px]">Technical Skills</h2>
-            <div className="space-y-2 text-[12px] font-normal leading-relaxed">
-              {technicalSkillsCategories.map((group, i) => (
-                <div key={i}>
-                  <span className="font-semibold text-gray-800">{group.category}: </span>
-                  <span>{group.items.join(', ')}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Work History */}
         {resumeConfig.sections.showProfessionalExperience && (
@@ -245,6 +249,52 @@ export default function Resume({
                 </div>
               );
             })}
+          </section>
+        )}
+
+        {/* Skills — unified or legacy split sections */}
+        {shouldShowSkills(resumeConfig, resumeAsData) && unifiedSkills && skillsCategories.length > 0 && (
+          <section className={`mb-5${highlightSections.includes('skills') || highlightSections.includes('technical') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
+            <h2 className="section-header text-[16px]">Skills</h2>
+            <div className="space-y-2 text-[12px] font-normal leading-relaxed">
+              {skillsCategories.map((group, i) => (
+                <div key={i}>
+                  <span className="font-semibold text-gray-800">{group.category}: </span>
+                  <span>{group.items.join(', ')}</span>
+                </div>
+              ))}
+              {skillsFootnote && (
+                <p className="text-[11px] italic text-gray-600 mt-1">{skillsFootnote}</p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {!unifiedSkills && resumeConfig.sections.showCoreCompetencies && coreCompetenciesArr.length > 0 && (
+          <section className={`mb-3.5${highlightSections.includes('coreCompetencies') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
+            <h2 className="section-header text-[16px]">Skills</h2>
+            <ul className="grid grid-cols-2 gap-x-6 text-[12px] ml-3">
+              {coreCompetenciesArr.map((item: string, i: number) => (
+                <li key={i} className="flex items-start mb-0.5">
+                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
+                  <span className="leading-snug block break-words" style={{maxWidth: '100%'}}>{getFieldValue(item)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {!unifiedSkills && resumeConfig.sections.showTechnicalProficiency && technicalSkillsCategories.length > 0 && (
+          <section className={`mb-5${highlightSections.includes('technicalProficiency') ? ' ring-2 ring-green-400 bg-green-50 transition-all duration-500' : ''}`}>
+            <h2 className="section-header text-[16px]">Technical Skills</h2>
+            <div className="space-y-2 text-[12px] font-normal leading-relaxed">
+              {technicalSkillsCategories.map((group, i) => (
+                <div key={i}>
+                  <span className="font-semibold text-gray-800">{group.category}: </span>
+                  <span>{group.items.join(', ')}</span>
+                </div>
+              ))}
+            </div>
           </section>
         )}
 

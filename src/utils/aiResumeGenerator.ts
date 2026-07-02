@@ -133,10 +133,14 @@ async function customizeResumeData(
     customizedData.summary.value = generateCustomSummary(baseData, keywords, requirements);
   }
   
-  // Customize core competencies if dynamic
-  if (customizedData.coreCompetencies._dynamic) {
+  // Customize skills if dynamic (unified or legacy competencies)
+  if (customizedData.skills?._dynamic && customizedData.skills.categories?.length) {
+    for (const cat of customizedData.skills.categories) {
+      cat.items = prioritizeCompetencies(cat.items, keywords);
+    }
+  } else if (customizedData.coreCompetencies?._dynamic && customizedData.coreCompetencies.value) {
     customizedData.coreCompetencies.value = prioritizeCompetencies(
-      baseData.coreCompetencies.value,
+      baseData.coreCompetencies?.value ?? [],
       keywords
     );
   }
@@ -233,11 +237,12 @@ function generateCustomConfig(keywords: string[], requirements: { role: string; 
       sub: subtitle
     },
     sections: {
-      showTechnicalProficiency: true,
-      showCoreCompetencies: true,
+      showSkills: true,
+      showTechnicalProficiency: false,
+      showCoreCompetencies: false,
       showProfessionalExperience: true,
       showEducation: true,
-      showCertifications: true,
+      showCertifications: false,
     }
   };
 }

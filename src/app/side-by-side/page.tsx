@@ -6,6 +6,7 @@ import type { ResumeData } from "../../types/resume";
 import { defaultResumeConfig } from "../../types/resume";
 import { getSectionIdsForResume, getSectionPrompts, getSectionMaxWords, getExperiencePrompts } from "../../utils/sectionPrompts";
 import type { SectionFragment } from "../../services/aiService";
+import { getSkillsCategories, getSkillsFootnote } from "../../utils/skillsUtils";
 
 function getSectionLabel(sectionId: string, resume: ResumeData): string {
   if (sectionId === "headline") return "Headline / Title bar";
@@ -29,12 +30,9 @@ function getMotherPreview(resume: ResumeData, sectionId: string): string {
     return resume.summary?.value ?? "";
   }
   if (sectionId === "technical") {
-    const comp = resume.coreCompetencies?.value ?? [];
-    const tech = resume.technicalProficiency;
-    const catLines = tech?.categories
-      ? tech.categories.map((c) => `${c.category}: ${(c.items ?? []).join(", ")}`)
-      : [];
-    return [...comp, ...catLines].filter(Boolean).join("\n\n");
+    const catLines = getSkillsCategories(resume).map((c) => `${c.category}: ${(c.items ?? []).join(", ")}`);
+    const foot = getSkillsFootnote(resume);
+    return [...catLines, foot].filter(Boolean).join("\n\n");
   }
   const match = sectionId.match(/^experience_(\d+)$/);
   if (match) {
@@ -52,6 +50,12 @@ function fragmentToPreview(fragment: SectionFragment): string {
   }
   if ("summary" in fragment) {
     return fragment.summary?.value ?? "";
+  }
+  if ("skills" in fragment) {
+    const catLines =
+      fragment.skills?.categories?.map((c) => `${c.category}: ${(c.items ?? []).join(", ")}`) ?? [];
+    const foot = fragment.skills?.footnote?.value?.trim() ?? "";
+    return [...catLines, foot].filter(Boolean).join("\n\n");
   }
   if ("coreCompetencies" in fragment && "technicalProficiency" in fragment) {
     const comp = fragment.coreCompetencies?.value ?? [];

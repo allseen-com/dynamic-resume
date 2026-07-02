@@ -64,56 +64,48 @@ export function generateCustomizedResume(
     titleBarSub = "Expertise: Web Engineering • Agentic AI Automation • Full-Stack SEO • Data-Driven GTM";
   }
   
-  // Enhanced competency prioritization with scoring
+  // Enhanced skill prioritization with scoring (unified skills or legacy competencies)
   if (jobRequirements.keywords.length > 0 || jobRequirements.preferredSkills.length > 0) {
     const allKeywords = [...jobRequirements.keywords, ...jobRequirements.preferredSkills];
-    
-    const scoredCompetencies = resumeData.coreCompetencies.value.map(competency => {
+
+    const scoreItem = (text: string) => {
       let score = 0;
-      const competencyLower = competency.toLowerCase();
-      
-      // Score based on exact keyword matches
-      allKeywords.forEach(keyword => {
-        if (competencyLower.includes(keyword.toLowerCase())) {
-          score += keyword === keyword.toLowerCase() ? 3 : 2; // Prefer exact case matches
+      const lower = text.toLowerCase();
+      allKeywords.forEach((keyword) => {
+        if (lower.includes(keyword.toLowerCase())) {
+          score += keyword === keyword.toLowerCase() ? 3 : 2;
         }
       });
-      
-      // Bonus for job type specific competencies
       switch (jobRequirements.jobType) {
         case 'marketing':
-          if (competencyLower.includes('marketing') || competencyLower.includes('growth') || 
-              competencyLower.includes('digital') || competencyLower.includes('performance')) {
-            score += 2;
-          }
+          if (lower.includes('marketing') || lower.includes('growth') || lower.includes('digital') || lower.includes('performance')) score += 2;
           break;
         case 'technical':
-          if (competencyLower.includes('technical') || competencyLower.includes('project') || 
-              competencyLower.includes('development') || competencyLower.includes('automation')) {
-            score += 2;
-          }
+          if (lower.includes('technical') || lower.includes('project') || lower.includes('development') || lower.includes('automation')) score += 2;
           break;
         case 'management':
-          if (competencyLower.includes('leadership') || competencyLower.includes('management') || 
-              competencyLower.includes('strategic') || competencyLower.includes('business')) {
-            score += 2;
-          }
+          if (lower.includes('leadership') || lower.includes('management') || lower.includes('strategic') || lower.includes('business')) score += 2;
           break;
         case 'data-analysis':
-          if (competencyLower.includes('analysis') || competencyLower.includes('data') || 
-              competencyLower.includes('optimization') || competencyLower.includes('performance')) {
-            score += 2;
-          }
+          if (lower.includes('analysis') || lower.includes('data') || lower.includes('optimization') || lower.includes('performance')) score += 2;
           break;
       }
-      
-      return { competency, score };
-    });
-    
-    // Sort by score (highest first) and extract competencies
-    resumeData.coreCompetencies.value = scoredCompetencies
-      .sort((a, b) => b.score - a.score)
-      .map(item => item.competency);
+      return score;
+    };
+
+    if (resumeData.skills?.categories?.length) {
+      for (const cat of resumeData.skills.categories) {
+        cat.items = cat.items
+          .map((item) => ({ item, score: scoreItem(item) }))
+          .sort((a, b) => b.score - a.score)
+          .map((x) => x.item);
+      }
+    } else if (resumeData.coreCompetencies?.value?.length) {
+      resumeData.coreCompetencies.value = resumeData.coreCompetencies.value
+        .map((competency) => ({ competency, score: scoreItem(competency) }))
+        .sort((a, b) => b.score - a.score)
+        .map((x) => x.competency);
+    }
   }
   
   // Limit professional experience if specified
@@ -128,11 +120,12 @@ export function generateCustomizedResume(
       sub: titleBarSub
     },
     sections: {
-      showTechnicalProficiency: customization.sections?.showTechnicalProficiency ?? true,
-      showCoreCompetencies: customization.sections?.showCoreCompetencies ?? true,
+      showSkills: true,
+      showTechnicalProficiency: customization.sections?.showTechnicalProficiency ?? false,
+      showCoreCompetencies: customization.sections?.showCoreCompetencies ?? false,
       showProfessionalExperience: customization.sections?.showProfessionalExperience ?? true,
       showEducation: customization.sections?.showEducation ?? true,
-      showCertifications: customization.sections?.showCertifications ?? true,
+      showCertifications: customization.sections?.showCertifications ?? false,
     }
   };
   

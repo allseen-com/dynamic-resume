@@ -6,95 +6,18 @@
   "header": {
     "_dynamic": false,
     "name": "Meysam Soheilipour",
-    "address": "Remote USA, Based in Mexico City (US Citizen)",
+    "address": "US Citizen, Based in Mexico City (Remote)",
     "email": "Soheil_dot@yahoo.com",
-    "phone": "(971) 267-9430"
+    "phone": "(971) 267-9430",
+    "links": {
+      "linkedin": "https://linkedin.com/in/meysamsoheili/",
+      "website": "https://tripways.com",
+      "portfolio": "https://cv.allseen.com"
+    }
   },
   "summary": {
     "_dynamic": true,
     "value": "Senior growth and AI product leader with 10+ years driving measurable revenue, platform scale, and digital transformation across travel tech, media, and e-commerce—including B2B SaaS and enterprise software GTM. Owns outcomes end-to-end: P&L-minded prioritization, stakeholder alignment, and cross-functional leadership across marketing, product, engineering, and data. Combines full-stack SEO with Answer Engine Optimization (AEO) and content ingestibility for LLM visibility—structuring entities, schema, and crawl-friendly surfaces so brands rank in AI answers as well as traditional search. Builds agentic automation (Python, n8n, LLM orchestration) to shorten GTM cycles, scale content operations, and operationalize experimentation. Proven record establishing organizational infrastructure from the ground up, running technical programs (migrations, cloud, APIs), and delivering incrementality-tested growth in remote, global environments."
-  },
-  "coreCompetencies": {
-    "_dynamic": true,
-    "value": [
-      "Executive ownership: P&L discipline, stakeholder alignment, cross-functional leadership",
-      "Growth architecture: full-stack SEO, AEO & LLM visibility, data-driven GTM & PLG",
-      "Agentic AI & automation: multi-step AI agents, workflow orchestration, prompt/LLM ops",
-      "Product & platform delivery: marketplaces, technical roadmaps, cloud scale & migrations",
-      "ABM, demand gen & lifecycle marketing; partnerships, affiliates & creator ecosystems",
-      "Attribution, incrementality & A/B testing; financial modeling & funnel optimization",
-      "Strategic messaging & content architecture for technical and economic buyers",
-      "Analytics stack: GA4, BigQuery, Looker/Tableau, Salesforce/Pardot, ad platforms",
-      "Web engineering fluency: WordPress/custom plugins, APIs, performance & Core Web Vitals",
-      "Hiring, editorial mentorship, distributed operations & competitive intelligence"
-    ]
-  },
-  "technicalProficiency": {
-    "_dynamic": true,
-    "footnote": {
-      "_dynamic": true,
-      "value": "AI-assisted development & code review (Cursor / LLM workflows)."
-    },
-    "categories": [
-      {
-        "category": "Languages & data",
-        "items": ["Python", "SQL", "PHP", "MySQL (WordPress data layer)", "Google BigQuery", "Amazon Redshift"]
-      },
-      {
-        "category": "Web platform & integrations",
-        "items": ["WordPress (custom plugins, hooks/filters, admin)", "REST APIs & webhooks", "HTML / CSS / JavaScript (themes & front-end)"]
-      },
-      {
-        "category": "Cloud & web performance",
-        "items": ["AWS (S3, SES, Lightsail, CloudFront)", "Technical SEO, Core Web Vitals & crawl efficiency (CDN, caching)"]
-      },
-      { "category": "Dev & delivery", "items": ["Git (branching, PRs, deploy workflow)"] },
-      {
-        "category": "AI, AEO & agentic automation",
-        "items": [
-          "Agentic workflows: multi-step AI agents and orchestration with Python, n8n, and LLMs",
-          "Answer Engine Optimization (AEO); conversational AI; prompt engineering for content ops",
-          "Content ingestibility & LLM visibility: structured data, entity clarity, retrieval-friendly markup for AI crawlers",
-          "LLM apps (Vertex AI, AWS Bedrock, NVIDIA NeMo); vector search (Pinecone, Qdrant)"
-        ]
-      },
-      {
-        "category": "Marketing & advertising",
-        "items": [
-          "GA4 Analytics; Google Tag Manager; Search Console; Google Ads; Facebook Ads",
-          "LinkedIn Campaign Manager & Sales Navigator",
-          "Salesforce & Pardot (B2B automation)",
-          "Local Services Ads (LSAs); display & traditional media advertising",
-          "SEMrush (advanced SEO/AEO execution)"
-        ]
-      },
-      {
-        "category": "Data visualization & experimentation",
-        "items": [
-          "Looker & Tableau (interactive dashboard development)",
-          "Incrementality testing & A/B testing",
-          "Attribution modeling (multi-touch impact measurement)",
-          "Cohort analysis & scenario modeling",
-          "Demand forecasting & budget planning",
-          "Funnel metrics analysis & funnel building"
-        ]
-      },
-      {
-        "category": "Growth & GTM",
-        "items": [
-          "Account-Based Marketing (ABM)",
-          "Direct-to-consumer (DTC) growth strategy",
-          "Product-led growth (PLG) initiatives",
-          "Demand generation & lifecycle marketing",
-          "Customer acquisition cost (CAC) management",
-          "Creator ecosystem management",
-          "Partnership & affiliate program management",
-          "Competitive intelligence & analyst relations",
-          "Messaging & positioning frameworks"
-        ]
-      },
-      { "category": "Tools & automation", "items": ["n8n", "Airtable", "Asana", "Zapier", "HubSpot"] }
-    ]
   },
   "professionalExperience": [
     {
@@ -106,7 +29,7 @@
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,
-        "value": "Founded in 2018 as ChinaWayz.com and later consolidated under the Trip Ways brand; resumed full-time leadership after Red Ventures with P&L ownership for scaling the marketplace globally, including market research and partnership strategy to expand reach and supply.\n\nEstablished the organizational infrastructure for product, growth, engineering, and vendor operations from the ground up—aligning stakeholders across a distributed team of 20 and 900 vendor companies serving 15,000 bookable products and 5,000 travelers.\n\nScaled a two-sided marketplace by owning product and growth execution end-to-end: catalog quality, traveler access to authentic affordable experiences, and transaction efficiency—measured by sustained supply growth and operational reliability.\n\nDirected development of a high-performance cloud WordPress platform for multi-vendor travel commerce, integrating real-time booking, automated inventory lifecycles, and agentic workflows that reduced manual publishing overhead and accelerated time-to-market for new tours.\n\nLed a large-scale replatform and content migration while preserving marketplace continuity; improved discoverability and technical SEO/AEO foundations for long-term scale.\n\nImproved activation and conversion as measured by funnel lift, by shipping website personalization and AI-powered semantic search and recommendations across live inventory.\n\nGrew partnership revenue channels as measured by affiliate and OTA performance, by managing global programs with Viator, TourRadar, Travelzoo, and aligned stakeholders on tracking, deals, and channel mix across organic and paid.\n\nDirected cross-functional execution across internal teams and vendor partners in 70 countries; hired and scaled distributed support for 24/7 coverage with clear operating cadences and accountability."
+        "value": "Founded in 2018 as ChinaWayz.com and later consolidated under the Trip Ways brand; resumed full-time leadership after Red Ventures with P&L ownership for scaling the marketplace globally, including market research and partnership strategy to expand reach and supply.\n\nEstablished the organizational infrastructure for product, growth, engineering, and vendor operations from the ground up—aligning stakeholders across a distributed team of 20 and 900 vendor companies serving 15,000 bookable products and 5,000 travelers.\n\nScaled a two-sided marketplace by owning product and growth execution end-to-end: catalog quality, traveler access to authentic affordable experiences, and transaction efficiency—measured by sustained supply growth and operational reliability.\n\nDirected development of a high-performance cloud WordPress platform for multi-vendor travel commerce, integrating real-time booking, automated inventory lifecycles, and agentic AI workflows that reduced manual publishing overhead and accelerated time-to-market for new tours.\n\nLed a large-scale replatform and content migration while preserving marketplace continuity; improved discoverability and technical SEO/AEO foundations for long-term scale.\n\nImproved activation and conversion as measured by funnel lift, by shipping website personalization and AI-powered semantic search and recommendations across live inventory.\n\nSecured and maintained Google Things To Do (GTTD) partner status by passing Google's data-quality and compliance review, building an agentic AI curation pipeline that vetted and structured thousands of tours across 900+ global vendor partners for accuracy, policy compliance, and search eligibility.\n\nGrew partnership revenue channels as measured by affiliate and OTA performance, by managing global programs with Viator, TourRadar, Travelzoo, and aligning stakeholders on tracking, deals, and channel mix across organic and paid.\n\nDelivered an estimated 8x return on ad spend on Meta with a self-produced UGC video campaign—writing, filming, and editing destination content in Khao Sok, Phuket, and Bali—demonstrating that low-cost, founder-led creative could outperform traditional paid media production.\n\nDirected cross-functional execution across internal teams and vendor partners in 70 countries; hired and scaled distributed support for 24/7 coverage with clear operating cadences and accountability."
       }
     },
     {
@@ -134,42 +57,82 @@
       }
     },
     {
-      "company": "Lam Research (Oregon, USA)",
+      "company": "Early Career — QA, Digital Marketing & SEO",
       "_dynamic_company": false,
-      "title": "QA / Testing Technician",
+      "title": "QA Technician, Digital Marketing Manager & SEO Specialist",
       "_dynamic_title": false,
-      "dateRange": "01/2015 – 09/2016",
+      "dateRange": "04/2013 – 09/2016",
       "_dynamic_dateRange": false,
       "description": {
         "_dynamic": true,
-        "value": "Ensured semiconductor manufacturing equipment and software met industry and customer standards through comprehensive QA, supporting cross-functional alignment with engineering and program stakeholders.\n\nReduced defect escape risk as measured by verified test coverage, by executing detailed hardware/software test plans, documenting issues, and partnering with engineering on rapid resolution.\n\nValidated functionality, performance, and reliability across product lines and customer environments using advanced methods and tools.\n\nShortened feedback loops for product quality as measured by cycle-time improvements, by analyzing test processes, implementing best practices, and contributing to continuous improvement initiatives.\n\nSupported successful launches and customer satisfaction by collaborating with R&D, manufacturing, and customer support on delivery and issue triage.\n\nMaintained audit-ready documentation of results, procedures, and equipment specifications for compliance and knowledge transfer."
-      }
-    },
-    {
-      "company": "Nilgasht Travel Agency (Tehran, Iran)",
-      "_dynamic_company": false,
-      "title": "Digital Marketing Manager / CRM Project Manager",
-      "_dynamic_title": false,
-      "dateRange": "01/2015 – 09/2016",
-      "_dynamic_dateRange": false,
-      "description": {
-        "_dynamic": true,
-        "value": "Increased online bookings by 40% and customer engagement by 25% as measured by CRM and channel analytics, by leading integrated digital campaigns across SEO, SEM, social, and email with stakeholder alignment across sales and operations.\n\nImproved service delivery and marketing automation as measured by reduced manual follow-up and cleaner segmentation, by implementing and operating CRM workflows end-to-end.\n\nRaised conversion rates by 30% as measured by campaign and landing performance, by analyzing behavior and reallocating budget to high-value traveler segments.\n\nStrengthened end-to-end customer experience from inquiry through post-trip follow-up, by partnering with consultants and operations on process and messaging.\n\nImproved campaign ROI as measured by negotiated rates and performance reviews, by owning marketing budgets and vendor relationships with advertising platforms.\n\nExpanded brand reach as measured by content engagement metrics, by producing travel promotions and assets across digital channels."
-      }
-    },
-    {
-      "company": "Hamrah Ltd, (London, UK)",
-      "_dynamic_company": false,
-      "title": "Jr. Digital Marketer / SEO Specialist / Copywriter",
-      "_dynamic_title": false,
-      "dateRange": "04/2013 – 02/2016",
-      "_dynamic_dateRange": false,
-      "description": {
-        "_dynamic": true,
-        "value": "Improved client lead generation and visibility as measured by ranking and traffic gains, by executing integrated digital campaigns and SEO programs across diverse B2B and B2C portfolios.\n\nDelivered an average ~60% organic ranking improvement for client sites as measured by rank-tracker and Search Console data, by running keyword research, competitive analysis, and technical SEO audits.\n\nIncreased engagement and conversion on copy-led assets as measured by content and email metrics, by writing websites, blogs, email, and social creative with consistent brand voice.\n\nImproved paid acquisition efficiency as measured by CPA and ROAS, by managing Google Ads and social campaigns with iterative creative and targeting tests.\n\nAccelerated optimization decisions as measured by faster reporting cycles, by analyzing site performance in Google Analytics and delivering actionable recommendations.\n\nReduced rework on new builds as measured by fewer post-launch SEO fixes, by partnering with design and development to embed SEO requirements upstream.\n\nSupported agency leadership on pitches and QBRs with strategy narratives and performance reporting.\n\nSustained client performance through algorithm and SERP shifts by monitoring industry trends and AEO-relevant visibility patterns."
+        "value": "Built foundational cross-functional experience spanning quality assurance, digital marketing operations, and technical SEO across three roles before moving into e-commerce leadership.\n\nAt Lam Research (Oregon, USA), executed hardware/software QA test plans for semiconductor manufacturing equipment, reducing defect escape risk and supporting on-time customer launches.\n\nAt Nilgasht Travel Agency (Tehran, Iran), increased online bookings 40% and customer engagement 25% by leading integrated SEO, SEM, social, and email campaigns and implementing CRM automation.\n\nAt Hamrah Ltd (London, UK), delivered an average ~60% organic ranking improvement for B2B and B2C clients through technical SEO audits, keyword strategy, and paid/organic campaign management."
       }
     }
   ],
+  "skills": {
+    "_dynamic": true,
+    "footnote": {
+      "_dynamic": true,
+      "value": "AI-assisted development & code review (Cursor / LLM workflows)."
+    },
+    "categories": [
+      {
+        "category": "Growth & GTM Leadership",
+        "items": [
+          "Executive ownership: P&L discipline, stakeholder alignment, cross-functional leadership",
+          "Full-stack SEO & Answer Engine Optimization (AEO)",
+          "Data-driven GTM, PLG & DTC growth strategy",
+          "ABM, demand generation & lifecycle marketing",
+          "Partnerships, affiliates & creator ecosystem management",
+          "Attribution, incrementality testing & A/B testing",
+          "Messaging, positioning & content architecture",
+          "Product & platform delivery: marketplaces, technical roadmaps, cloud scale"
+        ]
+      },
+      {
+        "category": "AI & Agentic Automation",
+        "items": [
+          "Agentic workflows & multi-step AI orchestration (Python, n8n, LLMs)",
+          "Content ingestibility & LLM visibility: structured data, entity clarity, crawl-friendly markup",
+          "LLM apps (Vertex AI, AWS Bedrock, NVIDIA NeMo)",
+          "Vector search (Pinecone, Qdrant)"
+        ]
+      },
+      {
+        "category": "Technical & Web Engineering",
+        "items": [
+          "Python, SQL, PHP, MySQL",
+          "WordPress (custom plugins, hooks/filters, admin)",
+          "REST APIs & webhooks",
+          "HTML / CSS / JavaScript",
+          "AWS (S3, SES, Lightsail, CloudFront)",
+          "Core Web Vitals & crawl efficiency (CDN, caching)",
+          "Git (branching, PRs, deploy workflow)"
+        ]
+      },
+      {
+        "category": "Analytics & Experimentation",
+        "items": [
+          "GA4, Google Tag Manager, Search Console",
+          "Google BigQuery, Amazon Redshift",
+          "Looker & Tableau (interactive dashboards)",
+          "Incrementality testing & A/B testing",
+          "Attribution modeling (multi-touch)",
+          "Cohort analysis & demand forecasting"
+        ]
+      },
+      {
+        "category": "GTM Tools & Platforms",
+        "items": [
+          "Google Ads, Facebook Ads, Local Services Ads (LSAs)",
+          "LinkedIn Campaign Manager & Sales Navigator",
+          "Salesforce & Pardot (B2B automation)",
+          "SEMrush (advanced SEO/AEO execution)",
+          "n8n, Airtable, Asana, Zapier, HubSpot"
+        ]
+      }
+    ]
+  },
   "education": {
     "_dynamic": false,
     "value": [
@@ -183,14 +146,6 @@
         "dateRange": "09/2006 – 07/2010",
         "degree": "Bachelor of Science, Mechanical Engineering"
       }
-    ]
-  },
-  "certifications": {
-    "_dynamic": false,
-    "value": [
-      "Google Analytics Certification, 07/2017",
-      "Google Tag Manager Certification, 07/2017",
-      "Google Search Certification, 07/2017"
     ]
   }
 }

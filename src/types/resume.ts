@@ -1,3 +1,12 @@
+export interface ResumeSkills {
+  _dynamic?: boolean;
+  footnote?: {
+    _dynamic?: boolean;
+    value: string;
+  };
+  categories: { category: string; items: string[] }[];
+}
+
 export interface ResumeData {
   /**
    * Optional identity cluster (main title + specialization bar).
@@ -13,24 +22,37 @@ export interface ResumeData {
     address: string;
     email: string;
     phone: string;
+    links?: {
+      linkedin?: string;
+      website?: string;
+      portfolio?: string;
+    };
   };
   summary: {
     _dynamic: boolean;
     value: string;
   };
-  coreCompetencies: {
+  /** Unified skills section (replaces coreCompetencies + technicalProficiency). */
+  skills?: ResumeSkills;
+  /** @deprecated Use `skills` — kept for legacy customized resumes. */
+  coreCompetencies?: {
     _dynamic: boolean;
     value: string[];
   };
-  /** Technical skills by category. Display label: "Technical Skills". */
-  technicalProficiency: {
+  /** @deprecated Use `skills` — kept for legacy customized resumes. */
+  technicalProficiency?: {
     _dynamic?: boolean;
-    /** Optional one-liner under Technical Skills (e.g. AI-assisted workflow disclosure). */
     footnote?: {
       _dynamic?: boolean;
       value: string;
     };
-    categories: { category: string; items: string[] }[];
+    categories?: { category: string; items: string[] }[];
+    programming?: string[];
+    cloudData?: string[];
+    analytics?: string[];
+    mlAi?: string[];
+    productivity?: string[];
+    marketingAds?: string[];
   };
   professionalExperience: {
     company: string;
@@ -52,7 +74,8 @@ export interface ResumeData {
       degree: string;
     }[];
   };
-  certifications: {
+  /** @deprecated Removed from mother resume — optional for legacy customized resumes. */
+  certifications?: {
     _dynamic: boolean;
     value: string[];
   };
@@ -64,8 +87,11 @@ export interface ResumeConfig {
     sub: string;
   };
   sections: {
-    showTechnicalProficiency: boolean;
+    showSkills: boolean;
+    /** @deprecated Use showSkills */
     showCoreCompetencies: boolean;
+    /** @deprecated Use showSkills */
+    showTechnicalProficiency: boolean;
     showProfessionalExperience: boolean;
     showEducation: boolean;
     showCertifications: boolean;
@@ -85,11 +111,12 @@ export const defaultResumeConfig: ResumeConfig = {
     sub: "Expertise: Web Engineering • Agentic AI Automation • Full-Stack SEO • Data-Driven GTM"
   },
   sections: {
-    showTechnicalProficiency: true,
-    showCoreCompetencies: true,
+    showSkills: true,
+    showCoreCompetencies: false,
+    showTechnicalProficiency: false,
     showProfessionalExperience: true,
     showEducation: true,
-    showCertifications: true,
+    showCertifications: false,
   }
 };
 
@@ -109,4 +136,17 @@ export function resumeConfigWithDataTitleBar(
     };
   }
   return base;
+}
+
+/** Whether the skills section should render for this resume + config. */
+export function shouldShowSkills(config: ResumeConfig, data: ResumeData): boolean {
+  if (config.sections.showSkills) return true;
+  if (config.sections.showCoreCompetencies || config.sections.showTechnicalProficiency) {
+    return Boolean(
+      data.skills?.categories?.length ||
+        data.coreCompetencies?.value?.length ||
+        data.technicalProficiency?.categories?.length
+    );
+  }
+  return false;
 }

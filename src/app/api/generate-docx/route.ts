@@ -13,14 +13,25 @@ import {
   convertInchesToTwip,
 } from "docx";
 import type { ResumeData, ResumeConfig } from "../../../types/resume";
-import { defaultResumeConfig } from "../../../types/resume";
+import { defaultResumeConfig, shouldShowSkills } from "../../../types/resume";
+import { getSkillsCategories, getSkillsFootnote, hasUnifiedSkills } from "../../../utils/skillsUtils";
 
 type FlexibleField = string | { value: string };
 type FlexibleResumeData = {
-  header: { name: FlexibleField; address: FlexibleField; email: FlexibleField; phone: FlexibleField };
+  header: {
+    name: FlexibleField;
+    address: FlexibleField;
+    email: FlexibleField;
+    phone: FlexibleField;
+    links?: { linkedin?: string; website?: string; portfolio?: string };
+  };
   summary: FlexibleField;
-  coreCompetencies: { value: string[] } | string[];
-  technicalProficiency: {
+  skills?: {
+    footnote?: FlexibleField;
+    categories?: { category: string; items: string[] }[];
+  };
+  coreCompetencies?: { value: string[] } | string[];
+  technicalProficiency?: {
     footnote?: FlexibleField;
     categories?: { category: string; items: string[] }[];
     programming?: string[];
@@ -37,7 +48,7 @@ type FlexibleResumeData = {
     description: FlexibleField;
   }[];
   education: { value: { school: string; dateRange: string; degree: string }[] };
-  certifications: { value: string[] } | string[];
+  certifications?: { value: string[] } | string[];
 };
 
 function getVal(f: FlexibleField): string {
@@ -60,6 +71,12 @@ function buildDocx(resumeData: FlexibleResumeData, config: ResumeConfig): Docume
   const email = getVal(data.header.email);
   const phone = getVal(data.header.phone);
   const contactLine = [address, email, phone].filter(Boolean).join(" | ");
+  const headerLinks = data.header.links;
+  const linkLine = headerLinks
+    ? [headerLinks.linkedin ? "LinkedIn" : "", headerLinks.website ? "Tripways.com" : "", headerLinks.portfolio ? "cv.allseen.com" : ""]
+        .filter(Boolean)
+        .join(" | ")
+    : "";
 
   const sectionHeader = (text: string) =>
     new Paragraph({
@@ -87,9 +104,18 @@ function buildDocx(resumeData: FlexibleResumeData, config: ResumeConfig): Docume
     new Paragraph({
       children: [new TextRun({ text: contactLine, size: 22 })],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 320 },
+      spacing: { after: linkLine ? 60 : 320 },
     })
   );
+  if (linkLine) {
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: linkLine, size: 22, color: "1e3a8a" })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 320 },
+      })
+    );
+  }
 
   // Title bar from config
   children.push(
@@ -123,64 +149,6 @@ function buildDocx(resumeData: FlexibleResumeData, config: ResumeConfig): Docume
     summaryText.split(/\n\n+/).forEach((p) => {
       if (p.trim()) children.push(bodyParagraph(p.trim()));
     });
-  }
-
-  // Skills (Core Competencies)
-  const competencies = getArr(
-    Array.isArray(data.coreCompetencies) ? data.coreCompetencies : data.coreCompetencies.value
-  );
-  if (cfg.sections.showCoreCompetencies && competencies.length > 0) {
-    children.push(sectionHeader("Skills"));
-    competencies.forEach((item) => {
-      if (item && String(item).trim()) {
-        children.push(
-          new Paragraph({
-            text: String(item).trim(),
-            bullet: { level: 0 },
-            spacing: { after: 60 },
-          })
-        );
-      }
-    });
-  }
-
-  // Technical Skills (by category, ATS-friendly)
-  if (cfg.sections.showTechnicalProficiency && data.technicalProficiency) {
-    const tech = data.technicalProficiency;
-    const categories = tech.categories?.length
-      ? tech.categories
-      : [
-          { category: "Programming", items: tech.programming || [] },
-          { category: "Cloud / Data", items: tech.cloudData || [] },
-          { category: "Analytics", items: tech.analytics || [] },
-          { category: "ML / AI", items: tech.mlAi || [] },
-          { category: "Productivity", items: tech.productivity || [] },
-          { category: "Marketing / Ads", items: tech.marketingAds || [] },
-        ].filter((g) => g.items.length > 0);
-    if (categories.length > 0) {
-      children.push(sectionHeader("Technical Skills"));
-      for (const group of categories) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({ text: `${group.category}: `, bold: true, size: 22 }),
-              new TextRun({ text: group.items.join(", "), size: 22 }),
-            ],
-            spacing: { after: 80 },
-          })
-        );
-      }
-      const footnoteRaw = tech.footnote;
-      const footnoteText = footnoteRaw ? getVal(footnoteRaw as FlexibleField).trim() : "";
-      if (footnoteText) {
-        children.push(
-          new Paragraph({
-            children: [new TextRun({ text: footnoteText, italics: true, size: 20 })],
-            spacing: { after: 80 },
-          })
-        );
-      }
-    }
   }
 
   // Work Experience
@@ -222,6 +190,92 @@ function buildDocx(resumeData: FlexibleResumeData, config: ResumeConfig): Docume
     });
   }
 
+  const resumeAsData = resumeData as unknown as ResumeData;
+  const unifiedSkills = hasUnifiedSkills(resumeAsData);
+  const skillsCategories = getSkillsCategories(resumeAsData);
+  const skillsFootnote = getSkillsFootnote(resumeAsData);
+
+  if (shouldShowSkills(cfg, resumeAsData) && unifiedSkills && skillsCategories.length > 0) {
+    children.push(sectionHeader("Skills"));
+    for (const group of skillsCategories) {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${group.category}: `, bold: true, size: 22 }),
+            new TextRun({ text: group.items.join(", "), size: 22 }),
+          ],
+          spacing: { after: 80 },
+        })
+      );
+    }
+    if (skillsFootnote) {
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: skillsFootnote, italics: true, size: 20 })],
+          spacing: { after: 80 },
+        })
+      );
+    }
+  }
+
+  // Legacy skills sections
+  const competencies = getArr(
+    Array.isArray(data.coreCompetencies) ? data.coreCompetencies ?? [] : data.coreCompetencies?.value ?? []
+  );
+  if (!unifiedSkills && cfg.sections.showCoreCompetencies && competencies.length > 0) {
+    children.push(sectionHeader("Skills"));
+    competencies.forEach((item) => {
+      if (item && String(item).trim()) {
+        children.push(
+          new Paragraph({
+            text: String(item).trim(),
+            bullet: { level: 0 },
+            spacing: { after: 60 },
+          })
+        );
+      }
+    });
+  }
+
+  // Technical Skills (by category, ATS-friendly)
+  if (!unifiedSkills && cfg.sections.showTechnicalProficiency && data.technicalProficiency) {
+    const tech = data.technicalProficiency;
+    const categories = tech.categories?.length
+      ? tech.categories
+      : [
+          { category: "Programming", items: tech.programming || [] },
+          { category: "Cloud / Data", items: tech.cloudData || [] },
+          { category: "Analytics", items: tech.analytics || [] },
+          { category: "ML / AI", items: tech.mlAi || [] },
+          { category: "Productivity", items: tech.productivity || [] },
+          { category: "Marketing / Ads", items: tech.marketingAds || [] },
+        ].filter((g) => g.items.length > 0);
+    if (categories.length > 0) {
+      children.push(sectionHeader("Technical Skills"));
+      for (const group of categories) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${group.category}: `, bold: true, size: 22 }),
+              new TextRun({ text: group.items.join(", "), size: 22 }),
+            ],
+            spacing: { after: 80 },
+          })
+        );
+      }
+      const footnoteRaw = tech.footnote;
+      const footnoteText = footnoteRaw ? getVal(footnoteRaw as FlexibleField).trim() : "";
+      if (footnoteText) {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text: footnoteText, italics: true, size: 20 })],
+            spacing: { after: 80 },
+          })
+        );
+      }
+    }
+  }
+
   // Education
   const educationList = getArr(data.education?.value ?? []);
   if (cfg.sections.showEducation && educationList.length > 0) {
@@ -245,7 +299,7 @@ function buildDocx(resumeData: FlexibleResumeData, config: ResumeConfig): Docume
 
   // Certifications
   const certs = getArr(
-    Array.isArray(data.certifications) ? data.certifications : data.certifications?.value ?? []
+    Array.isArray(data.certifications) ? data.certifications ?? [] : data.certifications?.value ?? []
   );
   if (cfg.sections.showCertifications && certs.length > 0) {
     children.push(sectionHeader("Certifications"));

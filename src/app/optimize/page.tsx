@@ -331,7 +331,7 @@ export default function HomePage() {
       setDraftId(null);
       setDraftScore(null);
       setShowSuccess(true);
-      setHighlightSections(["summary", "coreCompetencies", "technicalProficiency", "professionalExperience"]);
+      setHighlightSections(["summary", "skills", "technical", "professionalExperience"]);
     } catch (e) {
       handleErrorWithState(e, setError, "ai");
     } finally {

@@ -205,33 +205,39 @@ export function preprocessResumeForTemplate(
       .slice(0, template.constraints.itemLimits.maxExperienceJobs);
   }
   
-  // Limit competencies
-  if (processed.coreCompetencies.value.length > template.constraints.itemLimits.coreCompetencies) {
-    processed.coreCompetencies.value = processed.coreCompetencies.value
-      .slice(0, template.constraints.itemLimits.coreCompetencies);
+  // Limit skills (unified or legacy)
+  if (processed.skills?.categories?.length) {
+    const maxPerCat = template.constraints.itemLimits.technicalSkillsPerCategory;
+    for (const cat of processed.skills.categories) {
+      if (cat.items?.length) cat.items = cat.items.slice(0, maxPerCat);
+    }
+  } else if (processed.coreCompetencies?.value?.length) {
+    if (processed.coreCompetencies.value.length > template.constraints.itemLimits.coreCompetencies) {
+      processed.coreCompetencies.value = processed.coreCompetencies.value
+        .slice(0, template.constraints.itemLimits.coreCompetencies);
+    }
+    const techProf = processed.technicalProficiency;
+    const maxPerCat = template.constraints.itemLimits.technicalSkillsPerCategory;
+    if (techProf?.categories?.length) {
+      for (const cat of techProf.categories) {
+        if (cat.items?.length) cat.items = cat.items.slice(0, maxPerCat);
+      }
+    } else if (techProf) {
+      const legacy = techProf as { programming?: string[]; cloudData?: string[]; analytics?: string[]; mlAi?: string[]; productivity?: string[]; marketingAds?: string[] };
+      if (legacy.programming) legacy.programming = legacy.programming.slice(0, maxPerCat);
+      if (legacy.cloudData) legacy.cloudData = legacy.cloudData.slice(0, maxPerCat);
+      if (legacy.analytics) legacy.analytics = legacy.analytics.slice(0, maxPerCat);
+      if (legacy.mlAi) legacy.mlAi = legacy.mlAi.slice(0, maxPerCat);
+      if (legacy.productivity) legacy.productivity = legacy.productivity.slice(0, maxPerCat);
+      if (legacy.marketingAds) legacy.marketingAds = legacy.marketingAds.slice(0, maxPerCat);
+    }
   }
-  
-  // Limit certifications  
-  if (processed.certifications.value.length > template.constraints.itemLimits.certificationsMax) {
+
+  // Limit certifications (legacy resumes)
+  if (processed.certifications?.value?.length && processed.certifications.value.length > template.constraints.itemLimits.certificationsMax) {
     processed.certifications.value = processed.certifications.value
       .slice(0, template.constraints.itemLimits.certificationsMax);
   }
-  
-  // Limit technical skills per category
-  const techProf = processed.technicalProficiency;
-  const maxPerCat = template.constraints.itemLimits.technicalSkillsPerCategory;
-  if (techProf.categories?.length) {
-    for (const cat of techProf.categories) {
-      if (cat.items?.length) cat.items = cat.items.slice(0, maxPerCat);
-    }
-  } else {
-    const legacy = techProf as { programming?: string[]; cloudData?: string[]; analytics?: string[]; mlAi?: string[]; productivity?: string[]; marketingAds?: string[] };
-    if (legacy.programming) legacy.programming = legacy.programming.slice(0, maxPerCat);
-    if (legacy.cloudData) legacy.cloudData = legacy.cloudData.slice(0, maxPerCat);
-    if (legacy.analytics) legacy.analytics = legacy.analytics.slice(0, maxPerCat);
-    if (legacy.mlAi) legacy.mlAi = legacy.mlAi.slice(0, maxPerCat);
-    if (legacy.productivity) legacy.productivity = legacy.productivity.slice(0, maxPerCat);
-    if (legacy.marketingAds) legacy.marketingAds = legacy.marketingAds.slice(0, maxPerCat);
-  }
+
   return processed;
 }

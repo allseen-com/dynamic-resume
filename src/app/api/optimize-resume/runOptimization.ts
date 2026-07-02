@@ -180,7 +180,9 @@ export async function runOptimization(input: RunOptimizationInput): Promise<void
       if ('summary' in fragment) {
         workingResume.summary = fragment.summary;
       }
-      if ('coreCompetencies' in fragment && 'technicalProficiency' in fragment) {
+      if ('skills' in fragment) {
+        workingResume.skills = fragment.skills;
+      } else if ('coreCompetencies' in fragment && 'technicalProficiency' in fragment) {
         workingResume.coreCompetencies = fragment.coreCompetencies;
         workingResume.technicalProficiency = fragment.technicalProficiency;
       }

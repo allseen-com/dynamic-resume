@@ -1,4 +1,5 @@
 import { ResumeData } from '../types/resume';
+import { getSkillsTextForMatch } from './skillsUtils';
 
 /**
  * Utility functions for word count management in resume content
@@ -83,9 +84,8 @@ export function calculateSummaryWordCount(resumeData: ResumeData): number {
  */
 export function getTotalResumeWordCount(resumeData: ResumeData): number {
   let total = calculateSummaryWordCount(resumeData);
-  if (resumeData.coreCompetencies?.value?.length) {
-    total += countWords(resumeData.coreCompetencies.value.join(' '));
-  }
+  const skillsText = getSkillsTextForMatch(resumeData);
+  if (skillsText) total += countWords(skillsText);
   const expCounts = calculateExperienceWordCounts(resumeData);
   total += Object.values(expCounts).reduce((a, b) => a + b, 0);
   return total;
@@ -98,7 +98,8 @@ export function getTotalResumeWordCount(resumeData: ResumeData): number {
 export function getTotalResumeCharacterCount(resumeData: ResumeData): number {
   let s = '';
   if (resumeData.summary?.value) s += resumeData.summary.value;
-  if (resumeData.coreCompetencies?.value?.length) s += ' ' + resumeData.coreCompetencies.value.join(' ');
+  const skillsText = getSkillsTextForMatch(resumeData);
+  if (skillsText) s += ' ' + skillsText;
   if (resumeData.professionalExperience?.length) {
     resumeData.professionalExperience.forEach((exp) => {
       if (exp.description?.value) s += ' ' + exp.description.value;

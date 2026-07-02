@@ -146,11 +146,12 @@ export async function POST(request: Request) {
           sub: template.description
         },
         sections: {
-          showTechnicalProficiency: template.constraints.layout.showTechnicalProficiency ?? true,
-          showCoreCompetencies: true,
+          showSkills: true,
+          showTechnicalProficiency: false,
+          showCoreCompetencies: false,
           showProfessionalExperience: true,
           showEducation: true,
-          showCertifications: true,
+          showCertifications: false,
         }
       };
     }

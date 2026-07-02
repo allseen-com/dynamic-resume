@@ -134,34 +134,32 @@ Return ONLY a JSON object with this exact structure (no other keys):
   }
 }`;
 
-/** Default prompt for Core Competencies + Technical Skills. Output: { coreCompetencies, technicalProficiency } */
+/** Default prompt for Skills section. Output: { skills } */
 const DEFAULT_TECHNICAL = `${SKYSCRAPER}${BASE_CRITICAL}
 
-**SECTION: Core Competencies and Technical Skills**
+**SECTION: Skills**
 
-Your task is to produce ONLY the core competencies list and the technical skills categories, tailored to the job description.
+Your task is to produce ONLY the unified skills section, tailored to the job description.
 
 **Rules:**
-- Core competencies: 5–10 short, scannable headline strengths (prefer 6–8). Reorder so job-relevant items lead; merge overlapping ideas; avoid one mega-bullet. No fabrication.
-- Technical skills: use the "categories" array. Keep category *names* aligned with the source resume when possible (e.g. "Languages & data", "Web platform & integrations", "Cloud & web performance", "Dev & delivery", "AI & ML", "Marketing & analytics", "Tools & automation"). List only tools/stack the candidate has actually used; prioritize JD keywords. For AI/ML, prefer one umbrella line per area (e.g. LLM platforms + vector DBs + agents) rather than a long vendor laundry list unless each is interview-defensible.
+- Use the "categories" array with 4–6 category groups. Keep category names aligned with the source resume when possible (e.g. "Growth & GTM Leadership", "AI & Agentic Automation", "Technical & Web Engineering", "Analytics & Experimentation", "GTM Tools & Platforms").
+- Each category: 4–8 scannable items. Reorder so job-relevant items lead within each category; merge overlapping ideas; no fabrication.
+- List only tools/stack the candidate has actually used; prioritize JD keywords.
 - Optional \`footnote\`: one accurate line for AI-assisted engineering (e.g. Cursor / LLM workflows). Omit if not relevant to the JD.
 - Use exact tool/tech names from the resume where possible; match JD terminology.
 - No new skills that don't appear in the source material.
 
-Return ONLY a JSON object with this exact structure (no other keys). Use "categories" with category name and items array:
+Return ONLY a JSON object with this exact structure (no other keys):
 {
-  "coreCompetencies": { "_dynamic": true, "value": ["skill1", "skill2", ...] },
-  "technicalProficiency": {
+  "skills": {
     "_dynamic": true,
     "footnote": { "_dynamic": true, "value": "Optional one-line note (e.g. AI-assisted development)." },
     "categories": [
-      { "category": "Languages & data", "items": [] },
-      { "category": "Web platform & integrations", "items": [] },
-      { "category": "Cloud & web performance", "items": [] },
-      { "category": "Dev & delivery", "items": [] },
-      { "category": "AI & ML", "items": [] },
-      { "category": "Marketing & analytics", "items": [] },
-      { "category": "Tools & automation", "items": [] }
+      { "category": "Growth & GTM Leadership", "items": [] },
+      { "category": "AI & Agentic Automation", "items": [] },
+      { "category": "Technical & Web Engineering", "items": [] },
+      { "category": "Analytics & Experimentation", "items": [] },
+      { "category": "GTM Tools & Platforms", "items": [] }
     ]
   }
 }`;
@@ -253,7 +251,7 @@ You are given a draft resume that was built section-by-section (headline, summar
 5. Return the complete resume in the exact same JSON structure as the draft, plus a brief optimizationSummary and keyChanges list.
 
 **Output format:** Return ONLY a JSON object with these keys:
-- "resumeData": the full resume object (same structure as the draft: header, summary, coreCompetencies, technicalProficiency, professionalExperience, education, certifications).
+- "resumeData": the full resume object (same structure as the draft: header, summary, skills, professionalExperience, education).
 - "optimizationSummary": 2–4 sentences describing how the resume was tailored and why it is a better match for the role.
 - "keyChanges": array of 3–6 short bullet strings. Each bullet names the SECTION, WHAT was changed or added, and WHY it improves match (e.g. "Summary: Refocused on growth marketing and SEO to align with JD keywords.").
 
